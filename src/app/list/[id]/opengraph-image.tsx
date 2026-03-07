@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
 
-export const runtime = 'edge';
 export const alt = '9coma | 私を構成する漫画9選';
 export const size = {
   width: 1200,
@@ -16,72 +15,87 @@ export default async function Image({ params }: { params: { id: string } }) {
     (
       <div
         style={{
-          background: '#0a0a0f',
+          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '60px',
+          justifyContent: 'center',
+          padding: '40px',
         }}
       >
-        {/* Left Side: Text */}
+        {/* Left Side: Dynamic Text Section */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            flex: 1,
-            marginRight: '40px',
+            justifyContent: 'center',
+            width: '450px',
+            marginRight: '60px',
           }}
         >
           <div
             style={{
               display: 'flex',
-              fontSize: '56px',
+              fontSize: '24px',
+              fontWeight: 800,
+              color: '#8b5cf6',
+              letterSpacing: '0.1em',
+              marginBottom: '12px',
+              textTransform: 'uppercase',
+            }}
+          >
+            My Top 9 Comics
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '52px',
               fontWeight: 900,
               color: '#ffffff',
-              lineHeight: 1.2,
-              marginBottom: '20px',
+              lineHeight: 1.1,
+              marginBottom: '24px',
             }}
           >
-            {data.authorName}さんを構成する漫画9選
+            私を構成する9本
           </div>
           <div
             style={{
               display: 'flex',
-              fontSize: '28px',
-              color: '#a0a0b0',
-              marginBottom: '40px',
+              alignItems: 'center',
+              gap: '12px',
             }}
           >
-            #9coma | My Top 9 Comics
+            <div style={{ fontSize: '24px', color: '#a0a0b0' }}>by</div>
+            <div style={{ fontSize: '32px', fontWeight: 700, color: '#ffffff' }}>
+              {data.authorName}
+            </div>
           </div>
+          
           <div
             style={{
+              marginTop: 'auto',
               display: 'flex',
-              fontSize: '24px',
-              fontWeight: 600,
-              color: '#8b5cf6', // 9coma purple
-              border: '2px solid #8b5cf6',
-              padding: '8px 20px',
-              borderRadius: '99px',
-              alignSelf: 'flex-start',
+              fontSize: '18px',
+              color: '#4b5563',
+              fontWeight: 500,
             }}
           >
             9coma.com
           </div>
         </div>
 
-        {/* Right Side: Square Grid */}
+        {/* Right Side: Large Grid with Glassmorphism */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            background: '#14141e',
-            padding: '16px',
-            borderRadius: '20px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '20px',
+            borderRadius: '24px',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
           }}
         >
           {[0, 1, 2].map((rowIdx) => (
@@ -90,7 +104,7 @@ export default async function Image({ params }: { params: { id: string } }) {
               style={{
                 display: 'flex',
                 flexDirection: 'row',
-                marginBottom: rowIdx < 2 ? '8px' : '0px',
+                marginBottom: rowIdx < 2 ? '12px' : '0px',
               }}
             >
               {[0, 1, 2].map((colIdx) => {
@@ -100,13 +114,14 @@ export default async function Image({ params }: { params: { id: string } }) {
                   <div
                     key={idx}
                     style={{
-                      width: '110px',
-                      height: '155px', // Rectangular (Manga cover ratio)
+                      width: '135px',
+                      height: '190px',
                       background: '#1e1e2e',
-                      borderRadius: '8px',
+                      borderRadius: '10px',
                       display: 'flex',
-                      marginRight: colIdx < 2 ? '10px' : '0px',
+                      marginRight: colIdx < 2 ? '12px' : '0px',
                       overflow: 'hidden',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
                     }}
                   >
                     {manga ? (
@@ -116,7 +131,9 @@ export default async function Image({ params }: { params: { id: string } }) {
                         alt={manga.title}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
-                    ) : null}
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, #1e1e2e, #2a2a3e)' }} />
+                    )}
                   </div>
                 );
               })}
