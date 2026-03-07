@@ -1,0 +1,27 @@
+// 漫画データの型定義
+export interface MangaItem {
+  isbn: string;
+  title: string;
+  author: string;
+  imageUrl: string;
+  affiliateUrl: string;
+  salesPage?: string;
+}
+
+// 9コマリストの型定義
+export interface ComicList {
+  id: string;
+  authorName: string;
+  slots: (MangaItem | null)[];
+  createdAt: number;
+}
+
+// 楽天APIレスポンスの型
+export interface RakutenBookItem {
+  isbn: string;
+  title: string;
+  author: string;
+  largeImageUrl: string;
+  affiliateUrl: string;
+  itemUrl: string;
+}
