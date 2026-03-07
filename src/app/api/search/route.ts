@@ -78,15 +78,14 @@ export async function GET(request: Request) {
                 }
             });
             const data = await res.json();
-
-            if (data.errors || data.error) {
-                const errorMsg = data.errors?.[0]?.errorMessage || data.error_description || data.error;
-                console.error('Rakuten API Error:', errorMsg);
-                // 認証エラーなどの場合はモックに逃げずにエラーとして出す
+            
+            if (data.errors || data.error || !res.ok) {
+                const errorMsg = data.errors?.[0]?.errorMessage || data.error_description || data.error || '不明なエラー';
+                console.error('Rakuten API Error:', errorMsg, `(Status: ${res.status})`);
                 return NextResponse.json({ error: errorMsg, items: [], isMock: false }, { status: 400 });
             }
 
-            const items = (data.Items || []).map((item: any) => {
+            const items = (data.Items || []).map((item: { isbn: string; title: string; author: string; largeImageUrl: string; affiliateUrl?: string; itemUrl: string }) => {
                 return {
                     isbn: item.isbn,
                     title: item.title,
@@ -96,8 +95,11 @@ export async function GET(request: Request) {
                 };
             });
             return NextResponse.json({ items, isMock: false });
-        } catch (e) {
-            console.error('楽天API error:', e);
+        } catch (error: unknown) {
+            console.error('楽天API error:', error);
+            // APIエラーが発生した場合、モックデータを返すか、エラーを返すか選択
+            // ここではエラーを返し、フロントエンドでハンドリングすることを想定
+            return NextResponse.json({ items: [], isMock: true, error: error instanceof Error ? error.message : String(error) });
         }
     }
 

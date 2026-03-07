@@ -1,10 +1,6 @@
 import type { MangaItem } from '@/types';
 
-// モックストレージ（サーバーサイド用）
-// ※実際のFirebaseが設定されていない間、同一プロセス内ならメモリを共有できるが、
-// Next.jsのデベロップメントモードではリロードで消える可能性がある。
-// 本来はFirestoreを使うべき。
-const mockStore: Record<string, { slots: (MangaItem | null)[]; authorName: string; createdAt: number }> = {};
+// サーバーサイド用ユーティリティ
 
 export async function getListById(id: string) {
   // Firebaseが設定されている場合はFirestoreから取得
