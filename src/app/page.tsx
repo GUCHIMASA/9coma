@@ -106,7 +106,7 @@ export default function Home() {
               onClick={() => setSelectedSlotIndex(idx)}
               style={{
                 position: 'relative',
-                background: 'var(--color-surface-2)',
+                background: idx === 4 ? '#FFA8B8' : 'var(--color-surface-2)',
                 borderRadius: 'var(--radius-sm)',
                 overflow: 'hidden',
                 cursor: 'pointer',

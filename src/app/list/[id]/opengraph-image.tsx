@@ -76,7 +76,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                   style={{
                     width: '100%',
                     height: '100%',
-                    background: '#E0E0E0',
+                    background: '#FFA8B8',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
