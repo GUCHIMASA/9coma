@@ -44,7 +44,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
           {data.authorName}さんを構成する9つのマンガ
         </h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>9coma | 自分の漫画遍歴をシェア</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>9coma.com</p>
       </header>
 
       <ListViewClient data={data} />

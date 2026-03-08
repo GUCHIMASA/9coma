@@ -169,14 +169,14 @@ export default function Home() {
                 placeholder="著者名で探す..."
                 value={searchAuthor}
                 onChange={(e) => setSearchAuthor(e.target.value)}
-                style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
+                style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
               />
               <input
                 type="text"
                 placeholder="その他キーワード..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
+                style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
               />
             </div>
             <button onClick={() => setSelectedSlotIndex(null)} style={{ alignSelf: 'flex-end', padding: '0.5rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 700 }}>閉じる</button>

@@ -12,7 +12,8 @@ export default async function Image({ params }: { params: { id: string } }) {
   const data = await getListById(params.id);
 
   const topRowSlots = data.slots.slice(0, 4);
-  const bottomRowSlots = data.slots.slice(4, 9);
+  const bottomRowSlots = data.slots.slice(5, 9);
+  const centerSlot = data.slots[4];
 
   return new ImageResponse(
     (
@@ -22,72 +23,109 @@ export default async function Image({ params }: { params: { id: string } }) {
           height: '100%',
           background: 'linear-gradient(180deg, #FFD600 0%, #FFB300 100%)',
           display: 'flex',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          padding: '32px',
+          gap: '16px',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
-          }}
-        >
-          {/* Top Row */}
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
-            {/* Text Cell */}
-            <div
-              style={{
-                width: '208px',
-                height: '278px',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '10px 0',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>私を</div>
-                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>構成する</div>
-                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>9つのマンガ</div>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  fontSize: '20px',
-                  color: '#1A1A1A',
-                  fontWeight: 800,
-                  marginTop: '12px',
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                by {data.authorName}
-              </div>
-              <div style={{ marginTop: 'auto', display: 'flex' }}>
+        {/* Left Column (Badge + Slot 5) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '352px' }}>
+          {/* Badge */}
+          <div
+            style={{
+              width: '100%',
+              height: '52px',
+              background: '#1A1A1A',
+              borderRadius: '99px',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              fontWeight: 800,
+              letterSpacing: '0.2em',
+            }}
+          >
+            9COMA.COM
+          </div>
+
+          {/* Large Box (Slot 5) */}
+          <div
+            style={{
+              width: '100%',
+              height: '498px',
+              background: '#FFFFFF',
+              border: '4px solid #1A1A1A',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {centerSlot ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={centerSlot.imageUrl}
+                  alt={centerSlot.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                />
+              ) : (
                 <div
                   style={{
-                    background: '#1A1A1A',
-                    color: '#FFFFFF',
-                    padding: '8px 16px',
-                    borderRadius: '99px',
-                    fontSize: '18px',
-                    fontWeight: 800,
+                    width: '100%',
+                    height: '100%',
+                    background: '#E0E0E0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#CCCCCC',
+                    fontSize: '120px',
+                    fontWeight: 900,
                   }}
                 >
-                  9COMA.COM
+                  5
                 </div>
+              )}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                background: '#1A1A1A',
+                color: '#FFFFFF',
+                padding: '0 12px',
+                fontSize: '18px',
+                fontWeight: 600,
+                height: '48px',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <div
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                }}
+              >
+                {centerSlot ? centerSlot.title : '本のタイトル'}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Top 4 Books */}
+        {/* Right Column (2x4 Grid) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '768px' }}>
+          {/* Top Row: Slots 1, 2, 3, 4 */}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
             {topRowSlots.map((manga, idx) => (
               <div
                 key={`top-${idx}`}
                 style={{
-                  width: '208px',
-                  height: '278px',
+                  width: '180px',
+                  height: '275px',
                   background: '#FFFFFF',
                   border: '4px solid #1A1A1A',
                   display: 'flex',
@@ -101,7 +139,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                     <img
                       src={manga.imageUrl}
                       alt={manga.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
                     />
                   ) : (
                     <div
@@ -117,7 +155,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         fontWeight: 900,
                       }}
                     >
-                      ?
+                      {idx + 1}
                     </div>
                   )}
                 </div>
@@ -142,21 +180,21 @@ export default async function Image({ params }: { params: { id: string } }) {
                       maxWidth: '100%',
                     }}
                   >
-                    {manga ? manga.title : ''}
+                    {manga ? manga.title : '本のタイトル'}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Bottom Row */}
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+          {/* Bottom Row: Slots 6, 7, 8, 9 */}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
             {bottomRowSlots.map((manga, idx) => (
               <div
                 key={`bottom-${idx}`}
                 style={{
-                  width: '208px',
-                  height: '278px',
+                  width: '180px',
+                  height: '275px',
                   background: '#FFFFFF',
                   border: '4px solid #1A1A1A',
                   display: 'flex',
@@ -170,7 +208,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                     <img
                       src={manga.imageUrl}
                       alt={manga.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
                     />
                   ) : (
                     <div
@@ -186,7 +224,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         fontWeight: 900,
                       }}
                     >
-                      ?
+                      {idx + 6}
                     </div>
                   )}
                 </div>
@@ -211,7 +249,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                       maxWidth: '100%',
                     }}
                   >
-                    {manga ? manga.title : ''}
+                    {manga ? manga.title : '本のタイトル'}
                   </div>
                 </div>
               </div>
