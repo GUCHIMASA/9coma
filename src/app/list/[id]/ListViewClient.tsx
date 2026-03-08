@@ -19,7 +19,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   const shareOnX = () => {
     if (typeof window === 'undefined') return;
-    const text = `${data.authorName}さんを構成する漫画9選\n#9coma #私を構成する漫画9選\n`;
+    const text = `${data.authorName}さんを構成する9つのマンガ\n#9coma #9koma #私を構成する9つのマンガ\n`;
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };

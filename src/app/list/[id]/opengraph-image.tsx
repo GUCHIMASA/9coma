@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
 
-export const alt = '9coma | 私を構成する漫画9選';
+export const alt = '9coma | 私を構成する9つのマンガ';
 export const size = {
   width: 1200,
   height: 630,
@@ -48,7 +48,7 @@ export default async function Image({ params }: { params: { id: string } }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>私を</div>
                 <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>構成する</div>
-                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>9冊</div>
+                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>9つのマンガ</div>
               </div>
               <div
                 style={{

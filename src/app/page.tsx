@@ -94,7 +94,7 @@ export default function Home() {
           9coma
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
-          あなたを構成する漫画9選をシェアしよう
+          あなたを構成する9つのマンガをシェアしよう
         </p>
       </header>
 
