@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // モック漫画データ（APIキー取得後に楽天APIへ差し替え）
-const MOCK_MANGA: Record<string, object[]> = {
+const MOCK_MANGA: Record<string, Record<string, string>[]> = {
     'default': [
         {
             isbn: '9784088820934',
@@ -51,6 +51,8 @@ const MOCK_MANGA: Record<string, object[]> = {
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword') || '';
+    const title = searchParams.get('title') || '';
+    const author = searchParams.get('author') || '';
 
     // 楽天APIキーが設定されている場合は楽天APIを叩く
     const appId = process.env.RAKUTEN_APPLICATION_ID;
@@ -62,10 +64,22 @@ export async function GET(request: Request) {
             const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
             url.searchParams.set('applicationId', appId);
             url.searchParams.set('affiliateId', affiliateId || '');
-            url.searchParams.set('keyword', keyword);
-            url.searchParams.set('booksGenreId', '001001');
+            
+            // BooksTotal APIは `title` や `author` を個別のパラメータとしてサポートしていないため、
+            // 全ての要素を半角スペースで結合して強力な `keyword` 検索として処理します。
+            const combinedKeywords = [title, author, keyword]
+                .filter(term => term.trim() !== '')
+                .join(' ');
+
+            if (combinedKeywords) {
+                url.searchParams.set('keyword', combinedKeywords);
+            }
+            
+            url.searchParams.set('booksGenreId', '001001'); // 漫画・コミック
             url.searchParams.set('hits', '30');
             url.searchParams.set('formatVersion', '2');
+            url.searchParams.set('outOfStockFlag', '1'); // 品切れ商品も検索に含める
+            
             if (accessKey) {
                 url.searchParams.set('accessKey', accessKey);
             }
@@ -97,20 +111,21 @@ export async function GET(request: Request) {
             return NextResponse.json({ items, isMock: false });
         } catch (error: unknown) {
             console.error('楽天API error:', error);
-            // APIエラーが発生した場合、モックデータを返すか、エラーを返すか選択
-            // ここではエラーを返し、フロントエンドでハンドリングすることを想定
             return NextResponse.json({ items: [], isMock: true, error: error instanceof Error ? error.message : String(error) });
         }
     }
 
-    // モックデータを返す（キーワードでフィルタリング）
+    // モックデータを返す（各フィールドでフィルタリング）
     const allItems = MOCK_MANGA['default'];
-    const filtered = keyword
-        ? allItems.filter((item) =>
-            (item as Record<string, string>).title.toLowerCase().includes(keyword.toLowerCase()) ||
-            (item as Record<string, string>).author.toLowerCase().includes(keyword.toLowerCase())
-        )
-        : allItems;
+    const filtered = allItems.filter((item: Record<string, string>) => {
+        const matchKeyword = !keyword || 
+            item.title.toLowerCase().includes(keyword.toLowerCase()) || 
+            item.author.toLowerCase().includes(keyword.toLowerCase());
+        const matchTitle = !title || item.title.toLowerCase().includes(title.toLowerCase());
+        const matchAuthor = !author || item.author.toLowerCase().includes(author.toLowerCase());
+        
+        return matchKeyword && matchTitle && matchAuthor;
+    });
 
     return NextResponse.json({ items: filtered, isMock: true });
 }

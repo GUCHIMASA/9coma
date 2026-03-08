@@ -9,20 +9,27 @@ export default function Home() {
   const [slots, setSlots] = useState<(MangaItem | null)[]>(Array(9).fill(null));
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const [keyword, setKeyword] = useState('');
+  const [searchTitle, setSearchTitle] = useState('');
+  const [searchAuthor, setSearchAuthor] = useState('');
   const [searchResults, setSearchResults] = useState<MangaItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [authorName, setAuthorName] = useState('');
   const [isSharing, setIsSharing] = useState(false);
 
   // 検索処理
-  const handleSearch = useCallback(async (val: string) => {
-    if (!val.trim()) {
+  const handleSearch = useCallback(async (k: string, t: string, a: string) => {
+    if (!k.trim() && !t.trim() && !a.trim()) {
       setSearchResults([]);
       return;
     }
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/search?keyword=${encodeURIComponent(val)}`);
+      const params = new URLSearchParams();
+      if (k.trim()) params.set('keyword', k.trim());
+      if (t.trim()) params.set('title', t.trim());
+      if (a.trim()) params.set('author', a.trim());
+      
+      const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
       setSearchResults(data.items || []);
     } catch (error) {
@@ -35,10 +42,10 @@ export default function Home() {
   // デバウンス的な検索
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleSearch(keyword);
+      handleSearch(keyword, searchTitle, searchAuthor);
     }, 500);
     return () => clearTimeout(timer);
-  }, [keyword, handleSearch]);
+  }, [keyword, searchTitle, searchAuthor, handleSearch]);
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;
@@ -47,6 +54,8 @@ export default function Home() {
     setSlots(newSlots);
     setSelectedSlotIndex(null);
     setKeyword('');
+    setSearchTitle('');
+    setSearchAuthor('');
     setSearchResults([]);
   };
 
@@ -90,7 +99,7 @@ export default function Home() {
       </header>
 
       <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', background: 'var(--color-surface)', padding: '10px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
           {slots.map((manga, idx) => (
             <div
               key={idx}
@@ -101,7 +110,7 @@ export default function Home() {
                 borderRadius: 'var(--radius-sm)',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                border: selectedSlotIndex === idx ? '2px solid var(--color-primary)' : '2px solid transparent',
+                border: selectedSlotIndex === idx ? '3px solid var(--color-primary)' : '2px solid var(--color-border)',
                 transition: 'var(--transition-fast)',
                 aspectRatio: '1 / 1.4',
                 display: 'flex',
@@ -116,25 +125,27 @@ export default function Home() {
                     onClick={(e) => removeManga(idx, e)}
                     style={{
                       position: 'absolute',
-                      top: '4px',
-                      right: '4px',
-                      background: 'rgba(0,0,0,0.6)',
+                      top: '6px',
+                      right: '6px',
+                      background: 'var(--color-accent)',
                       color: 'white',
-                      width: '24px',
-                      height: '24px',
+                      width: '28px',
+                      height: '28px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '12px',
-                      backdropFilter: 'blur(4px)'
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      border: '2px solid var(--color-border)',
+                      boxShadow: '2px 2px 0px rgba(0,0,0,0.2)'
                     }}
                   >
                     ×
                   </button>
                 </>
               ) : (
-                <span style={{ fontSize: '2rem', color: 'var(--color-text-muted)', fontWeight: 700 }}>{idx + 1}</span>
+                <span style={{ fontSize: '2.5rem', color: 'var(--color-text-muted)', fontWeight: 900 }}>{idx + 1}</span>
               )}
             </div>
           ))}
@@ -142,17 +153,33 @@ export default function Home() {
       </section>
 
       {selectedSlotIndex !== null && (
-        <section className="animate-fade-in" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem' }}>
+        <section className="animate-fade-in" style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '2px solid var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
             <input
               type="text"
               autoFocus
-              placeholder="漫画のタイトルを検索..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              style={{ flex: 1, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'white' }}
+              placeholder="漫画のタイトルで探す..."
+              value={searchTitle}
+              onChange={(e) => setSearchTitle(e.target.value)}
+              style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
             />
-            <button onClick={() => setSelectedSlotIndex(null)} style={{ padding: '0 1rem', color: 'var(--color-text-secondary)' }}>閉じる</button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="著者名で探す..."
+                value={searchAuthor}
+                onChange={(e) => setSearchAuthor(e.target.value)}
+                style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
+              />
+              <input
+                type="text"
+                placeholder="その他キーワード..."
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
+              />
+            </div>
+            <button onClick={() => setSelectedSlotIndex(null)} style={{ alignSelf: 'flex-end', padding: '0.5rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 700 }}>閉じる</button>
           </div>
 
           <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
@@ -161,11 +188,11 @@ export default function Home() {
             ) : searchResults.length > 0 ? (
               searchResults.map((manga) => (
                 <div key={manga.isbn} onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)' }}>
-                  <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem' }} />
+                  <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
                   <p style={{ fontSize: '0.85rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{manga.title}</p>
                 </div>
               ))
-            ) : keyword && (
+            ) : (keyword || searchTitle || searchAuthor) && (
               <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
             )}
           </div>
@@ -178,7 +205,7 @@ export default function Home() {
           placeholder="あなたの名前（任意）"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
-          style={{ width: '100%', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'white', marginBottom: '1rem' }}
+          style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
         />
         <button
           onClick={handleShare}

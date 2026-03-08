@@ -26,7 +26,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', background: 'var(--color-surface)', padding: '10px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
         {data.slots.map((manga, idx) => (
           <div
             key={idx}
@@ -37,7 +37,8 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               aspectRatio: '1 / 1.4',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '2px solid var(--color-border)'
             }}
           >
             {manga ? (
@@ -45,33 +46,36 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                 <img src={manga.imageUrl} alt={manga.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </a>
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'var(--color-bg)' }} />
+              <div style={{ width: '100%', height: '100%', background: 'var(--color-surface-2)' }} />
             )}
           </div>
         ))}
       </div>
 
-      <div style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
         <button
           onClick={shareOnX}
           style={{
             width: '100%',
-            padding: '1rem',
+            padding: '1.2rem',
             borderRadius: 'var(--radius-md)',
             background: '#000',
             color: 'white',
-            fontWeight: 700,
+            fontWeight: 800,
+            fontSize: '1.1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '10px',
-            border: '1px solid rgba(255,255,255,0.2)'
+            border: '3px solid #000',
+            boxShadow: 'var(--shadow-md)',
+            transition: 'var(--transition-base)'
           }}
         >
           <span>Xでシェアする</span>
         </button>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={copyUrl}
             style={{
@@ -79,9 +83,12 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               padding: '1rem',
               borderRadius: 'var(--radius-md)',
               background: 'var(--color-surface)',
-              color: 'white',
-              fontWeight: 600,
-              border: '1px solid var(--color-border)'
+              color: 'var(--color-text)',
+              fontWeight: 700,
+              fontSize: '1rem',
+              border: '3px solid var(--color-border)',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'var(--transition-base)'
             }}
           >
             URLをコピー
@@ -93,10 +100,13 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               padding: '1rem',
               borderRadius: 'var(--radius-md)',
               background: 'var(--color-surface)',
-              color: 'white',
-              fontWeight: 600,
-              border: '1px solid var(--color-border)',
-              textAlign: 'center'
+              color: 'var(--color-text)',
+              fontWeight: 700,
+              fontSize: '1rem',
+              border: '3px solid var(--color-border)',
+              boxShadow: 'var(--shadow-sm)',
+              textAlign: 'center',
+              transition: 'var(--transition-base)'
             }}
           >
             自分も作る

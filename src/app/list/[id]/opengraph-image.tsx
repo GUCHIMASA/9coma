@@ -11,134 +11,212 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: { id: string } }) {
   const data = await getListById(params.id);
 
+  const topRowSlots = data.slots.slice(0, 4);
+  const bottomRowSlots = data.slots.slice(4, 9);
+
   return new ImageResponse(
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%)',
           width: '100%',
           height: '100%',
+          background: 'linear-gradient(180deg, #FFD600 0%, #FFB300 100%)',
           display: 'flex',
-          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px',
         }}
       >
-        {/* Left Side: Dynamic Text Section */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            width: '450px',
-            marginRight: '60px',
+            gap: '24px',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '24px',
-              fontWeight: 800,
-              color: '#8b5cf6',
-              letterSpacing: '0.1em',
-              marginBottom: '12px',
-              textTransform: 'uppercase',
-            }}
-          >
-            My Top 9 Comics
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '52px',
-              fontWeight: 900,
-              color: '#ffffff',
-              lineHeight: 1.1,
-              marginBottom: '24px',
-            }}
-          >
-            私を構成する9本
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <div style={{ fontSize: '24px', color: '#a0a0b0' }}>by</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#ffffff' }}>
-              {data.authorName}
-            </div>
-          </div>
-          
-          <div
-            style={{
-              marginTop: 'auto',
-              display: 'flex',
-              fontSize: '18px',
-              color: '#4b5563',
-              fontWeight: 500,
-            }}
-          >
-            9coma.com
-          </div>
-        </div>
-
-        {/* Right Side: Large Grid with Glassmorphism */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            padding: '20px',
-            borderRadius: '24px',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
-          }}
-        >
-          {[0, 1, 2].map((rowIdx) => (
+          {/* Top Row */}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+            {/* Text Cell */}
             <div
-              key={rowIdx}
               style={{
+                width: '208px',
+                height: '278px',
                 display: 'flex',
-                flexDirection: 'row',
-                marginBottom: rowIdx < 2 ? '12px' : '0px',
+                flexDirection: 'column',
+                padding: '10px 0',
               }}
             >
-              {[0, 1, 2].map((colIdx) => {
-                const idx = rowIdx * 3 + colIdx;
-                const manga = data.slots[idx];
-                return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>私を</div>
+                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>構成する</div>
+                <div style={{ fontSize: '38px', fontWeight: 900, color: '#1A1A1A', lineHeight: 1.1 }}>9冊</div>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '20px',
+                  color: '#1A1A1A',
+                  fontWeight: 800,
+                  marginTop: '12px',
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                by {data.authorName}
+              </div>
+              <div style={{ marginTop: 'auto', display: 'flex' }}>
+                <div
+                  style={{
+                    background: '#1A1A1A',
+                    color: '#FFFFFF',
+                    padding: '8px 16px',
+                    borderRadius: '99px',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                  }}
+                >
+                  9COMA.COM
+                </div>
+              </div>
+            </div>
+
+            {/* Top 4 Books */}
+            {topRowSlots.map((manga, idx) => (
+              <div
+                key={`top-${idx}`}
+                style={{
+                  width: '208px',
+                  height: '278px',
+                  background: '#FFFFFF',
+                  border: '4px solid #1A1A1A',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                  {manga ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={manga.imageUrl}
+                      alt={manga.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        background: '#E0E0E0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#CCCCCC',
+                        fontSize: '60px',
+                        fontWeight: 900,
+                      }}
+                    >
+                      ?
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    background: '#1A1A1A',
+                    color: '#FFFFFF',
+                    padding: '0 8px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    height: '32px',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}
+                >
                   <div
-                    key={idx}
                     style={{
-                      width: '135px',
-                      height: '190px',
-                      background: '#1e1e2e',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      marginRight: colIdx < 2 ? '12px' : '0px',
+                      whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%',
                     }}
                   >
-                    {manga ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={manga.imageUrl}
-                        alt={manga.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, #1e1e2e, #2a2a3e)' }} />
-                    )}
+                    {manga ? manga.title : ''}
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Row */}
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+            {bottomRowSlots.map((manga, idx) => (
+              <div
+                key={`bottom-${idx}`}
+                style={{
+                  width: '208px',
+                  height: '278px',
+                  background: '#FFFFFF',
+                  border: '4px solid #1A1A1A',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                  {manga ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={manga.imageUrl}
+                      alt={manga.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        background: '#E0E0E0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#CCCCCC',
+                        fontSize: '60px',
+                        fontWeight: 900,
+                      }}
+                    >
+                      ?
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    background: '#1A1A1A',
+                    color: '#FFFFFF',
+                    padding: '0 8px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    height: '32px',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}
+                >
+                  <div
+                    style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%',
+                    }}
+                  >
+                    {manga ? manga.title : ''}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ),
