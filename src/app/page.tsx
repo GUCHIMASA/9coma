@@ -22,7 +22,7 @@ export default function Home() {
     const initData = async () => {
       const params = new URLSearchParams(window.location.search);
       const cloneId = params.get('clone');
-      
+
       if (cloneId) {
         try {
           const res = await fetch(`/api/list?id=${cloneId}`);
@@ -70,7 +70,7 @@ export default function Home() {
       if (k.trim()) params.set('keyword', k.trim());
       if (t.trim()) params.set('title', t.trim());
       if (a.trim()) params.set('author', a.trim());
-      
+
       const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
       setSearchResults(data.items || []);
@@ -140,7 +140,7 @@ export default function Home() {
 
   return (
     <main className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
-      <header style={{ textAlign: 'center', margin: '3rem 0' }}>
+      <header style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
           9coma
         </h1>

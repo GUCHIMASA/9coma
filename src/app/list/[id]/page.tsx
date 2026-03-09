@@ -40,7 +40,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
 
   return (
     <main className="container animate-fade-in" style={{ paddingBottom: '5rem' }}>
-      <header style={{ textAlign: 'center', margin: '3rem 0' }}>
+      <header style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
           {data.authorName}を構成する9つのマンガ
         </h1>
@@ -48,7 +48,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
       </header>
 
       <ListViewClient data={data} />
-      
+
       <footer style={{ marginTop: '5rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
         <p>書影データ提供：楽天ブックス</p>
       </footer>
