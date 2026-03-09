@@ -14,6 +14,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<MangaItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [authorName, setAuthorName] = useState('');
+  const [theme, setTheme] = useState('');
   const [isSharing, setIsSharing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -41,6 +42,7 @@ export default function Home() {
             const parsed = JSON.parse(saved);
             if (parsed.slots) setSlots(parsed.slots);
             if (parsed.authorName) setAuthorName(parsed.authorName);
+            if (parsed.theme) setTheme(parsed.theme);
           } catch (e) {
             console.error('Draft parsing failed:', e);
           }
@@ -54,9 +56,9 @@ export default function Home() {
   // 状態が変わるたびに下書きを保存
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('draft_9coma', JSON.stringify({ slots, authorName }));
+      localStorage.setItem('draft_9coma', JSON.stringify({ slots, authorName, theme }));
     }
-  }, [slots, authorName, isLoaded]);
+  }, [slots, authorName, theme, isLoaded]);
 
   // 検索処理
   const handleSearch = useCallback(async (k: string, t: string, a: string) => {
@@ -112,6 +114,7 @@ export default function Home() {
     if (window.confirm('これまで選んだマンガをすべてクリアして最初から作り直しますか？')) {
       setSlots(Array(9).fill(null));
       setAuthorName('');
+      setTheme('');
       localStorage.removeItem('draft_9coma');
       setSelectedSlotIndex(null);
     }
@@ -124,7 +127,7 @@ export default function Home() {
       const res = await fetch('/api/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slots, authorName: authorName || '私' }),
+        body: JSON.stringify({ slots, authorName: authorName || '私', theme: theme || undefined }),
       });
       const data = await res.json();
       if (data.id) {
@@ -150,6 +153,41 @@ export default function Home() {
       </header>
 
       <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label htmlFor="themeSelect" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>テーマ（タグ）</label>
+          <select
+            id="themeSelect"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '0.6rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-surface-2)',
+              border: '2px solid var(--color-border)',
+              color: 'var(--color-text)',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              appearance: 'none',
+              outline: 'none',
+              transition: 'var(--transition-fast)'
+            }}
+          >
+            <option value="">設定しない（デフォルト）</option>
+            <option value="人生のバイブル編">人生のバイブル編</option>
+            <option value="涙腺崩壊・感涙編">涙腺崩壊・感涙編</option>
+            <option value="腹筋崩壊・爆笑編">腹筋崩壊・爆笑編</option>
+            <option value="メンタル浄化編">メンタル浄化編</option>
+            <option value="あの頃（青春）編">あの頃（青春）編</option>
+            <option value="大人で刺さった編">大人で刺さった編</option>
+            <option value="今これ激アツ！編">今これ激アツ！編</option>
+            <option value="原点にして頂点編">原点にして頂点編</option>
+            <option value="布教用ガチ推し編">布教用ガチ推し編</option>
+            <option value="画力に溺れる編">画力に溺れる編</option>
+          </select>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
           {slots.map((manga, idx) => (
             <div

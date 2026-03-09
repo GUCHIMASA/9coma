@@ -8,6 +8,7 @@ interface ListViewClientProps {
   data: {
     slots: (MangaItem | null)[];
     authorName: string;
+    theme?: string;
   };
 }
 
@@ -23,7 +24,8 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   const shareOnX = () => {
     if (typeof window === 'undefined') return;
-    const text = `${data.authorName}を構成する9つのマンガ\n#9coma #9koma #My9manga\n`;
+    const themeText = data.theme ? `：${data.theme}` : '';
+    const text = `${data.authorName}を構成する9つのマンガ${themeText}\n#9coma #9koma #My9manga\n`;
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };

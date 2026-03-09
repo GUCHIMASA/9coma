@@ -12,6 +12,7 @@ export interface MangaItem {
 export interface ComicList {
   id: string;
   authorName: string;
+  theme?: string;
   slots: (MangaItem | null)[];
   createdAt: number;
 }

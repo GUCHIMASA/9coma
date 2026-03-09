@@ -1,26 +1,30 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { getListById } from '@/lib/list';
+import { THEME_GRADIENTS } from '@/lib/themes';
 import ListViewClient from './ListViewClient';
 
 export async function generateMetadata(
   { params }: { params: { id: string } }
 ): Promise<Metadata> {
   const data = await getListById(params.id);
+  const themeText = data && data.theme ? `：${data.theme}` : '';
+  const metaTitle = data ? `${data.authorName}を構成する9つのマンガ${themeText} | 9coma` : '9coma';
+  const metaDesc = data ? `${data.authorName}が選んだ、自分を構成する9つのマンガです。` : '9coma';
 
   return {
-    title: `${data.authorName}を構成する9つのマンガ | 9coma`,
-    description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
+    title: metaTitle,
+    description: metaDesc,
     openGraph: {
-      title: `${data.authorName}を構成する9つのマンガ | 9coma`,
-      description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
+      title: metaTitle,
+      description: metaDesc,
       type: 'article',
       siteName: '9coma',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${data.authorName}を構成する9つのマンガ | 9coma`,
-      description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
+      title: metaTitle,
+      description: metaDesc,
     },
   };
 }
@@ -44,7 +48,13 @@ export default async function ListView({ params }: { params: { id: string } }) {
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
           {data.authorName}を構成する9つのマンガ
         </h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>9coma.com</p>
+        {data.theme ? (
+          <div style={{ display: 'inline-block', padding: '0.4rem 1.2rem', background: THEME_GRADIENTS[data.theme] || 'var(--color-surface)', color: '#fff', borderRadius: '99px', fontSize: '0.9rem', fontWeight: 700, marginTop: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
+            #{data.theme}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--color-text-secondary)' }}>9coma.com</p>
+        )}
       </header>
 
       <ListViewClient data={data} />

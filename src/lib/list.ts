@@ -11,7 +11,7 @@ export async function getListById(id: string) {
       const { doc, getDoc } = await import('firebase/firestore');
       const snap = await getDoc(doc(db, 'lists', id));
       if (snap.exists()) {
-        return { ...snap.data(), id } as { slots: (MangaItem | null)[]; authorName: string; createdAt: number; id: string };
+        return { ...snap.data(), id } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
       }
     } catch (e) {
       console.error('Firestore error in getListById:', e);
@@ -22,7 +22,8 @@ export async function getListById(id: string) {
   return {
     id,
     authorName: '名無し',
+    theme: undefined,
     slots: Array(9).fill(null),
     createdAt: Date.now()
-  };
+  } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
 }

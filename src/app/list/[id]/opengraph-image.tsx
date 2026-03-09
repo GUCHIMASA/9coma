@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
+import { THEME_GRADIENTS } from '@/lib/themes';
 
 export const alt = '9coma | 私を構成する9つのマンガ';
 export const size = {
@@ -37,7 +38,7 @@ export default async function Image({ params }: { params: { id: string } }) {
             style={{
               width: '100%',
               height: '52px',
-              background: '#1A1A1A',
+              background: data.theme && THEME_GRADIENTS[data.theme] ? THEME_GRADIENTS[data.theme] : '#1A1A1A',
               borderRadius: '99px',
               color: '#FFFFFF',
               display: 'flex',
@@ -48,7 +49,7 @@ export default async function Image({ params }: { params: { id: string } }) {
               letterSpacing: '0.2em',
             }}
           >
-            9COMA.COM
+            {data.theme ? `＃${data.theme}` : '9COMA.COM'}
           </div>
 
           {/* Large Box (Slot 5) */}
