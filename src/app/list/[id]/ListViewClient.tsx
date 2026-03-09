@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useParams } from 'next/navigation';
 import type { MangaItem } from '@/types';
 
 interface ListViewClientProps {
@@ -11,6 +12,9 @@ interface ListViewClientProps {
 }
 
 export default function ListViewClient({ data }: ListViewClientProps) {
+  const params = useParams();
+  const id = params.id as string;
+
   const copyUrl = () => {
     if (typeof window === 'undefined') return;
     navigator.clipboard.writeText(window.location.href);
@@ -19,7 +23,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   const shareOnX = () => {
     if (typeof window === 'undefined') return;
-    const text = `${data.authorName}さんを構成する9つのマンガ\n#9coma #9koma #私を構成する9つのマンガ\n`;
+    const text = `${data.authorName}を構成する9つのマンガ\n#9coma #9koma #My9manga\n`;
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };
@@ -106,12 +110,36 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               border: '3px solid var(--color-border)',
               boxShadow: 'var(--shadow-sm)',
               textAlign: 'center',
-              transition: 'var(--transition-base)'
+              transition: 'var(--transition-base)',
+              textDecoration: 'none',
             }}
           >
-            自分も作る
+            戻る
           </a>
         </div>
+
+        <a
+          href={`/?clone=${id}`}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--color-surface)',
+            color: 'var(--color-primary)',
+            fontWeight: 800,
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            border: '2px solid var(--color-primary)',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'var(--transition-base)',
+            textDecoration: 'none',
+          }}
+        >
+          <span>✨ コピーして編集</span>
+        </a>
       </div>
     </div>
   );

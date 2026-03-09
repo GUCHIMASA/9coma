@@ -9,18 +9,18 @@ export async function generateMetadata(
   const data = await getListById(params.id);
 
   return {
-    title: `${data.authorName}さんを構成する9つのマンガ | 9coma`,
-    description: `${data.authorName}さんが選んだ、自分を構成する9つのマンガです。`,
+    title: `${data.authorName}を構成する9つのマンガ | 9coma`,
+    description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
     openGraph: {
-      title: `${data.authorName}さんを構成する9つのマンガ | 9coma`,
-      description: `${data.authorName}さんが選んだ、自分を構成する9つのマンガです。`,
+      title: `${data.authorName}を構成する9つのマンガ | 9coma`,
+      description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
       type: 'article',
       siteName: '9coma',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${data.authorName}さんを構成する9つのマンガ | 9coma`,
-      description: `${data.authorName}さんが選んだ、自分を構成する9つのマンガです。`,
+      title: `${data.authorName}を構成する9つのマンガ | 9coma`,
+      description: `${data.authorName}が選んだ、自分を構成する9つのマンガです。`,
     },
   };
 }
@@ -42,7 +42,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
     <main className="container animate-fade-in" style={{ paddingBottom: '5rem' }}>
       <header style={{ textAlign: 'center', margin: '3rem 0' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          {data.authorName}さんを構成する9つのマンガ
+          {data.authorName}を構成する9つのマンガ
         </h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>9coma.com</p>
       </header>

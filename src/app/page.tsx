@@ -15,6 +15,48 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [authorName, setAuthorName] = useState('');
   const [isSharing, setIsSharing] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 初回マウント時のクローン＆ドラフト復元処理
+  useEffect(() => {
+    const initData = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const cloneId = params.get('clone');
+      
+      if (cloneId) {
+        try {
+          const res = await fetch(`/api/list?id=${cloneId}`);
+          const data = await res.json();
+          if (data && data.slots) {
+            setSlots(data.slots);
+          }
+        } catch (e) {
+          console.error('Clone fetch failed:', e);
+        }
+        window.history.replaceState({}, '', '/');
+      } else {
+        const saved = localStorage.getItem('draft_9coma');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.slots) setSlots(parsed.slots);
+            if (parsed.authorName) setAuthorName(parsed.authorName);
+          } catch (e) {
+            console.error('Draft parsing failed:', e);
+          }
+        }
+      }
+      setIsLoaded(true);
+    };
+    initData();
+  }, []);
+
+  // 状態が変わるたびに下書きを保存
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('draft_9coma', JSON.stringify({ slots, authorName }));
+    }
+  }, [slots, authorName, isLoaded]);
 
   // 検索処理
   const handleSearch = useCallback(async (k: string, t: string, a: string) => {
@@ -66,6 +108,15 @@ export default function Home() {
     setSlots(newSlots);
   };
 
+  const handleClear = () => {
+    if (window.confirm('これまで選んだマンガをすべてクリアして最初から作り直しますか？')) {
+      setSlots(Array(9).fill(null));
+      setAuthorName('');
+      localStorage.removeItem('draft_9coma');
+      setSelectedSlotIndex(null);
+    }
+  };
+
   const handleShare = async () => {
     if (isSharing) return;
     setIsSharing(true);
@@ -73,7 +124,7 @@ export default function Home() {
       const res = await fetch('/api/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slots, authorName: authorName || '名無し' }),
+        body: JSON.stringify({ slots, authorName: authorName || '私' }),
       });
       const data = await res.json();
       if (data.id) {
@@ -224,6 +275,23 @@ export default function Home() {
           }}
         >
           {isSharing ? '保存中...' : 'ページを作成してシェア'}
+        </button>
+        <button
+          onClick={handleClear}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            marginTop: '1rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'transparent',
+            color: 'var(--color-text-secondary)',
+            fontWeight: 700,
+            fontSize: '1rem',
+            border: '2px solid var(--color-border)',
+            transition: 'var(--transition-fast)'
+          }}
+        >
+          最初から作り直す（クリア）
         </button>
       </section>
     </main>
