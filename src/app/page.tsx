@@ -13,6 +13,8 @@ export default function Home() {
   const [searchAuthor, setSearchAuthor] = useState('');
   const [searchResults, setSearchResults] = useState<MangaItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [authorName, setAuthorName] = useState('');
   const [theme, setTheme] = useState('');
   const [isSharing, setIsSharing] = useState(false);
@@ -110,6 +112,44 @@ export default function Home() {
     setSlots(newSlots);
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    // FirefoxではDataTransferに何かセットしないとドラッグが発火しない場合があるためのワークアラウンド
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newSlots = [...slots];
+    const dragItem = newSlots[draggedIndex];
+    newSlots[draggedIndex] = newSlots[dropIndex];
+    newSlots[dropIndex] = dragItem;
+    
+    setSlots(newSlots);
+    setDraggedIndex(null);
+  };
+
   const handleClear = () => {
     if (window.confirm('これまで選んだマンガをすべてクリアして最初から作り直しますか？')) {
       setSlots(Array(9).fill(null));
@@ -192,19 +232,28 @@ export default function Home() {
           {slots.map((manga, idx) => (
             <div
               key={idx}
+              draggable={manga !== null}
+              onDragStart={(e) => manga && handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDragLeave={handleDragLeave}
+              onDragEnd={handleDragEnd}
+              onDrop={(e) => handleDrop(e, idx)}
               onClick={() => setSelectedSlotIndex(idx)}
               style={{
                 position: 'relative',
                 background: idx === 4 ? '#FFA8B8' : 'var(--color-surface-2)',
                 borderRadius: 'var(--radius-sm)',
                 overflow: 'hidden',
-                cursor: 'pointer',
-                border: selectedSlotIndex === idx ? '3px solid var(--color-primary)' : '2px solid var(--color-border)',
+                cursor: manga ? 'grab' : 'pointer',
+                border: dragOverIndex === idx ? '3px dashed var(--color-primary)' 
+                      : selectedSlotIndex === idx ? '3px solid var(--color-primary)' 
+                      : '2px solid var(--color-border)',
                 transition: 'var(--transition-fast)',
                 aspectRatio: '1 / 1.4',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                opacity: draggedIndex === idx ? 0.5 : 1,
               }}
             >
               {manga ? (
