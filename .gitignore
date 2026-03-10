@@ -39,3 +39,9 @@ firebase-debug*.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Design source files
+画像PSD・AI/
+*.psd
+*.ai
+build.log
