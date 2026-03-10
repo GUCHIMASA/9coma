@@ -229,6 +229,34 @@ export default function Home() {
           </select>
         </div>
 
+        {/* 進捗バー */}
+        {(() => {
+          const filledCount = slots.filter(s => s !== null).length;
+          const pct = (filledCount / 9) * 100;
+          const isDone = filledCount === 9;
+          return (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: isDone ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
+                  {isDone ? '🎉 完成！シェアしよう！' : `あと ${9 - filledCount} 冊で完成！`}
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text)' }}>
+                  {filledCount} / 9
+                </span>
+              </div>
+              <div style={{ height: '10px', background: 'var(--color-border)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${pct}%`,
+                  background: isDone ? 'var(--gradient-primary)' : 'linear-gradient(90deg, #FFD600, #FF8C00)',
+                  borderRadius: '99px',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
           {slots.map((manga, idx) => (
             <div
