@@ -131,7 +131,7 @@ export default function Home() {
     setDragOverIndex(null);
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
