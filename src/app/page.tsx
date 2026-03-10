@@ -20,6 +20,8 @@ export default function Home() {
   const [theme, setTheme] = useState('');
   const [isSharing, setIsSharing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [themeRecommendations, setThemeRecommendations] = useState<MangaItem[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -93,6 +95,33 @@ export default function Home() {
     }, 500);
     return () => clearTimeout(timer);
   }, [keyword, searchTitle, searchAuthor, handleSearch]);
+
+  // モーダルが開いたときにテーマ別おすすめを取得
+  useEffect(() => {
+    if (selectedSlotIndex === null) return;
+    if (!theme) {
+      setThemeRecommendations([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchRecommendations = async () => {
+      setIsLoadingRecommendations(true);
+      try {
+        const res = await fetch(`/api/popular?theme=${encodeURIComponent(theme)}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setThemeRecommendations(data.items || []);
+        }
+      } catch (e) {
+        console.error('Recommendations fetch failed:', e);
+        if (!cancelled) setThemeRecommendations([]);
+      } finally {
+        if (!cancelled) setIsLoadingRecommendations(false);
+      }
+    };
+    fetchRecommendations();
+    return () => { cancelled = true; };
+  }, [selectedSlotIndex, theme]);
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;
@@ -387,7 +416,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div style={{ overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', flexGrow: 1 }}>
+            <div style={{ overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', flexGrow: 1, alignContent: 'start' }}>
               {isSearching ? (
                 Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
               ) : searchResults.length > 0 ? (
@@ -397,6 +426,20 @@ export default function Home() {
                     <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
                   </div>
                 ))
+              ) : !(keyword || searchTitle || searchAuthor) && isLoadingRecommendations ? (
+                Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
+              ) : !(keyword || searchTitle || searchAuthor) && themeRecommendations.length > 0 ? (
+                <>
+                  <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0' }}>
+                    📚 {theme} でよく選ばれています
+                  </p>
+                  {themeRecommendations.map((manga) => (
+                    <div key={manga.isbn} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
+                      <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
+                      <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
+                    </div>
+                  ))}
+                </>
               ) : (keyword || searchTitle || searchAuthor) && (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
               )}
