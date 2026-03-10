@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MangaItem } from '@/types';
+import { THEME_GRADIENTS } from '@/lib/themes';
 
 export default function Home() {
   const router = useRouter();
@@ -206,7 +207,7 @@ export default function Home() {
               background: 'var(--color-surface-2)',
               border: '2px solid var(--color-border)',
               color: 'var(--color-text)',
-              fontSize: '0.95rem',
+              fontSize: '16px', // iOSの自動ズーム防止のために16pxを指定
               fontWeight: 600,
               cursor: 'pointer',
               appearance: 'none',
@@ -291,59 +292,99 @@ export default function Home() {
       </section>
 
       {selectedSlotIndex !== null && (
-        <section className="animate-fade-in" style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', border: '2px solid var(--color-border)', boxShadow: 'var(--shadow-md)' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
-            <input
-              type="text"
-              autoFocus
-              placeholder="漫画のタイトルで探す..."
-              value={searchTitle}
-              onChange={(e) => setSearchTitle(e.target.value)}
-              style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
-            />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <input
-                type="text"
-                placeholder="著者名で探す..."
-                value={searchAuthor}
-                onChange={(e) => setSearchAuthor(e.target.value)}
-                style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
-              />
-              <input
-                type="text"
-                placeholder="その他キーワード..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600 }}
-              />
-            </div>
-            <button onClick={() => setSelectedSlotIndex(null)} style={{ alignSelf: 'flex-end', padding: '0.5rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 700 }}>閉じる</button>
-          </div>
-
-          <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-            {isSearching ? (
-              Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
-            ) : searchResults.length > 0 ? (
-              searchResults.map((manga) => (
-                <div key={manga.isbn} onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)' }}>
-                  <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
-                  <p style={{ fontSize: '0.85rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{manga.title}</p>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.5)', // 白っぽく変更
+          backdropFilter: 'blur(5px)', // ぼかしを少し強める
+          zIndex: 1000,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '1rem'
+        }}>
+          <section className="search-section animate-fade-in" style={{ 
+            width: '100%', 
+            maxWidth: '600px', 
+            height: '80vh', // 高さを固定して結果表示でガタガタ動くのを防止
+            maxHeight: '800px', 
+            background: 'var(--color-surface)', 
+            borderRadius: 'var(--radius-lg)', 
+            border: '2px solid var(--color-border)', 
+            boxShadow: 'var(--shadow-xl)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <div style={{ padding: '1.5rem 1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '12px', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-text)', letterSpacing: '0.05em', margin: 0 }}>
+                    #{selectedSlotIndex + 1}
+                  </h2>
+                  {theme && (
+                    <div style={{ padding: '0.2rem 0.8rem', background: THEME_GRADIENTS[theme] || 'var(--color-surface-2)', color: '#fff', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700, boxShadow: 'var(--shadow-sm)' }}>
+                      #{theme}
+                    </div>
+                  )}
                 </div>
-              ))
-            ) : (keyword || searchTitle || searchAuthor) && (
-              <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
-            )}
-          </div>
-        </section>
+                <button onClick={() => setSelectedSlotIndex(null)} style={{ background: 'var(--color-surface-2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-text-secondary)', transition: 'var(--transition-fast)' }}>✕</button>
+              </div>
+              <input
+                type="text"
+                autoFocus
+                placeholder="漫画のタイトルで探す..."
+                value={searchTitle}
+                onChange={(e) => setSearchTitle(e.target.value)}
+                style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+              />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  placeholder="著者名で探す..."
+                  value={searchAuthor}
+                  onChange={(e) => setSearchAuthor(e.target.value)}
+                  style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="その他キーワード..."
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', flexGrow: 1 }}>
+              {isSearching ? (
+                Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
+              ) : searchResults.length > 0 ? (
+                searchResults.map((manga) => (
+                  <div key={manga.isbn} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
+                    <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
+                  </div>
+                ))
+              ) : (keyword || searchTitle || searchAuthor) && (
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
+              )}
+            </div>
+          </section>
+        </div>
       )}
 
-      <section style={{ marginTop: '3rem', maxWidth: '400px', margin: '3rem auto 0' }}>
+      {/* 下部フォーム・ボタングループ */}
+      <section style={{ maxWidth: '400px', margin: '3rem auto 0', padding: '0 1rem' }}>
         <input
           type="text"
           placeholder="あなたの名前（任意）"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
-          style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
+          style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
         />
         <button
           onClick={handleShare}
