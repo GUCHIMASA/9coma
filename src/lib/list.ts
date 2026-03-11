@@ -12,6 +12,7 @@ export async function getListById(id: string) {
       const snap = await getDoc(doc(db, 'lists', id));
       if (snap.exists()) {
         const rawData = snap.data();
+        // 開発時の調査用ログ
         console.log(`[Diagnostic] Raw Firestore data for list ${id}:`, JSON.stringify(rawData));
         
         const data = rawData as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; createdAt: number };
@@ -22,14 +23,14 @@ export async function getListById(id: string) {
         const hydratedSlots = await Promise.all(
           data.slots.map(async (slot, idx) => {
             const isIsbnString = typeof slot === 'string' && slot.length > 0;
-            // オブジェクトかつ画像URLが欠落しており、ISBNがある場合を判定
+            // オブジェクトかつ画像URLが実質的にない（欠落、null、または空文字）、かつISBNがある場合を判定
             const isObject = slot !== null && typeof slot === 'object';
             const slotAsObj = slot as unknown as Record<string, unknown>;
-            const isMissingImageUrl = isObject && !('imageUrl' in slotAsObj) && ('isbn' in slotAsObj);
+            const isMissingImageUrl = isObject && (!slotAsObj.imageUrl || slotAsObj.imageUrl === '') && ('isbn' in slotAsObj);
             
             if (isIsbnString || isMissingImageUrl) {
               const isbn = isIsbnString ? (slot as string) : (slotAsObj.isbn as string);
-              console.log(`[Hydration] Slot ${idx}: Needs hydration. ISBN: ${isbn}. Trigger: ${isIsbnString ? 'String' : 'MissingURL'}`);
+              console.log(`[Hydration] Slot ${idx}: Needs hydration. ISBN: ${isbn}. Trigger: ${isIsbnString ? 'String' : 'FalsyURL'}`);
               
               // ISBNを使ってキャッシュまたは楽天から情報を復元
               try {
