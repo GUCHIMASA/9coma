@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MangaItem } from '@/types';
 import { THEME_GRADIENTS } from '@/lib/themes';
-import AdUnit from '@/components/AdUnit';
+import PromotionUnit from '@/components/PromotionUnit';
 
 export default function Home() {
   const router = useRouter();
@@ -446,7 +446,7 @@ export default function Home() {
               )}
               {/* 検索モーダル内広告 */}
               <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
-                <AdUnit slotId="modal-bottom" format="fluid" />
+                <PromotionUnit slotId="modal-bottom" format="fluid" />
               </div>
             </div>
           </section>
@@ -500,7 +500,7 @@ export default function Home() {
       </section>
 
       {/* トップページ最下部広告 */}
-      <AdUnit slotId="home-bottom" maxHeight="280px" />
+      <PromotionUnit slotId="home-bottom" maxHeight="280px" />
     </main>
   );
 }

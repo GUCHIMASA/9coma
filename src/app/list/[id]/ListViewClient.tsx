@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams } from 'next/navigation';
 import type { MangaItem } from '@/types';
-import AdUnit from '@/components/AdUnit';
+import PromotionUnit from '@/components/PromotionUnit';
 
 interface ListViewClientProps {
   data: {
@@ -181,7 +181,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       </div>
 
       {/* 詳細ページ最下部広告 */}
-      <AdUnit slotId="list-bottom" maxHeight="280px" />
+      <PromotionUnit slotId="list-bottom" maxHeight="280px" />
     </div>
   );
 }

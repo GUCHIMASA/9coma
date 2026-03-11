@@ -2,7 +2,13 @@
 
 import React, { useEffect } from 'react';
 
-interface AdUnitProps {
+declare global {
+  interface Window {
+    adsbygoogle?: object[];
+  }
+}
+
+interface PromotionUnitProps {
   slotId: string;
   format?: 'auto' | 'fluid' | 'rectangle';
   responsive?: 'true' | 'false';
@@ -11,7 +17,7 @@ interface AdUnitProps {
   maxHeight?: string;
 }
 
-const AdUnit: React.FC<AdUnitProps> = ({ 
+const PromotionUnit: React.FC<PromotionUnitProps> = ({ 
   slotId, 
   format = 'auto', 
   responsive = 'true', 
@@ -24,7 +30,7 @@ const AdUnit: React.FC<AdUnitProps> = ({
     if (window.location.hostname === 'localhost') return;
 
     try {
-      const adsbygoogle = (window as any).adsbygoogle || [];
+      const adsbygoogle = window.adsbygoogle || [];
       adsbygoogle.push({});
     } catch (e) {
       console.error('AdSense integration error:', e);
@@ -37,7 +43,7 @@ const AdUnit: React.FC<AdUnitProps> = ({
 
   return (
     <div 
-      className="adsense-container"
+      className="promotion-container"
       style={{ 
         textAlign: 'center', 
         margin: '2rem 0', 
@@ -61,4 +67,4 @@ const AdUnit: React.FC<AdUnitProps> = ({
   );
 };
 
-export default AdUnit;
+export default PromotionUnit;
