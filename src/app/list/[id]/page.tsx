@@ -44,7 +44,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
 
   return (
     <main className="container animate-fade-in" style={{ paddingBottom: '5rem' }}>
-      <header style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
+      <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
           {data.authorName}を構成する9つのマンガ
         </h1>

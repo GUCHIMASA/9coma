@@ -40,19 +40,30 @@ export default function RootLayout({
             </Script>
           </>
         )}
+        {process.env.NEXT_PUBLIC_ADSENSE_PUB_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${process.env.NEXT_PUBLIC_ADSENSE_PUB_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
       </head>
       <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div style={{ flex: 1 }}>
           {children}
         </div>
-        <footer style={{
-          textAlign: 'center',
-          padding: '2rem 1rem',
-          color: 'var(--color-text-muted)',
-          fontSize: '0.85rem',
-          borderTop: '1px solid var(--color-border)',
-          background: 'var(--color-background)'
-        }}>
+        <footer 
+          className="google-anno-skip"
+          style={{
+            textAlign: 'center',
+            padding: '2rem 1rem',
+            color: 'var(--color-text-muted)',
+            fontSize: '0.85rem',
+            borderTop: '1px solid var(--color-border)',
+            background: 'var(--color-background)'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
             <a href="/privacy" style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
               プライバシーポリシー

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MangaItem } from '@/types';
 import { THEME_GRADIENTS } from '@/lib/themes';
+import AdUnit from '@/components/AdUnit';
 
 export default function Home() {
   const router = useRouter();
@@ -213,7 +214,7 @@ export default function Home() {
 
   return (
     <main className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
-      <header style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
+      <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
           9coma
         </h1>
@@ -443,6 +444,10 @@ export default function Home() {
               ) : (keyword || searchTitle || searchAuthor) && (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
               )}
+              {/* 検索モーダル内広告 */}
+              <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
+                <AdUnit slotId="modal-bottom" format="fluid" />
+              </div>
             </div>
           </section>
         </div>
@@ -493,6 +498,9 @@ export default function Home() {
           最初から作り直す（クリア）
         </button>
       </section>
+
+      {/* トップページ最下部広告 */}
+      <AdUnit slotId="home-bottom" maxHeight="280px" />
     </main>
   );
 }
