@@ -23,6 +23,7 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [themeRecommendations, setThemeRecommendations] = useState<MangaItem[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [deviceId, setDeviceId] = useState<string>('');
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -54,6 +55,15 @@ export default function Home() {
           }
         }
       }
+
+      // deviceId の取得または生成
+      let dId = localStorage.getItem('9coma_device_id');
+      if (!dId) {
+        dId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem('9coma_device_id', dId);
+      }
+      setDeviceId(dId);
+
       setIsLoaded(true);
     };
     initData();
@@ -193,15 +203,42 @@ export default function Home() {
 
   const handleShare = async () => {
     if (isSharing) return;
+
+    // 重複投稿チェック
+    const currentPost = {
+      slots: slots.map(s => s ? s.isbn : null),
+      authorName: authorName || '私',
+      theme: theme || undefined
+    };
+
+    const lastPostStr = localStorage.getItem('last_post_9coma');
+    if (lastPostStr) {
+      try {
+        const lastPost = JSON.parse(lastPostStr);
+        if (JSON.stringify(lastPost.content) === JSON.stringify(currentPost)) {
+          // 全く同じ内容ならAPIを叩かずに遷移
+          router.push(`/list/${lastPost.id}`);
+          return;
+        }
+      } catch (e) {
+        console.error('Last post parsing failed:', e);
+      }
+    }
+
     setIsSharing(true);
     try {
       const res = await fetch('/api/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slots, authorName: authorName || '私', theme: theme || undefined }),
+        body: JSON.stringify({ ...currentPost, deviceId }),
       });
       const data = await res.json();
       if (data.id) {
+        // 投稿成功時に内容を保存
+        localStorage.setItem('last_post_9coma', JSON.stringify({
+          id: data.id,
+          content: currentPost
+        }));
         router.push(`/list/${data.id}`);
       }
     } catch (error) {

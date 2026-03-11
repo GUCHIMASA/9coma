@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { MangaItem } from '@/types';
 
 // モックストレージ（Firebase未設定時用）
-const mockStore: Record<string, { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number }> = {};
+const mockStore: Record<string, { slots: (MangaItem | null)[]; authorName: string; theme?: string; userId?: string; createdAt: number }> = {};
 
 function generateId(): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -13,7 +13,12 @@ function generateId(): string {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { slots, authorName, theme } = body as { slots: (MangaItem | null)[]; authorName: string; theme?: string };
+        const { slots, authorName, theme, deviceId } = body as { 
+            slots: (MangaItem | null)[]; 
+            authorName: string; 
+            theme?: string;
+            deviceId?: string;
+        };
 
         if (!slots || !Array.isArray(slots) || slots.length !== 9) {
             return NextResponse.json({ error: '9枠のデータが必要です' }, { status: 400 });
@@ -28,7 +33,13 @@ export async function POST(request: Request) {
             try {
                 const { db } = await import('@/lib/firebase');
                 const { doc, setDoc } = await import('firebase/firestore');
-                await setDoc(doc(db, 'lists', id), { slots, authorName, ...(theme ? { theme } : {}), createdAt });
+                await setDoc(doc(db, 'lists', id), { 
+                    slots, 
+                    authorName, 
+                    ...(theme ? { theme } : {}), 
+                    ...(deviceId ? { userId: deviceId } : {}),
+                    createdAt 
+                });
                 return NextResponse.json({ id, isMock: false });
             } catch (e) {
                 console.error('Firestore error:', e);
@@ -36,7 +47,13 @@ export async function POST(request: Request) {
         }
 
         // モックストレージに保存
-        mockStore[id] = { slots, authorName, ...(theme ? { theme } : {}), createdAt };
+        mockStore[id] = { 
+            slots, 
+            authorName, 
+            ...(theme ? { theme } : {}), 
+            ...(deviceId ? { userId: deviceId } : {}),
+            createdAt 
+        };
         return NextResponse.json({ id, isMock: true });
     } catch {
         return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 });
