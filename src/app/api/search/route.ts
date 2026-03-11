@@ -61,16 +61,18 @@ export async function GET(request: Request) {
 
     if (appId && appId !== 'your_rakuten_app_id_here') {
         try {
-            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
-            url.searchParams.set('applicationId', appId);
-            url.searchParams.set('affiliateId', affiliateId || '');
-            
-            // BooksTotal APIは `title` や `author` を個別のパラメータとしてサポートしていないため、
-            // 全ての要素を半角スペースで結合して強力な `keyword` 検索として処理します。
             const combinedKeywords = [title, author, keyword]
                 .filter(term => term.trim() !== '')
                 .join(' ');
 
+            // 1. キャッシュの確認 (ISBNが完全に一致する場合などは特に有効だが、
+            // 今回はBooksTotalでのキーワード検索がメインのため、
+            // 検索結果自体をキャッシュするのではなく、取得した個々のアイテムを後で利用するための保存を優先する)
+
+            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
+            url.searchParams.set('applicationId', appId);
+            url.searchParams.set('affiliateId', affiliateId || '');
+            
             if (combinedKeywords) {
                 url.searchParams.set('keyword', combinedKeywords);
             }
@@ -108,6 +110,23 @@ export async function GET(request: Request) {
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
                 };
             });
+
+            // 取得したアイテムを Firestore にキャッシュ保存 (バックグラウンド的に実行)
+            const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+            if (projectId && projectId !== 'your_project_id' && items.length > 0) {
+                try {
+                    const { db } = await import('@/lib/firebase');
+                    const { doc, setDoc } = await import('firebase/firestore');
+                    // 大量のリクエストを避けるため、上位数件のみにするか非同期で一気に投げる
+                    // ここではループで回すが、実際には Promise.all などで効率化
+                    items.slice(0, 10).forEach((m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
+                        setDoc(doc(db, 'manga_cache', m.isbn), { ...m, updatedAt: Date.now() }, { merge: true });
+                    });
+                } catch (e) {
+                    console.error('Cache set error:', e);
+                }
+            }
+
             return NextResponse.json({ items, isMock: false });
         } catch (error: unknown) {
             console.error('楽天API error:', error);

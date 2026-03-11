@@ -24,6 +24,7 @@ export default function Home() {
   const [themeRecommendations, setThemeRecommendations] = useState<MangaItem[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [deviceId, setDeviceId] = useState<string>('');
+  const [postHistory, setPostHistory] = useState<{id: string, theme?: string, date: number}[]>([]);
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -63,6 +64,16 @@ export default function Home() {
         localStorage.setItem('9coma_device_id', dId);
       }
       setDeviceId(dId);
+
+      // 投稿履歴の取得
+      const history = localStorage.getItem('post_history_9coma');
+      if (history) {
+        try {
+          setPostHistory(JSON.parse(history));
+        } catch (e) {
+          console.error('History parsing failed:', e);
+        }
+      }
 
       setIsLoaded(true);
     };
@@ -204,8 +215,8 @@ export default function Home() {
   const handleShare = async () => {
     if (isSharing) return;
 
-    // 重複投稿チェック
-    const currentPost = {
+    // 重複投稿チェック用のデータ構造（ISBNのみで比較）
+    const currentPostContent = {
       slots: slots.map(s => s ? s.isbn : null),
       authorName: authorName || '私',
       theme: theme || undefined
@@ -215,7 +226,7 @@ export default function Home() {
     if (lastPostStr) {
       try {
         const lastPost = JSON.parse(lastPostStr);
-        if (JSON.stringify(lastPost.content) === JSON.stringify(currentPost)) {
+        if (JSON.stringify(lastPost.content) === JSON.stringify(currentPostContent)) {
           // 全く同じ内容ならAPIを叩かずに遷移
           router.push(`/list/${lastPost.id}`);
           return;
@@ -230,15 +241,27 @@ export default function Home() {
       const res = await fetch('/api/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...currentPost, deviceId }),
+        body: JSON.stringify({ 
+          slots, // ここではメタデータを含むオブジェクト配列を送信
+          authorName: authorName || '私', 
+          theme: theme || undefined,
+          deviceId 
+        }),
       });
       const data = await res.json();
       if (data.id) {
         // 投稿成功時に内容を保存
         localStorage.setItem('last_post_9coma', JSON.stringify({
           id: data.id,
-          content: currentPost
+          content: currentPostContent
         }));
+
+        // 履歴に追加 (最大5件)
+        const newHistoryItem = { id: data.id, theme: theme || undefined, date: Date.now() };
+        const updatedHistory = [newHistoryItem, ...postHistory.filter(h => h.id !== data.id)].slice(0, 5);
+        setPostHistory(updatedHistory);
+        localStorage.setItem('post_history_9coma', JSON.stringify(updatedHistory));
+
         router.push(`/list/${data.id}`);
       }
     } catch (error) {
@@ -384,6 +407,38 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* 最近の投稿履歴表示 */}
+        {postHistory.length > 0 && (
+          <div style={{ marginTop: '2rem', padding: '1.2rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', border: '2px dashed var(--color-border)', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text-secondary)', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <span>🕒 最近あなたが作ったリスト</span>
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+              {postHistory.map((item) => (
+                <a
+                  key={item.id}
+                  href={`/list/${item.id}`}
+                  style={{
+                    padding: '0.5rem 0.8rem',
+                    background: item.theme ? (THEME_GRADIENTS[item.theme] || 'var(--color-surface-2)') : 'var(--color-surface-2)',
+                    color: item.theme ? '#fff' : 'var(--color-text)',
+                    borderRadius: '99px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+                >
+                  {item.theme ? `#${item.theme}` : '（テーマなし）'}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {selectedSlotIndex !== null && (
