@@ -7,26 +7,51 @@ import ListViewClient from './ListViewClient';
 export async function generateMetadata(
   { params }: { params: { id: string } }
 ): Promise<Metadata> {
-  const data = await getListById(params.id);
-  const themeText = data && data.theme ? `：${data.theme}` : '';
-  const metaTitle = data ? `${data.authorName}を構成する9つのマンガ${themeText} | 9coma` : '9coma';
-  const metaDesc = data ? `${data.authorName}が選んだ、自分を構成する9つのマンガです。` : '9coma';
+  console.log(`[Metadata] Generating metadata for ID: ${params.id}`);
+  try {
+    const data = await getListById(params.id);
+    
+    if (!data) {
+      console.warn(`[Metadata] No data found for ID: ${params.id}`);
+      return { title: '9coma' };
+    }
 
-  return {
-    title: metaTitle,
-    description: metaDesc,
-    openGraph: {
+    const themeText = data.theme ? `：${data.theme}` : '';
+    const metaTitle = `${data.authorName}を構成する9つのマンガ${themeText} | 9coma`;
+    const metaDesc = `${data.authorName}が選んだ、自分を構成する9つのマンガです。`;
+
+    console.log(`[Metadata] Successfully retrieved data for ${params.id}. Title: ${metaTitle}`);
+
+    return {
       title: metaTitle,
       description: metaDesc,
-      type: 'article',
-      siteName: '9coma',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: metaTitle,
-      description: metaDesc,
-    },
-  };
+      openGraph: {
+        title: metaTitle,
+        description: metaDesc,
+        type: 'article',
+        siteName: '9coma',
+        // Next.jsのファイルベースOGP(opengraph-image.tsx)は自動で入るはずだが、
+        // 念のため明示的に指定することで確実性を高める
+        images: [
+          {
+            url: `/list/${params.id}/opengraph-image`,
+            width: 1200,
+            height: 630,
+            alt: metaTitle,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: metaTitle,
+        description: metaDesc,
+        images: [`/list/${params.id}/opengraph-image`],
+      },
+    };
+  } catch (error) {
+    console.error(`[Metadata] Error generating metadata for ${params.id}:`, error);
+    return { title: '9coma' };
+  }
 }
 
 export default async function ListView({ params }: { params: { id: string } }) {

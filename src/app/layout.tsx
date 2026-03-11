@@ -2,8 +2,14 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
+  ? process.env.NEXT_PUBLIC_BASE_URL 
+  : process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : 'http://localhost:3000';
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(baseUrl),
   title: '9coma | 私を構成する9つのマンガ',
   description: '自分を形成した漫画9作品を選んでページを作成し、SNSでシェアできるWebサービス',
   openGraph: {
