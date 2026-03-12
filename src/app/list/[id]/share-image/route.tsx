@@ -22,24 +22,28 @@ export async function GET(
 
     return new ImageResponse(
       (
-        <div style={{ width: '720px', height: '1280px', display: 'flex', flexDirection: 'column', backgroundColor: themeBg, padding: '40px', color: textColor }}>
+        <div style={{ width: '720px', height: '1280px', display: 'flex', flexDirection: 'column', backgroundColor: themeBg, padding: '20px', color: textColor, justifyContent: 'space-between' }}>
           {/* Header */}
-          <div style={{ display: 'flex', flexDirection: 'column', height: '200px', justifyContent: 'center' }}>
-            <h1 style={{ fontSize: '32px', opacity: 0.8, marginBottom: '8px', fontWeight: 400 }}>{data.authorName}を構成する</h1>
-            <h1 style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1 }}>{data.theme || '9つのマンガ'}</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '160px', justifyContent: 'center', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '32px', opacity: 0.8, marginBottom: '4px', fontWeight: 400, margin: 0 }}>
+              {data.authorName}を構成する{data.theme ? '9つのマンガ' : ''}
+            </h1>
+            <h1 style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
+              {data.theme || '9つのマンガ'}
+            </h1>
           </div>
 
           {/* Grid Area */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '800px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '4px', justifyContent: 'center' }}>
             {/* Row 1 */}
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               {[0, 1, 2].map((idx) => {
                 const manga = data.slots[idx];
                 return (
-                  <div key={idx} style={{ width: '190px', height: '260px', margin: '6px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
+                  <div key={idx} style={{ width: '224px', height: '304px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
                     {manga?.imageUrl && <img src={manga.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '12px', textAlign: 'center' }}>
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '13px', textAlign: 'center', lineHeight: 1.2 }}>
                         {manga.title}
                       </div>
                     )}
@@ -48,14 +52,14 @@ export async function GET(
               })}
             </div>
             {/* Row 2 */}
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               {[3, 4, 5].map((idx) => {
                 const manga = data.slots[idx];
                 return (
-                  <div key={idx} style={{ width: '190px', height: '260px', margin: '6px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
+                  <div key={idx} style={{ width: '224px', height: '304px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
                     {manga?.imageUrl && <img src={manga.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '12px', textAlign: 'center' }}>
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '13px', textAlign: 'center', lineHeight: 1.2 }}>
                         {manga.title}
                       </div>
                     )}
@@ -64,14 +68,14 @@ export async function GET(
               })}
             </div>
             {/* Row 3 */}
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               {[6, 7, 8].map((idx) => {
                 const manga = data.slots[idx];
                 return (
-                  <div key={idx} style={{ width: '190px', height: '260px', margin: '6px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
+                  <div key={idx} style={{ width: '224px', height: '304px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
                     {manga?.imageUrl && <img src={manga.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '12px', textAlign: 'center' }}>
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '13px', textAlign: 'center', lineHeight: 1.2 }}>
                         {manga.title}
                       </div>
                     )}
@@ -82,14 +86,14 @@ export async function GET(
           </div>
 
           {/* Footer */}
-          <div style={{ display: 'flex', width: '100%', height: '200px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', width: '100%', height: '160px', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <p style={{ fontSize: '64px', fontWeight: 800, margin: 0, padding: 0 }}>9coma</p>
-              <p style={{ fontSize: '20px', opacity: 0.6, margin: 0, marginBottom: '8px' }}>https://9coma.com</p>
+              <p style={{ fontSize: '64px', fontWeight: 800, margin: 0, padding: 0, lineHeight: 1 }}>9coma</p>
+              <p style={{ fontSize: '20px', opacity: 0.6, margin: '4px 0', marginBottom: '8px' }}>https://9coma.com</p>
               <p style={{ fontSize: '14px', opacity: 0.8, margin: 0, fontWeight: 700 }}>Data from Rakuten Books - Powered by 9coma.com</p>
             </div>
-            <div style={{ display: 'flex', padding: '10px', backgroundColor: 'white', borderRadius: '16px', border: '4px solid #000' }}>
-              <img src={qrCodeDataUrl} style={{ width: '140px', height: '140px' }} />
+            <div style={{ display: 'flex', padding: '8px', backgroundColor: 'white', borderRadius: '12px', border: '3px solid #000' }}>
+              <img src={qrCodeDataUrl} style={{ width: '120px', height: '120px' }} />
             </div>
           </div>
         </div>
