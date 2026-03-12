@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         if (projectId && projectId !== 'your_project_id') {
             try {
                 const { db } = await import('@/lib/firebase');
-                const { doc, setDoc } = await import('firebase/firestore');
+                const { doc, setDoc, getDoc } = await import('firebase/firestore');
                 
                 // リスト自体の保存
                 await setDoc(doc(db, 'lists', id), { 
@@ -46,9 +46,14 @@ export async function POST(request: Request) {
                 // マンガ情報のキャッシュ保存 (救済・高速化用)
                 try {
                     await Promise.all(
-                        slots.filter(s => s !== null).map(m => 
-                            setDoc(doc(db, 'manga_cache', m!.isbn), { ...m, updatedAt: Date.now() }, { merge: true })
-                        )
+                        slots.filter(s => s !== null).map(async (m) => {
+                            const cacheRef = doc(db, 'manga_cache', m!.isbn);
+                            const cacheSnap = await getDoc(cacheRef);
+                            // 既にキャッシュが存在する場合は書き込まない
+                            if (!cacheSnap.exists()) {
+                                await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                            }
+                        })
                     );
                 } catch (ce) {
                     console.error('Manga cache save error in list POST:', ce);

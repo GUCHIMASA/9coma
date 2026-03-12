@@ -91,7 +91,8 @@ export async function GET(request: Request) {
                 headers: {
                     'Referer': baseUrl,
                     'Origin': baseUrl,
-                }
+                },
+                next: { revalidate: 10800 }
             });
             const data = await res.json();
             
@@ -114,17 +115,26 @@ export async function GET(request: Request) {
             // 取得したアイテムを Firestore にキャッシュ保存 (バックグラウンド的に実行)
             const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
             if (projectId && projectId !== 'your_project_id' && items.length > 0) {
-                try {
-                    const { db } = await import('@/lib/firebase');
-                    const { doc, setDoc } = await import('firebase/firestore');
-                    // 大量のリクエストを避けるため、上位数件のみにするか非同期で一気に投げる
-                    // ここではループで回すが、実際には Promise.all などで効率化
-                    items.slice(0, 10).forEach((m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
-                        setDoc(doc(db, 'manga_cache', m.isbn), { ...m, updatedAt: Date.now() }, { merge: true });
+                // インポートを整理
+                import('@/lib/firebase').then(async ({ db }) => {
+                    const { doc, setDoc, getDoc } = await import('firebase/firestore');
+                    
+                    // 上位3件のみ保存し、かつ存在しない場合のみ書き込む
+                    items.slice(0, 3).forEach(async (m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
+                        try {
+                            const cacheRef = doc(db, 'manga_cache', m.isbn);
+                            const cacheSnap = await getDoc(cacheRef);
+                            // 既に存在する場合は何もしない（書き込み回数節約）
+                            if (!cacheSnap.exists()) {
+                                await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                            }
+                        } catch (e) {
+                            console.error('Cache set item error:', e);
+                        }
                     });
-                } catch (e) {
-                    console.error('Cache set error:', e);
-                }
+                }).catch(e => {
+                    console.error('Firebase import error in search:', e);
+                });
             }
 
             return NextResponse.json({ items, isMock: false });

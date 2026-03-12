@@ -25,6 +25,7 @@ export default function Home() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [deviceId, setDeviceId] = useState<string>('');
   const [postHistory, setPostHistory] = useState<{id: string, theme?: string, date: number}[]>([]);
+  const [lastFetchedTheme, setLastFetchedTheme] = useState<string | null>(null);
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -123,8 +124,15 @@ export default function Home() {
     if (selectedSlotIndex === null) return;
     if (!theme) {
       setThemeRecommendations([]);
+      setLastFetchedTheme(null);
       return;
     }
+
+    // すでにデータがあり、かつ取得時と同じテーマならスキップして通信を削減
+    if (themeRecommendations.length > 0 && theme === lastFetchedTheme) {
+      return;
+    }
+
     let cancelled = false;
     const fetchRecommendations = async () => {
       setIsLoadingRecommendations(true);
@@ -133,17 +141,21 @@ export default function Home() {
         const data = await res.json();
         if (!cancelled) {
           setThemeRecommendations(data.items || []);
+          setLastFetchedTheme(theme);
         }
       } catch (e) {
         console.error('Recommendations fetch failed:', e);
-        if (!cancelled) setThemeRecommendations([]);
+        if (!cancelled) {
+          setThemeRecommendations([]);
+          setLastFetchedTheme(null);
+        }
       } finally {
         if (!cancelled) setIsLoadingRecommendations(false);
       }
     };
     fetchRecommendations();
     return () => { cancelled = true; };
-  }, [selectedSlotIndex, theme]);
+  }, [selectedSlotIndex, theme, themeRecommendations.length, lastFetchedTheme]);
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;

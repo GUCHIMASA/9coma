@@ -4,6 +4,8 @@ import { getListById } from '@/lib/list';
 import { THEME_GRADIENTS } from '@/lib/themes';
 import ListViewClient from './ListViewClient';
 
+export const revalidate = 3600; // 1時間ごとに再生成 (ISR)
+
 export async function generateMetadata(
   { params }: { params: { id: string } }
 ): Promise<Metadata> {
