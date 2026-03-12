@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー | 9coma',
-  description: '9comaのプライバシーポリシーおよび免責事項',
+  title: 'プライバシーポリシー・免責事項 | 9coma',
+  description: '9comaのプライバシーポリシー、免責事項、および著作権に関する指針',
 };
 
 export default function PrivacyPolicy() {
@@ -16,31 +16,40 @@ export default function PrivacyPolicy() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-          アクセス解析ツールについて
+          ① 画像の取り扱いと著作権について
         </h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-          当サイトでは、Googleによるアクセス解析ツール「Google Analytics (GA4)」を使用しています。このGoogle Analyticsはデータの収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。<br />
-          この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。この規約に関しての詳細は<a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>Google Analyticsサービス利用規約</a>のページや<a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>Googleポリシーと規約</a>ページをご覧ください。
-        </p>
+        <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+          <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>本サービスで生成される画像について</p>
+          <p>
+            本サービス（9coma）が生成する画像に含まれる書籍の書影、タイトル、および著者名等の著作権は、各出版社、著者、および権利者に帰属します。本サービスは、楽天ブックスAPIを利用し、書籍のプロモーションおよび紹介を目的としてこれらの情報を表示・合成しています。
+          </p>
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+          ② ユーザーの責任範囲
+        </h2>
+        <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+          <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>利用者の責任</p>
+          <p>
+            生成された画像は、利用者が自身の好みを表現し、作品を紹介する目的でSNS等にシェアすることを想定しています。画像の商用利用や、公序良俗に反する形での利用、権利者の名誉を毀損する形での利用は固くお控えください。シェア後の画像利用に関するトラブルについて、当サービスは一切の責任を負いかねます。
+          </p>
+        </div>
       </section>
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
           アフィリエイトプログラムについて
         </h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-          当サイト「9coma」は、楽天アフィリエイトプログラムの参加者です。楽天アフィリエイトプログラムは、適切な商品リンクを配置することによってサイトが紹介料を獲得できるアフィリエイト宣伝プログラムです。<br />
-          リンク先の商品の購入にあたっては、リンク先の各店舗・サービスの利用規約やプライバシーポリシーをご確認ください。商品に関するお問い合わせは、各店舗へ直接お願いいたします。
-        </p>
-      </section>
-
-      <section style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-          Cookieおよび匿名識別子について
-        </h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-          当サイトでは、利便性向上（二重投稿の防止や下書き機能、投稿履歴の提供）のため、ブラウザのローカルストレージおよび匿名ID（deviceId）を利用しています。これらは個人の特定に繋がるものではなく、サイト内での機能維持やユーザー体験の向上のためにのみ使用されます。
-        </p>
+        <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+          <p style={{ marginBottom: '1rem' }}>
+            Amazonのサイバーマンデー、ブラックフライデー等のキャンペーン期間を含め、Amazonのアソシエイトとして、9coma（9コマ）は適格販売により収入を得ています。
+          </p>
+          <p>
+            当サイトは、楽天グループ株式会社が提供する楽天アフィリエイトプログラムに参加しています。
+          </p>
+        </div>
       </section>
 
       <section style={{ marginBottom: '2.5rem' }}>
@@ -54,13 +63,13 @@ export default function PrivacyPolicy() {
         </p>
       </section>
 
-      <section style={{ marginTop: '5rem', borderTop: '1px dashed var(--color-border)', paddingTop: '3rem', opacity: 0.9 }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.2rem', color: 'var(--color-text)', textAlign: 'center' }}>
-          運営者の想い
+      <section style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+          アクセス解析ツールについて
         </h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: '1.8' }}>
-          「9coma」は、ユーザーの皆様が本当に好きな作品を形にし、共有することで、一人でも多くの方が素晴らしいマンガと出会うきっかけになることを願って個人で開発しました。<br /><br />
-          私自身、マンガから多くの勇気や知識をもらってきました。このサイトを通じて、素敵な作品たちがより多くの人の目に触れ、日本の漫画業界のさらなる発展にささやかながら貢献できればと考えています。
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+          当サイトでは、Googleによるアクセス解析ツール「Google Analytics (GA4)」を使用しています。このGoogle Analyticsはデータの収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。<br />
+          この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。
         </p>
       </section>
 

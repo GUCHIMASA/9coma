@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { MangaItem } from '@/types';
 import PromotionUnit from '@/components/PromotionUnit';
@@ -16,6 +16,7 @@ interface ListViewClientProps {
 export default function ListViewClient({ data }: ListViewClientProps) {
   const params = useParams();
   const id = params.id as string;
+  const [isSharing, setIsSharing] = useState(false);
 
   const copyUrl = () => {
     if (typeof window === 'undefined') return;
@@ -29,6 +30,42 @@ export default function ListViewClient({ data }: ListViewClientProps) {
     const text = `${data.authorName}を構成する9つのマンガ${themeText}\n#9coma #9koma #My9manga\n`;
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  const handleImageShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+    try {
+      const response = await fetch(`/list/${id}/share-image`);
+      if (!response.ok) throw new Error('Failed to generate image');
+      
+      const blob = await response.blob();
+      const file = new File([blob], '9coma-share.png', { type: 'image/png' });
+
+      // Check if navigator.share is available and supports files
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: '9coma - 9つのマンガ',
+          text: `${data.authorName}を構成する9つのマンガ`,
+        });
+      } else {
+        // Fallback for PC or unsupported browsers: Download or Open
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `9coma-${id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      alert('画像の共有に失敗しました。');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   return (
@@ -111,6 +148,32 @@ export default function ListViewClient({ data }: ListViewClientProps) {
           }}
         >
           <span>Xでシェアする</span>
+        </button>
+
+        {/* 画像でシェアボタン (スマホ推奨) */}
+        <button
+          onClick={handleImageShare}
+          disabled={isSharing}
+          style={{
+            width: '100%',
+            padding: '1.2rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'linear-gradient(135deg, #4b5563, #1f2937)',
+            color: 'white',
+            fontWeight: 800,
+            fontSize: '1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            border: 'none',
+            boxShadow: 'var(--shadow-md)',
+            transition: 'var(--transition-base)',
+            opacity: isSharing ? 0.7 : 1,
+            cursor: isSharing ? 'wait' : 'pointer'
+          }}
+        >
+          <span>{isSharing ? '生成中...' : '📸 画像でシェア (スマホ推奨)'}</span>
         </button>
 
         <div style={{ display: 'flex', gap: '12px' }}>

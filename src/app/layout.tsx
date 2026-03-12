@@ -70,7 +70,10 @@ export default function RootLayout({
             background: 'var(--color-background)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '0.5rem' }}>
+            <a href="/about" style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
+              このサイトについて
+            </a>
             <a href="/privacy" style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
               プライバシーポリシー
             </a>
