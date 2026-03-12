@@ -71,7 +71,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
     <main className="container animate-fade-in" style={{ paddingBottom: '5rem' }}>
       <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          {data.authorName}を構成する9つのマンガ
+          {data.authorName}を<br />構成する9つのマンガ
         </h1>
         {data.theme ? (
           <div style={{ display: 'inline-block', padding: '0.4rem 1.2rem', background: THEME_GRADIENTS[data.theme] || 'var(--color-surface)', color: '#fff', borderRadius: '99px', fontSize: '0.9rem', fontWeight: 700, marginTop: '0.5rem', boxShadow: 'var(--shadow-md)' }}>

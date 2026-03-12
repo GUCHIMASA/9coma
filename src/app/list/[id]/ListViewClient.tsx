@@ -180,6 +180,102 @@ export default function ListViewClient({ data }: ListViewClientProps) {
         </a>
       </div>
 
+      {/* リスト形式の販売リンク集（罫線区切り版） */}
+      <section style={{ marginTop: '4rem', padding: '1.2rem', background: 'var(--color-surface-2)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '1.5rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <span>🛒 気になった作品をチェック</span>
+        </h2>
+        
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {data.slots.map((manga, idx) => {
+            if (!manga) return null;
+            
+            // 将来的にここを環境変数などから取得するようにすればOK
+            const AMAZON_ASSOCIATE_ID = ''; // 例: 'your-id-22'
+            const amazonUrl = `https://www.amazon.co.jp/s?k=${manga.isbn}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
+            
+            const isLast = idx === data.slots.reduce((last, m, i) => m ? i : last, -1);
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  padding: '1rem 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  borderBottom: isLast ? 'none' : '1px dashed var(--color-border)',
+                }}
+              >
+                {/* 左側: タイトル */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ 
+                    fontSize: '0.95rem', 
+                    fontWeight: 800, 
+                    color: 'var(--color-text)', 
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    <span style={{ color: 'var(--color-primary)', marginRight: '6px' }}>#{idx + 1}</span>
+                    {manga.title}
+                  </p>
+                </div>
+
+                {/* 右側: ボタン群 */}
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <a
+                    href={manga.affiliateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '0.5rem 0.9rem',
+                      background: '#bf0000', // 楽天
+                      color: 'white',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      transition: 'var(--transition-fast)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    楽天
+                  </a>
+                  <a
+                    href={amazonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '0.5rem 0.9rem',
+                      background: '#FF9900', // Amazon
+                      color: '#111',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      transition: 'var(--transition-fast)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    Amazon
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p style={{ marginTop: '1.2rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+          ※在庫状況や価格はリンク先でご確認ください
+        </p>
+      </section>
+
       {/* 詳細ページ最下部広告 */}
       <PromotionUnit slotId="list-bottom" maxHeight="280px" />
     </div>
