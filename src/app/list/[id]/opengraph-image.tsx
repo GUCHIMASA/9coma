@@ -261,6 +261,9 @@ export default async function Image({ params }: { params: { id: string } }) {
     ),
     {
       ...size,
+      headers: {
+        'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
+      },
     }
   );
 }

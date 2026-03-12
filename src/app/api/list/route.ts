@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getListById } from '@/lib/list';
 import type { MangaItem } from '@/types';
 
 // モックストレージ（Firebase未設定時用）
@@ -88,19 +89,14 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'IDが必要です' }, { status: 400 });
     }
 
-    // Firebaseが設定されている場合はFirestoreから取得
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (projectId && projectId !== 'your_project_id') {
-        try {
-            const { db } = await import('@/lib/firebase');
-            const { doc, getDoc } = await import('firebase/firestore');
-            const snap = await getDoc(doc(db, 'lists', id));
-            if (snap.exists()) {
-                return NextResponse.json({ ...snap.data(), id, isMock: false });
-            }
-        } catch (e) {
-            console.error('Firestore error:', e);
+    // getListById ユーティリティを使用して取得（ハイドレーションと内部キャッシュの恩恵を受ける）
+    try {
+        const data = await getListById(id);
+        if (data && data.authorName !== '名無し') {
+            return NextResponse.json({ ...data, isMock: false });
         }
+    } catch (e) {
+        console.error('Error in API GET /api/list:', e);
     }
 
     // モックストレージから取得

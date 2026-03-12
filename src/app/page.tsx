@@ -129,7 +129,8 @@ export default function Home() {
     }
 
     // すでにデータがあり、かつ取得時と同じテーマならスキップして通信を削減
-    if (themeRecommendations.length > 0 && theme === lastFetchedTheme) {
+    // また、すでに取得中の場合も重複アクセスを避けるためにスキップ
+    if (isLoadingRecommendations || (themeRecommendations.length > 0 && theme === lastFetchedTheme)) {
       return;
     }
 

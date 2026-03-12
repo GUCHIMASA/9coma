@@ -1,8 +1,10 @@
+import { cache } from 'react';
 import type { MangaItem } from '@/types';
 
 // サーバーサイド用ユーティリティ
-
-export async function getListById(id: string) {
+// cache() でラップすることで、同一リクエスト内での重複呼び出しをメモ化し、Firestoreへのアクセスを1回に制限します。
+export const getListById = cache(async (id: string) => {
+  console.log(`[Firestore] Physical access triggered for list: ${id}`);
   // Firebaseが設定されている場合はFirestoreから取得
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   if (projectId && projectId !== 'your_project_id') {
@@ -92,4 +94,4 @@ export async function getListById(id: string) {
     slots: Array(9).fill(null),
     createdAt: Date.now()
   } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
-}
+});
