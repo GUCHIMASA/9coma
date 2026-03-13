@@ -95,3 +95,50 @@ export const getListById = cache(async (id: string) => {
     createdAt: Date.now()
   } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
 });
+
+// 最新のリストを取得する
+export const getRecentLists = cache(async (limitCount: number = 6) => {
+  console.log(`[Firestore] Physical access triggered for getRecentLists (limit: ${limitCount})`);
+  const projectId = process.env.NEXT_PUBLIC_BASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (projectId && projectId !== 'your_project_id') {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { collection, query, orderBy, limit, getDocs, doc, getDoc } = await import('firebase/firestore');
+      
+      const q = query(
+        collection(db, 'lists'),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      
+      const snaps = await getDocs(q);
+      const results = await Promise.all(
+        snaps.docs.map(async (snap) => {
+          const id = snap.id;
+          const data = snap.data() as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; createdAt: number };
+          
+          const hydratedSlots = await Promise.all(
+            data.slots.map(async (slot) => {
+              if (typeof slot === 'string' && slot.length > 0) {
+                const cacheSnap = await getDoc(doc(db, 'manga_cache', slot));
+                if (cacheSnap.exists()) return cacheSnap.data() as MangaItem;
+                return { isbn: slot, title: '不明なマンガ', author: '', imageUrl: '', affiliateUrl: '' };
+              }
+              return slot as MangaItem | null;
+            })
+          );
+          
+          return { ...data, slots: hydratedSlots, id };
+        })
+      );
+      
+      return results;
+    } catch (e) {
+      console.error('Firestore error in getRecentLists:', e);
+      if (e instanceof Error && e.message.includes('index')) {
+        console.error('Firestore needs an index! Please check the Firebase console URL in the error message.');
+      }
+    }
+  }
+  return [];
+});

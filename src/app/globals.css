@@ -140,6 +140,26 @@ img {
   animation: fadeIn 0.4s ease forwards;
 }
 
+/* ===== Interactive Elements ===== */
+.list-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.list-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.1) !important;
+  border-color: var(--color-border-hover) !important;
+}
+
+.hover-lift {
+  transition: var(--transition-base);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
 /* ===== Skeleton Loading ===== */
 .skeleton {
   background: linear-gradient(
