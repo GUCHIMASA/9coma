@@ -98,7 +98,7 @@ export async function GET(request: Request) {
             
             if (!data.errors && !data.error && res.ok && data.Items) {
                 // フィルタリングせずそのまま返して、API 本来の結果を確認する
-                const items = data.Items.map((item: any) => ({
+                const items = data.Items.map((item: { isbn: string; title: string; author: string; largeImageUrl: string; affiliateUrl: string; itemUrl: string }) => ({
                     isbn: item.isbn,
                     title: item.title,
                     author: item.author,
@@ -111,14 +111,15 @@ export async function GET(request: Request) {
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
                         const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                        items.slice(0, 3).forEach(async (m: any) => {
+                        items.slice(0, 3).forEach(async (m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
                             try {
                                 const cacheRef = doc(db, 'manga_cache', m.isbn);
                                 const cacheSnap = await getDoc(cacheRef);
                                 if (!cacheSnap.exists()) {
                                     await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
                                 }
-                            } catch (e) {}
+                            } catch {
+                            }
                         });
                     }).catch(() => {});
                 }
