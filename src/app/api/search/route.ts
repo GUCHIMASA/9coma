@@ -54,106 +54,94 @@ export async function GET(request: Request) {
     const title = searchParams.get('title') || '';
     const author = searchParams.get('author') || '';
 
-    // 楽天APIキーが設定されている場合は楽天APIを叩く
+    // 楽天APIキー
     const appId = process.env.RAKUTEN_APPLICATION_ID;
     const affiliateId = process.env.RAKUTEN_AFFILIATE_ID;
-    const accessKey = process.env.RAKUTEN_ACCESS_KEY; // 新API v2用
+    const accessKey = process.env.RAKUTEN_ACCESS_KEY;
 
     if (appId && appId !== 'your_rakuten_app_id_here') {
         try {
-            const combinedKeywords = [title, author, keyword]
-                .filter(term => term.trim() !== '')
-                .join(' ');
-
-            // 1. キャッシュの確認 (ISBNが完全に一致する場合などは特に有効だが、
-            // 今回はBooksTotalでのキーワード検索がメインのため、
-            // 検索結果自体をキャッシュするのではなく、取得した個々のアイテムを後で利用するための保存を優先する)
-
-            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
+            // エンドポイントを BooksBook に設定（タイトル・著者の個別パラメータを正確に反映させるため）
+            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
             url.searchParams.set('applicationId', appId);
             url.searchParams.set('affiliateId', affiliateId || '');
+            if (accessKey) url.searchParams.set('accessKey', accessKey);
             
-            if (combinedKeywords) {
-                url.searchParams.set('keyword', combinedKeywords);
+            // パラメータを個別にセット
+            if (title) url.searchParams.set('title', title);
+            if (author) url.searchParams.set('author', author);
+            if (keyword) url.searchParams.set('keyword', keyword);
+            
+            if (!title && !author && !keyword) {
+                return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
             }
             
             url.searchParams.set('booksGenreId', '001001'); // 漫画・コミック
             url.searchParams.set('hits', '30');
             url.searchParams.set('formatVersion', '2');
-            url.searchParams.set('outOfStockFlag', '1'); // 品切れ商品も検索に含める
+            url.searchParams.set('outOfStockFlag', '1');
             
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
+            const headers: Record<string, string> = {
+                'Referer': baseUrl,
+                'Origin': baseUrl,
+            };
             if (accessKey) {
-                url.searchParams.set('accessKey', accessKey);
+                headers['Authorization'] = `Bearer ${accessKey}`;
             }
 
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
             const res = await fetch(url.toString(), {
-                headers: {
-                    'Referer': baseUrl,
-                    'Origin': baseUrl,
-                },
+                headers,
                 next: { revalidate: 10800 }
             });
             const data = await res.json();
             
-            if (data.errors || data.error || !res.ok) {
-                const errorMsg = data.errors?.[0]?.errorMessage || data.error_description || data.error || '不明なエラー';
-                console.error('Rakuten API Error:', errorMsg, `(Status: ${res.status})`);
-                return NextResponse.json({ error: errorMsg, items: [], isMock: false }, { status: 400 });
-            }
-
-            const items = (data.Items || []).map((item: { isbn: string; title: string; author: string; largeImageUrl: string; affiliateUrl?: string; itemUrl: string }) => {
-                return {
+            if (!data.errors && !data.error && res.ok && data.Items) {
+                // フィルタリングせずそのまま返して、API 本来の結果を確認する
+                const items = data.Items.map((item: any) => ({
                     isbn: item.isbn,
                     title: item.title,
                     author: item.author,
                     imageUrl: item.largeImageUrl,
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
-                };
-            });
+                }));
 
-            // 取得したアイテムを Firestore にキャッシュ保存 (バックグラウンド的に実行)
-            const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-            if (projectId && projectId !== 'your_project_id' && items.length > 0) {
-                // インポートを整理
-                import('@/lib/firebase').then(async ({ db }) => {
-                    const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                    
-                    // 上位3件のみ保存し、かつ存在しない場合のみ書き込む
-                    items.slice(0, 3).forEach(async (m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
-                        try {
-                            const cacheRef = doc(db, 'manga_cache', m.isbn);
-                            const cacheSnap = await getDoc(cacheRef);
-                            // 既に存在する場合は何もしない（書き込み回数節約）
-                            if (!cacheSnap.exists()) {
-                                await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
-                            }
-                        } catch (e) {
-                            console.error('Cache set item error:', e);
-                        }
-                    });
-                }).catch(e => {
-                    console.error('Firebase import error in search:', e);
-                });
+                // Firestore キャッシュ保存 (バックグラウンド)
+                const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                if (projectId && projectId !== 'your_project_id' && items.length > 0) {
+                    import('@/lib/firebase').then(async ({ db }) => {
+                        const { doc, setDoc, getDoc } = await import('firebase/firestore');
+                        items.slice(0, 3).forEach(async (m: any) => {
+                            try {
+                                const cacheRef = doc(db, 'manga_cache', m.isbn);
+                                const cacheSnap = await getDoc(cacheRef);
+                                if (!cacheSnap.exists()) {
+                                    await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                                }
+                            } catch (e) {}
+                        });
+                    }).catch(() => {});
+                }
+
+                return NextResponse.json({ items, isMock: false });
+            } else {
+                console.warn('Rakuten API Error:', data.errors || data.error);
             }
-
-            return NextResponse.json({ items, isMock: false });
-        } catch (error: unknown) {
-            console.error('楽天API error:', error);
-            return NextResponse.json({ items: [], isMock: true, error: error instanceof Error ? error.message : String(error) });
+        } catch (error) {
+            console.error('Rakuten API fetch error:', error);
         }
     }
 
-    // モックデータを返す（各フィールドでフィルタリング）
+    // fallback to mock (basic selection)
     const allItems = MOCK_MANGA['default'];
     const filtered = allItems.filter((item: Record<string, string>) => {
-        const matchKeyword = !keyword || 
-            item.title.toLowerCase().includes(keyword.toLowerCase()) || 
-            item.author.toLowerCase().includes(keyword.toLowerCase());
-        const matchTitle = !title || item.title.toLowerCase().includes(title.toLowerCase());
-        const matchAuthor = !author || item.author.toLowerCase().includes(author.toLowerCase());
-        
-        return matchKeyword && matchTitle && matchAuthor;
+        if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false;
+        if (author && !item.author.toLowerCase().includes(author.toLowerCase())) return false;
+        if (keyword) {
+            const k = keyword.toLowerCase();
+            if (!item.title.toLowerCase().includes(k) && !item.author.toLowerCase().includes(k)) return false;
+        }
+        return true;
     });
 
     return NextResponse.json({ items: filtered, isMock: true });
