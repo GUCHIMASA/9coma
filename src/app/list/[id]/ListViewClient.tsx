@@ -253,8 +253,8 @@ export default function ListViewClient({ data }: ListViewClientProps) {
           {data.slots.map((manga, idx) => {
             if (!manga) return null;
             
-            // 将来的にここを環境変数などから取得するようにすればOK
-            const AMAZON_ASSOCIATE_ID = ''; // 例: 'your-id-22'
+            // Amazon トラッキング ID を設定
+            const AMAZON_ASSOCIATE_ID = '9coma-22';
             const amazonUrl = `https://www.amazon.co.jp/s?k=${manga.isbn}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
             
             const isLast = idx === data.slots.reduce((last, m, i) => m ? i : last, -1);
