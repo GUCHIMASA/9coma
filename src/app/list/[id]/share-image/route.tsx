@@ -26,7 +26,7 @@ export async function GET(
           {/* Header */}
           <div style={{ display: 'flex', flexDirection: 'column', height: '160px', justifyContent: 'center', textAlign: 'center' }}>
             <h1 style={{ fontSize: '32px', opacity: 0.8, marginBottom: '4px', fontWeight: 400, margin: 0 }}>
-              {data.authorName}を構成する9つのマンガ
+              {data.theme ? `${data.authorName}を構成する9つのマンガ` : `${data.authorName}を構成する`}
             </h1>
             <h1 style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
               {data.theme || '9つのマンガ'}

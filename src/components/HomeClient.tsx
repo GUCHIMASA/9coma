@@ -24,7 +24,7 @@ export default function HomeClient() {
   const [themeRecommendations, setThemeRecommendations] = useState<MangaItem[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [deviceId, setDeviceId] = useState<string>('');
-  const [postHistory, setPostHistory] = useState<{id: string, theme?: string, date: number}[]>([]);
+  const [postHistory, setPostHistory] = useState<{ id: string, theme?: string, date: number }[]>([]);
   const [lastFetchedTheme, setLastFetchedTheme] = useState<string | null>(null);
 
   // 初回マウント時のクローン＆ドラフト復元処理
@@ -222,7 +222,7 @@ export default function HomeClient() {
     const dragItem = newSlots[draggedIndex];
     newSlots[draggedIndex] = newSlots[dropIndex];
     newSlots[dropIndex] = dragItem;
-    
+
     setSlots(newSlots);
     setDraggedIndex(null);
   };
@@ -264,11 +264,11 @@ export default function HomeClient() {
       const res = await fetch('/api/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           slots,
-          authorName: authorName || '私', 
+          authorName: authorName || '私',
           theme: theme || undefined,
-          deviceId 
+          deviceId
         }),
       });
       const data = await res.json();
@@ -296,20 +296,20 @@ export default function HomeClient() {
   return (
     <div className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
       <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
-          9コマ
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
+          私を構成する9つのマンガ
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
-          私を構成する9つのマンガを選んでシェアしよう。
+          あなたの人生に影響を与えた漫画は何ですか？
         </p>
       </header>
 
       <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
         <p style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1.2rem' }}>
-          💡 空いているマスをタップして、マンガを検索してください。
+          💡 テーマを選んでコマをタップしてマンガを検索！
         </p>
         <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label htmlFor="themeSelect" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>テーマ（タグ）</label>
+          <label htmlFor="themeSelect" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>テーマ</label>
           <select
             id="themeSelect"
             value={theme}
@@ -367,7 +367,7 @@ export default function HomeClient() {
                 }} />
               </div>
               <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-                👆 長押ししてドラッグで場所を入れ替えられます。
+                ▼ 長押ししてドラッグで場所を入れ替えられます。
               </p>
             </div>
           );
@@ -390,9 +390,9 @@ export default function HomeClient() {
                 borderRadius: 'var(--radius-sm)',
                 overflow: 'hidden',
                 cursor: manga ? 'grab' : 'pointer',
-                border: dragOverIndex === idx ? '3px dashed var(--color-primary)' 
-                      : selectedSlotIndex === idx ? '3px solid var(--color-primary)' 
-                      : '2px solid var(--color-border)',
+                border: dragOverIndex === idx ? '3px dashed var(--color-primary)'
+                  : selectedSlotIndex === idx ? '3px solid var(--color-primary)'
+                    : '2px solid var(--color-border)',
                 transition: 'var(--transition-fast)',
                 aspectRatio: '1 / 1.4',
                 display: 'flex',
@@ -481,14 +481,14 @@ export default function HomeClient() {
           alignItems: 'center',
           padding: '1rem'
         }}>
-          <section className="search-section animate-fade-in" style={{ 
-            width: '100%', 
-            maxWidth: '600px', 
+          <section className="search-section animate-fade-in" style={{
+            width: '100%',
+            maxWidth: '600px',
             height: '80vh',
-            maxHeight: '800px', 
-            background: 'var(--color-surface)', 
-            borderRadius: 'var(--radius-lg)', 
-            border: '2px solid var(--color-border)', 
+            maxHeight: '800px',
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            border: '2px solid var(--color-border)',
             boxShadow: 'var(--shadow-xl)',
             display: 'flex',
             flexDirection: 'column',
@@ -570,20 +570,11 @@ export default function HomeClient() {
       )}
 
       <section style={{ maxWidth: '400px', margin: '3rem auto 0', padding: '0 1rem' }}>
-        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>作成者名：</p>
         <input
           type="text"
           placeholder="あなたの名前（空欄可）"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
-          style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
-        />
-        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>テーマ：</p>
-        <input
-          type="text"
-          placeholder="このリストテーマを選ぶ（空欄可）"
-          value={theme}
-          onChange={(e) => setTheme(e.target.value)}
           style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
         />
         <button

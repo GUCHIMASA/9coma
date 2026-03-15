@@ -44,10 +44,15 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
       // Check if navigator.share is available and supports files
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        const themeText = data.theme ? `：${data.theme}` : '';
+        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n#9コマ #9coma #9koma #My9manga`;
+        const shareUrl = window.location.href;
+
         await navigator.share({
           files: [file],
           title: '9コマ - 私を構成する9つのマンガ',
-          text: `${data.authorName}を構成する9つのマンガ`,
+          text: shareText,
+          url: shareUrl,
         });
       } else {
         // Fallback for PC or unsupported browsers: Download or Open
