@@ -45,8 +45,8 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       // Check if navigator.share is available and supports files
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         const themeText = data.theme ? `：${data.theme}` : '';
-        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n#9コマ #9coma #9koma #My9manga`;
         const shareUrl = window.location.href;
+        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n${shareUrl}\n#9コマ #9coma #9koma #My9manga`;
 
         await navigator.share({
           files: [file],

@@ -296,11 +296,11 @@ export default function HomeClient() {
   return (
     <div className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
       <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
           私を構成する9つのマンガ
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
-          あなたの人生に影響を与えた漫画は何ですか？
+          あなたの人生に影響を与えた漫画は？
         </p>
       </header>
 
