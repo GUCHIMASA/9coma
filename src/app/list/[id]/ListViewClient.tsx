@@ -27,7 +27,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
   const shareOnX = () => {
     if (typeof window === 'undefined') return;
     const themeText = data.theme ? `：${data.theme}` : '';
-    const text = `${data.authorName}を構成する9つのマンガ${themeText}\n#9coma #9koma #My9manga\n`;
+    const text = `${data.authorName}を構成する9つのマンガ${themeText}\n#9コマ #9coma #9koma #My9manga\n`;
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };
@@ -46,7 +46,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: '9coma - 9つのマンガ',
+          title: '9コマ - 私を構成する9つのマンガ',
           text: `${data.authorName}を構成する9つのマンガ`,
         });
       } else {
@@ -128,53 +128,63 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       {/* シェア＆コピー＆クローン用のボタン領域群（グリッド枠の下の固まり全体） */}
       <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
         {/* Xでシェアボタン（一番目立つ黒背景ボタン） */}
-        <button
-          onClick={shareOnX}
-          style={{
-            width: '100%',
-            padding: '1.2rem',
-            borderRadius: 'var(--radius-md)',
-            background: '#000',
-            color: 'white',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            border: '3px solid #000',
-            boxShadow: 'var(--shadow-md)',
-            transition: 'var(--transition-base)'
-          }}
-        >
-          <span>Xでシェアする</span>
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={shareOnX}
+            style={{
+              width: '100%',
+              padding: '1.2rem',
+              borderRadius: 'var(--radius-md)',
+              background: '#000',
+              color: 'white',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              border: '3px solid #000',
+              boxShadow: 'var(--shadow-md)',
+              transition: 'var(--transition-base)'
+            }}
+          >
+            <span>Xでシェアする</span>
+          </button>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', margin: 0 }}>
+            🔗 XやLINEで「横長サムネイル」として表示されます
+          </p>
+        </div>
 
         {/* 画像でシェアボタン (スマホ推奨) */}
-        <button
-          onClick={handleImageShare}
-          disabled={isSharing}
-          style={{
-            width: '100%',
-            padding: '1.2rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, #4b5563, #1f2937)',
-            color: 'white',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            border: 'none',
-            boxShadow: 'var(--shadow-md)',
-            transition: 'var(--transition-base)',
-            opacity: isSharing ? 0.7 : 1,
-            cursor: isSharing ? 'wait' : 'pointer'
-          }}
-        >
-          <span>{isSharing ? '生成中...' : '📸 画像でシェア (スマホ推奨)'}</span>
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={handleImageShare}
+            disabled={isSharing}
+            style={{
+              width: '100%',
+              padding: '1.2rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(135deg, #4b5563, #1f2937)',
+              color: 'white',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              border: 'none',
+              boxShadow: 'var(--shadow-md)',
+              transition: 'var(--transition-base)',
+              opacity: isSharing ? 0.7 : 1,
+              cursor: isSharing ? 'wait' : 'pointer'
+            }}
+          >
+            <span>{isSharing ? '画像を作成中です...' : '📸 画像でシェア (スマホ推奨)'}</span>
+          </button>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', margin: 0 }}>
+            🖼️ スマホ全画面の「縦長 3×3 画像」を生成します
+          </p>
+        </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
           {/* 左側：「URLをコピー」ボタン */}

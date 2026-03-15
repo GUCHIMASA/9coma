@@ -88,6 +88,16 @@ export default function HomeClient() {
     }
   }, [slots, authorName, theme, isLoaded]);
 
+  // モーダルが開いた際の状態リセット
+  useEffect(() => {
+    if (selectedSlotIndex !== null) {
+      setKeyword('');
+      setSearchTitle('');
+      setSearchAuthor('');
+      setSearchResults([]);
+    }
+  }, [selectedSlotIndex]);
+
   // 検索処理
   const handleSearch = useCallback(async (k: string, t: string, a: string) => {
     if (!k.trim() && !t.trim() && !a.trim()) {
@@ -128,6 +138,11 @@ export default function HomeClient() {
       return;
     }
 
+    // テーマが変更された場合は即座にクリア
+    if (theme !== lastFetchedTheme) {
+      setThemeRecommendations([]);
+    }
+
     if (isLoadingRecommendations || (themeRecommendations.length > 0 && theme === lastFetchedTheme)) {
       return;
     }
@@ -154,7 +169,7 @@ export default function HomeClient() {
     };
     fetchRecommendations();
     return () => { cancelled = true; };
-  }, [selectedSlotIndex, theme, themeRecommendations.length, lastFetchedTheme, isLoadingRecommendations]);
+  }, [selectedSlotIndex, theme]); // 依存配列を最小限に整理
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;
@@ -282,14 +297,17 @@ export default function HomeClient() {
     <div className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
       <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.5rem' }}>
-          9coma
+          9コマ
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
-          あなたを構成する9つのマンガをシェアしよう
+          私を構成する9つのマンガを選んでシェアしよう。
         </p>
       </header>
 
       <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <p style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1.2rem' }}>
+          💡 空いているマスをタップして、マンガを検索してください。
+        </p>
         <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <label htmlFor="themeSelect" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>テーマ（タグ）</label>
           <select
@@ -348,6 +366,9 @@ export default function HomeClient() {
                   transition: 'width 0.3s ease'
                 }} />
               </div>
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                👆 長押ししてドラッグで場所を入れ替えられます。
+              </p>
             </div>
           );
         })()}
@@ -490,7 +511,7 @@ export default function HomeClient() {
               <input
                 type="text"
                 autoFocus
-                placeholder="漫画のタイトルで探す..."
+                placeholder="作品名で探す..."
                 value={searchTitle}
                 onChange={(e) => setSearchTitle(e.target.value)}
                 style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
@@ -523,12 +544,12 @@ export default function HomeClient() {
                     <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
                   </div>
                 ))
-              ) : !(keyword || searchTitle || searchAuthor) && isLoadingRecommendations ? (
+              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && (isLoadingRecommendations || !lastFetchedTheme || theme !== lastFetchedTheme) ? (
                 Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
-              ) : !(keyword || searchTitle || searchAuthor) && themeRecommendations.length > 0 ? (
+              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && themeRecommendations.length > 0 ? (
                 <>
                   <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0' }}>
-                    📚 {theme} でよく選ばれています
+                    📚 {theme} で多くの人が選んでいる作品：
                   </p>
                   {themeRecommendations.map((manga) => (
                     <div key={manga.isbn} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
@@ -537,7 +558,7 @@ export default function HomeClient() {
                     </div>
                   ))}
                 </>
-              ) : (keyword || searchTitle || searchAuthor) && (
+              ) : (keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
               )}
               <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
@@ -549,11 +570,20 @@ export default function HomeClient() {
       )}
 
       <section style={{ maxWidth: '400px', margin: '3rem auto 0', padding: '0 1rem' }}>
+        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>作成者名：</p>
         <input
           type="text"
-          placeholder="あなたの名前（任意）"
+          placeholder="あなたの名前（空欄可）"
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
+          style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
+        />
+        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>テーマ：</p>
+        <input
+          type="text"
+          placeholder="このリストテーマを選ぶ（空欄可）"
+          value={theme}
+          onChange={(e) => setTheme(e.target.value)}
           style={{ width: '100%', background: 'var(--color-surface)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '1.2rem', boxShadow: 'var(--shadow-sm)' }}
         />
         <button

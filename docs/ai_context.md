@@ -10,45 +10,42 @@
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Vanilla CSS (`globals.css` に定義したCSS変数を活用。Tailwindは不使用)
-- **Backend/DB:** Firebase (Firestore / Hosting)
-- **External API:** 楽天ブックス総合検索API (v2) を使用して漫画データを取得
+- **Backend/DB:** Firebase (Firestore) ※Hostingはリダイレクト専用
+- **Hosting/CI/CD:** Vercel (メインのホスティング環境)
+- **External API:** 楽天ブックス書籍検索API (`BooksBook/Search/20170404`)
 
 ## 3. 主要なディレクトリ・ファイル構造
 ```text
 src/
 ├── app/
 │   ├── page.tsx          # トップページ (検索、グリッドUIによるリスト作成)
-│   ├── layout.tsx        # 共通レイアウト、メタデータ、Google Analytics(GA4)
+│   ├── layout.tsx        # 共通レイアウト、GA4
 │   ├── globals.css       # グローバルCSSとCSS変数の定義
 │   ├── api/
-│   │   ├── search/route.ts # 楽天APIを用いた漫画検索（デバウンス、キーワード結合、outOfStockFlag=1による絶版対応）
-│   │   └── list/route.ts   # リストの保存(Firestore)と取得用API
+│   │   ├── search/route.ts # 楽天APIを用いた検索（title, author パラメータを個別送信）
+│   │   └── list/route.ts   # リストの保存(Firestore)
 │   └── list/[id]/
-│       ├── page.tsx            # シェアされたリストの個別閲覧ページ (SSR化済み)
-│       ├── ListViewClient.tsx  # クライアントサイドのシェアボタン等ロジック用
-│       └── opengraph-image.tsx # next/ogによる動的OGP画像生成（左にSlot5・右に他8冊のレイアウト）
-├── app/opengraph-image.png # トップページ専用の静的OGP画像
+│       ├── page.tsx            # 個別閲覧ページ (SSR)
+│       ├── ListViewClient.tsx  # AmazonアフィリエイトID (9coma-22) 実装箇所
+│       └── share-image/        # 共有用画像の生成 (OGPとは別)
 ├── lib/
 │   ├── firebase.ts       # Firebase初期化設定
 │   └── list.ts           # リスト取得などのヘルパー関数
 └── types/
     └── index.ts          # MangaItem (isbn, title, author, imageUrl, affiliateUrl) 等の型定義
+docs/
+├── management/           # AI作業管理用 (task.md, implementation_plan.md 等)
+├── ai_context.md         # このファイル（AI向け全体ガイド）
+└── ux_seo_proposal.md    # UX/SEO改善案
 ```
 
 ## 4. 固有の仕様やルール
-- **デザイン・UI:** 
-  - メインカラーは黄色系（明るくポップなデザイン）。
-  - グリッドのUIは3x3（全9スロット）。
-  - **特等席:** 中心にある5番目のスロット（`idx === 4`）は、特別感を出すため背景を薄ピンク（`#FFA8B8`）にしている。
-- **検索の仕組み:** 
-  - 入力欄は「タイトル」「著者名」「キーワード」の3つ。これらをバックエンド (`search/route.ts`) で半角スペース連結し、楽天APIの単一 `keyword` として渡している。
-  - 絶版・古い作品も取得できるよう、楽天APIに `outOfStockFlag=1` を指定している。
-- **OGPとSSR:** 
-  - X等のSNSクローラーに確実にメタデータを読ませるため、個別ページ (`/list/[id]/page.tsx`) は **Server-Side Rendering (SSR)** としている。
-  - 動的OGP画像 (`/list/[id]/opengraph-image.tsx`) は、左側に「特等席のSlot 5」、右側に「その他の8冊の画像を4列x2行」で並べる独自レイアウト（黄色グラデーション背景）を採用。
-  - トップページには静的な専用OGP (`opengraph-image.png`) を用意している。
-- **トラッキング:** `layout.tsx` 内で `next/script` を用いて GA4 を実装（環境変数 `NEXT_PUBLIC_GA_ID` で作動）。
-- **デプロイ戦略:** 絶対にローカル（`http://localhost:3000`）でプレビュー確認とユーザー承認を得てから本番（Firebase Hosting）へデプロイする方針としている。
+- **デザイン:** メインカラーは黄色系。3x3グリッド。中心(Slot 5)は「特等席」として特別な装飾。
+- **サイト名:** 公式名称を「9コマ」に変更予定（内部コードでは順次反映）。
+- **検索:** 精度向上のため `BooksBook/Search` API を使用。`title` と `author` を個別に渡す。
+- **アフィリエイト:** Amazonリンクには一律で `tag=9coma-22` を付与。
+- **リダイレクト:** `coma-5555b.web.app` (Firebase) は `9coma.com` (Vercel) へ 301 転送される。
+- **AI管理:** 進行中のタスクやルールは `docs/management/` 以下のファイルを「公式記録」として読み取り、更新すること。
 
 ---
-**[質問や相談内容をここに記載してください]**
+**[AIへの指示: 常に `docs/management/task.md` を確認して重複作業を防いでください]**

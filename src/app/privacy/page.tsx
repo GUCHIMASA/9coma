@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー・免責事項 | 9coma',
-  description: '9comaのプライバシーポリシー、免責事項、および著作権に関する指針',
+  title: 'プライバシーポリシー・免責事項 | 9コマ',
+  description: '9コマのプライバシーポリシー、免責事項、および著作権に関する指針',
 };
 
 export default function PrivacyPolicy() {
@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>本サービスで生成される画像について</p>
           <p>
-            本サービス（9coma）が生成する画像に含まれる書籍の書影、タイトル、および著者名等の著作権は、各出版社、著者、および権利者に帰属します。本サービスは、楽天ブックスAPIを利用し、書籍のプロモーションおよび紹介を目的としてこれらの情報を表示・合成しています。
+            本サービス（9コマ）が生成する画像に含まれる書籍の書影、タイトル、および著者名等の著作権は、各出版社、著者、および権利者に帰属します。本サービスは、楽天ブックスAPIを利用し、書籍のプロモーションおよび紹介を目的としてこれらの情報を表示・合成しています。
           </p>
         </div>
       </section>
@@ -44,7 +44,7 @@ export default function PrivacyPolicy() {
         </h2>
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           <p style={{ marginBottom: '1rem' }}>
-            Amazonのサイバーマンデー、ブラックフライデー等のキャンペーン期間を含め、Amazonのアソシエイトとして、9coma（9コマ）は適格販売により収入を得ています。
+            Amazonのサイバーマンデー、ブラックフライデー等のキャンペーン期間を含め、Amazonのアソシエイトとして、9コマは適格販売により収入を得ています。
           </p>
           <p>
             当サイトは、楽天グループ株式会社が提供する楽天アフィリエイトプログラムに参加しています。

@@ -2,19 +2,19 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
-  ? process.env.NEXT_PUBLIC_BASE_URL 
-  : process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+  ? process.env.NEXT_PUBLIC_BASE_URL
+  : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:3000';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: '9coma | 私を構成する9つのマンガ',
-  description: '自分を形成した漫画9作品を選んでページを作成し、SNSでシェアできるWebサービス',
+  title: '私を構成する9つのマンガ | 9コマ（9coma / 9koma）',
+  description: '9コマ（9koma / 9coma）は、私を構成する9つのマンガを3×3のタイル状のページにして共有できるサービスです。人生のバイブルや最近の推しを整理して、あなただけの「マンガ棚」をSNSでシェアしませんか？',
   openGraph: {
-    title: '9coma | 私を構成する9つのマンガ',
-    description: '自分を形成した漫画9作品を選んでページを作成し、SNSでシェアできるWebサービス',
+    title: '私を構成する9つのマンガ | 9コマ',
+    description: '9コマは、私を構成する9つのマンガを3×3のタイル状のページにして共有できるサービスです。人生のバイブルや最近の推しを整理して、あなただけの「マンガ棚」をSNSでシェアしませんか？',
     type: 'website',
   },
   twitter: {
@@ -59,7 +59,7 @@ export default function RootLayout({
         <div style={{ flex: 1 }}>
           {children}
         </div>
-        <footer 
+        <footer
           className="google-anno-skip"
           style={{
             textAlign: 'center',
@@ -78,7 +78,7 @@ export default function RootLayout({
               プライバシーポリシー
             </a>
           </div>
-          <p>© {new Date().getFullYear()} 9coma</p>
+          <p>© {new Date().getFullYear()} 9コマ</p>
         </footer>
       </body>
     </html>

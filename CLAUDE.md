@@ -1,17 +1,27 @@
-# 9coma Project Context
+# 9コマ プロジェクト概要
 
-## Overview
-9coma is a web application where users can create and share their top 9 comics (私を構成する9冊).
-It utilizes Firebase for hosting and Next.js as the application framework.
+## プロジェクトについて
+9コマ（ナインコマ）は、ユーザーが「私を構成する9つのマンガ」を選び、3x3のグリッド形式でシェア用ページを作成・共有できるWebアプリケーションです。
+Next.jsをフレームワークとして使用し、FirebaseおよびVercelでホスティングされています。
 
-## Recent Changes
-- **[2026-03-08] Text & OGP Adjustment**: Modified all occurrences of "〜を構成する漫画9選" to "私を構成する9つのマンガ" across the project. Updated OGP text, layout, and share intent tweet hashtags (`#9coma #9koma #私を構成する9つのマンガ`).
-- **[2026-03-08] Text & OGP Adjustment**: Modified all occurrences of "〜を構成する漫画9選" to "私を構成する9つのマンガ" across the project. Updated OGP text, layout, and share intent tweet hashtags (`#9coma #9koma #私を構成する9つのマンガ`).
-- **[2026-03-08] OGP Image Layout Update**: Changed `src/app/list/[id]/opengraph-image.tsx` to generate a 1200x630 layout featuring a 2x5 grid of comics and dynamic text for the user's top 9 comics.
-- **[2026-03-08] OGP Image Redesign & Slot 5 Highlight**: Redesigned the OGP layout to match the new mockup (Slot 5 on the left with a badge, other 8 slots in a 2x4 grid on the right). Highlighted Slot 5 with a pink background `#FFA8B8` on the homepage and OGP image to signify its importance.
-- **[2026-03-08] Top Page Static OGP**: Added a custom static OGP image specifically for the top page (`src/app/opengraph-image.png`) using the provided `9coma_ogp2.png` asset.
+## 最近の変更履歴
+- **[2026-03-08] 表記とOGPの調整**: サイト内の「〜を構成する漫画9選」を「私を構成する9つのマンガ」に統一。OGPテキスト、レイアウト、ハッシュタグ（`#9coma #9koma #私を構成する9つのマンガ`）を更新。
+- **[2026-03-08] OGP画像レイアウト**: `src/app/list/[id]/opengraph-image.tsx` を修正し、1200x630サイズでSlot 5を強調したレイアウトに変更。
+- **[2026-03-08] トップページ専用OGP**: トップページ用に静的なOGP画像 (`src/app/opengraph-image.png`) を設定。
+- **[2026-03-14] 収益化 & 検索改善**: AmazonアフィリエイトID (`9coma-22`) の組み込みと、楽天APIの検索精度向上（パラメータ分離）を実施。
+- **[2026-03-14] リダイレクト設定**: 旧Firebaseドメインから新ドメイン (`9coma.com`) への 301 転送設定を完了。
 
-## Workflow & Commands
-- **Dev**: `npm run dev`
-- **Build**: `npm run build`
-- **Deploy**: `npx firebase deploy` (or `firebase deploy`)
+## ワークフローとコマンド
+- **開発サーバー起動**: `npm run dev`
+- **ビルド**: `npm run build`
+- **本番デプロイ**: Vercel (mainブランチへのpushで自動デプロイ)
+- **Firebase Hosting**: 旧ドメインからの 301 リダイレクト管理にのみ使用。
+
+## AI 向けのコンテキスト共有ルール
+このプロジェクトに従事するすべてのAI（Antigravity, Cursor等）は、重複作業を防ぎ一貫性を保つため、**必ず最初に以下のファイルを読み取ってください。**
+
+- **`docs/ai_context.md`**: 技術仕様、ディレクトリ構造、コーディングルールのマスターガイド。
+- **`docs/management/task.md`**: 現在の進捗状況とタスクリスト（**最優先参照**）。
+- **`docs/management/roles_and_rules.md`**: 振る舞いのルールや標準化の指針。
+- **`docs/management/implementation_plan.md`**: 次に実装する機能の設計書。
+- **`docs/ux_seo_proposal.md`**: 用語、UXガイド、SEOテキストの一覧。

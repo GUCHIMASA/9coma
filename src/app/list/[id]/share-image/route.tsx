@@ -26,7 +26,7 @@ export async function GET(
           {/* Header */}
           <div style={{ display: 'flex', flexDirection: 'column', height: '160px', justifyContent: 'center', textAlign: 'center' }}>
             <h1 style={{ fontSize: '32px', opacity: 0.8, marginBottom: '4px', fontWeight: 400, margin: 0 }}>
-              {data.authorName}を構成する{data.theme ? '9つのマンガ' : ''}
+              {data.authorName}を構成する9つのマンガ
             </h1>
             <h1 style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
               {data.theme || '9つのマンガ'}
@@ -88,7 +88,7 @@ export async function GET(
           {/* Footer */}
           <div style={{ display: 'flex', width: '100%', height: '160px', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <p style={{ fontSize: '64px', fontWeight: 800, margin: 0, padding: 0, lineHeight: 1 }}>9coma</p>
+              <p style={{ fontSize: '64px', fontWeight: 800, margin: 0, padding: 0, lineHeight: 1 }}>9コマ</p>
               <p style={{ fontSize: '20px', opacity: 0.6, margin: '4px 0', marginBottom: '8px' }}>https://9coma.com</p>
               <p style={{ fontSize: '14px', opacity: 0.8, margin: 0, fontWeight: 700 }}>Data from Rakuten Books - Powered by 9coma.com</p>
             </div>

@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'このサイトについて | 9coma',
-  description: '9comaの開発のきっかけと運営者の想い',
+  title: 'このサイトについて | 9コマ',
+  description: '9コマの開発のきっかけと運営者の想い',
 };
 
 export default function AboutPage() {
@@ -21,7 +21,7 @@ export default function AboutPage() {
         
         <div style={{ color: 'var(--color-text)', fontSize: '1rem', whiteSpace: 'pre-wrap' }}>
           <p>
-            「9coma」は、「自分の好きな漫画を、誰かと分かち合う」というワクワクの在り方を提供することを目的とした、個人運営のサービスです。
+            「9コマ」は、「自分の好きな漫画を、誰かと分かち合う」というワクワクの在り方を提供することを目的とした、個人運営のサービスです。
           </p>
           <br />
           <p>
@@ -33,7 +33,7 @@ export default function AboutPage() {
           </p>
           <br />
           <p>
-            この「9coma」が、誰かの新しい一面を“構成する”ような漫画と出会う、ささやかなきっかけになれば。これほど嬉しいことはありません。
+            この「9コマ」が、誰かの新しい一面を“構成する”ような漫画と出会う、ささやかなきっかけになれば。これほど嬉しいことはありません。
           </p>
         </div>
       </section>

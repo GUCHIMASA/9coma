@@ -49,7 +49,7 @@ export default async function Image({ params }: { params: { id: string } }) {
               letterSpacing: '0.2em',
             }}
           >
-            {data.theme ? `＃${data.theme}` : '9COMA.COM'}
+            {data.theme ? `＃${data.theme}` : '9コマ'}
           </div>
 
           {/* Large Box (Slot 5) */}

@@ -19,7 +19,7 @@ export async function generateMetadata(
     }
 
     const themeText = data.theme ? `：${data.theme}` : '';
-    const metaTitle = `${data.authorName}を構成する9つのマンガ${themeText} | 9coma`;
+    const metaTitle = `${data.authorName}を構成する9つのマンガ${themeText} | 9コマ`;
     const metaDesc = `${data.authorName}が選んだ、自分を構成する9つのマンガです。`;
 
     console.log(`[Metadata] Successfully retrieved data for ${params.id}. Title: ${metaTitle}`);
@@ -31,7 +31,7 @@ export async function generateMetadata(
         title: metaTitle,
         description: metaDesc,
         type: 'article',
-        siteName: '9coma',
+        siteName: '9コマ',
         // Next.jsのファイルベースOGP(opengraph-image.tsx)は自動で入るはずだが、
         // 念のため明示的に指定することで確実性を高める
         images: [
@@ -80,7 +80,7 @@ export default async function ListView({ params }: { params: { id: string } }) {
             #{data.theme}
           </div>
         ) : (
-          <p style={{ color: 'var(--color-text-secondary)' }}>9coma.com</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>9コマ</p>
         )}
       </header>
 
