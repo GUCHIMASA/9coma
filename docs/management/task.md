@@ -200,3 +200,8 @@
 - [x] シェア用 URL のテキスト内明示化（共有の堅牢性向上） (3/16完了)
 - [x] ホームヘッダーの軽量化とモバイル表示の最適化 (3/16完了)
 - [x] 最終確認と Vercel (9coma.com) デプロイ (3/16完了)
+
+## Phase 33: Google AdSense ID の設定と検証
+- [/] `.env.local` への `NEXT_PUBLIC_ADSENSE_PUB_ID` 追記
+- [ ] Vercel 環境変数への ID 登録案内
+- [ ] ブラウザでの AdSense スクリプト読み込み確認
