@@ -2,6 +2,7 @@
 export interface MangaItem {
   isbn: string;
   title: string;
+  seriesName?: string;
   author: string;
   imageUrl: string;
   affiliateUrl: string;
@@ -21,6 +22,7 @@ export interface ComicList {
 export interface RakutenBookItem {
   isbn: string;
   title: string;
+  seriesName: string;
   author: string;
   largeImageUrl: string;
   affiliateUrl: string;

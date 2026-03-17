@@ -201,7 +201,36 @@
 - [x] ホームヘッダーの軽量化とモバイル表示の最適化 (3/16完了)
 - [x] 最終確認と Vercel (9coma.com) デプロイ (3/16完了)
 
-## Phase 33: Google AdSense ID の設定と検証
-- [/] `.env.local` への `NEXT_PUBLIC_ADSENSE_PUB_ID` 追記
-- [ ] Vercel 環境変数への ID 登録案内
-- [ ] ブラウザでの AdSense スクリプト読み込み確認
+## Phase 33: 詳細ページのタイトル（作品名）表示への復元（差し戻し仕様）
+- [x] ListViewClient.tsx での表示名を `manga.title` に復元 (3/16完了)
+- [x] ListViewClient.tsx での検索リンクを `manga.title` ベースに復元 (3/16完了)
+- [x] api/search/route.ts での不確実なタイトル加工・正規化ロジックの廃止 (3/16完了)
+- [x] 全体の表示確認とユーザー承認 (3/16完了)
+
+## Phase 34: 著者別詳細ページ（/author/[authorName]）の実装
+- [x] 著者別ページ (`/src/app/author/[authorName]/page.tsx`) の新規作成 (3/17完了)
+- [x] 著者作品一覧（manga_cache）と関連リスト（lists）の取得ロジック (3/17完了)
+- [x] ListViewClient.tsx の著者名をリンク化 (3/17完了)
+- [x] SNS連携（「○○先生に伝える」ボタン）の実装 (3/17完了)
+- [x] 動作確認とインデックス提案 (3/17完了)
+
+## Phase 35: 著者別リスト取得の最適化（高速化・精度向上）
+- [x] 投稿 API (`/api/list/route.ts`) で `authors` フィールドを保存する修正 (3/17完了)
+- [x] 取得ロジック (`/lib/list.ts`) の `getListsByAuthor` を `array-contains` クエリに移行 (3/17完了)
+- [x] 動作確認とパフォーマンス検証 (3/17完了)
+
+## Phase 36: 既存データの著者名紐付け（マイグレーション）
+- [x] 移行スクリプト (`/scripts/migrate-authors.ts`) の作成 (3/17完了)
+- [x] スクリプトの実行（バッチ処理による authors フィールドの一括付与） (3/17完了)
+- [x] 完了後の著者ページにおける統計情報の確認 (3/17完了)
+
+## Phase 37: ページナビゲーションボタン（うえに戻る/ホームへ戻る）の実装
+- [x] フローティングボタンコンポーネント (`ScrollToTop.tsx`) の作成 (3/17完了)
+- [x] RootLayout への組み込み (3/17完了)
+- [x] 動作確認（スクロール追従、スムーズスクロール、遷移） (3/17完了)
+
+## Phase 38: 著者別ページ専用の動적 OGP 画像生成の実装
+- [ ] OGP 画像生成スクリプト (`/src/app/author/[authorName]/opengraph-image.tsx`) の作成
+- [ ] サイトカラー（黄色）を基調としたデザイン適用
+- [ ] 累計カウント・代表作書影の動的埋め込み
+- [ ] SNS（X）での表示確認検証

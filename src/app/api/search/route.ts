@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { MangaItem } from '@/types';
 
 // モック漫画データ（APIキー取得後に楽天APIへ差し替え）
 const MOCK_MANGA: Record<string, Record<string, string>[]> = {
@@ -6,6 +7,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784088820934',
             title: 'ONE PIECE 1',
+            seriesName: 'ONE PIECE',
             author: '尾田 栄一郎',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/0934/9784088820934.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/1234567/',
@@ -13,6 +15,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784088742717',
             title: 'NARUTO -ナルト- 1',
+            seriesName: 'NARUTO-ナルト-',
             author: '岸本 斉史',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/2717/9784088742717.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/2345678/',
@@ -20,6 +23,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784088717616',
             title: 'DRAGON BALL 1',
+            seriesName: 'DRAGON BALL',
             author: '鳥山 明',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/7616/9784088717616.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/3456789/',
@@ -27,6 +31,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784063288995',
             title: '進撃の巨人 1',
+            seriesName: '進撃の巨人',
             author: '諫山 創',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/8995/9784063288995.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/4567890/',
@@ -34,6 +39,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784819170000',
             title: '鬼滅の刃 1',
+            seriesName: '鬼滅の刃',
             author: '吾峠 呼世晴',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/0000/9784819170000.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/5678901/',
@@ -41,6 +47,7 @@ const MOCK_MANGA: Record<string, Record<string, string>[]> = {
         {
             isbn: '9784088775401',
             title: '呪術廻戦 1',
+            seriesName: '呪術廻戦',
             author: '芥見 下々',
             imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/5401/9784088775401.jpg',
             affiliateUrl: 'https://books.rakuten.co.jp/rb/6789012/',
@@ -56,7 +63,7 @@ export async function GET(request: Request) {
 
     // 楽天APIキー
     const appId = process.env.RAKUTEN_APPLICATION_ID;
-    const affiliateId = process.env.RAKUTEN_AFFILIATE_ID;
+    const affiliateId = process.env.NEXT_PUBLIC_RAKUTEN_AFFILIATE_ID;
     const accessKey = process.env.RAKUTEN_ACCESS_KEY;
 
     if (appId && appId !== 'your_rakuten_app_id_here') {
@@ -97,10 +104,20 @@ export async function GET(request: Request) {
             const data = await res.json();
             
             if (!data.errors && !data.error && res.ok && data.Items) {
+                interface RakutenItemDef {
+                    isbn: string;
+                    title: string;
+                    seriesName?: string;
+                    author: string;
+                    largeImageUrl: string;
+                    affiliateUrl?: string;
+                    itemUrl?: string;
+                }
                 // フィルタリングせずそのまま返して、API 本来の結果を確認する
-                const items = data.Items.map((item: { isbn: string; title: string; author: string; largeImageUrl: string; affiliateUrl: string; itemUrl: string }) => ({
+                const items = data.Items.map((item: RakutenItemDef) => ({
                     isbn: item.isbn,
                     title: item.title,
+                    seriesName: item.seriesName,
                     author: item.author,
                     imageUrl: item.largeImageUrl,
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
@@ -111,11 +128,12 @@ export async function GET(request: Request) {
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
                         const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                        items.slice(0, 3).forEach(async (m: { isbn: string; title: string; author: string; imageUrl: string; affiliateUrl: string }) => {
+                        items.forEach(async (m: MangaItem) => {
                             try {
                                 const cacheRef = doc(db, 'manga_cache', m.isbn);
                                 const cacheSnap = await getDoc(cacheRef);
-                                if (!cacheSnap.exists()) {
+                                // シリーズ名が未取得の場合のみ書き込む（書き込み回数の抑制）
+                                if (!cacheSnap.exists() || !cacheSnap.data()?.seriesName) {
                                     await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
                                 }
                             } catch {

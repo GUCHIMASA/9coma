@@ -25,55 +25,79 @@ export const getListById = cache(async (id: string) => {
         const hydratedSlots = await Promise.all(
           data.slots.map(async (slot, idx) => {
             const isIsbnString = typeof slot === 'string' && slot.length > 0;
-            // オブジェクトかつ画像URLが実質的にない（欠落、null、または空文字）、かつISBNがある場合を判定
+            // オブジェクトかつ画像URLが実質的にない、またはシリーズ名が欠落している、かつISBNがある場合を判定
             const isObject = slot !== null && typeof slot === 'object';
             const slotAsObj = slot as unknown as Record<string, unknown>;
             const isMissingImageUrl = isObject && (!slotAsObj.imageUrl || slotAsObj.imageUrl === '') && ('isbn' in slotAsObj);
+            const isMissingSeriesName = isObject && (slotAsObj.seriesName === undefined) && ('isbn' in slotAsObj);
             
-            if (isIsbnString || isMissingImageUrl) {
+            if (isIsbnString || isMissingImageUrl || isMissingSeriesName) {
               const isbn = isIsbnString ? (slot as string) : (slotAsObj.isbn as string);
-              console.log(`[Hydration] Slot ${idx}: Needs hydration. ISBN: ${isbn}. Trigger: ${isIsbnString ? 'String' : 'FalsyURL'}`);
+              console.log(`[Hydration] Slot ${idx}: Needs hydration. ISBN: ${isbn}. Trigger: ${isIsbnString ? 'String' : (isMissingImageUrl ? 'FalsyURL' : 'MissingSeries')}`);
               
               // ISBNを使ってキャッシュまたは楽天から情報を復元
               try {
                 const cacheSnap = await getDoc(doc(db, 'manga_cache', isbn));
                 if (cacheSnap.exists()) {
-                  console.log(`[Hydration] Slot ${idx}: Cache HIT for ISBN ${isbn}`);
-                  return cacheSnap.data() as MangaItem;
+                  const cachedManga = cacheSnap.data() as MangaItem;
+                  // シリーズ名がある場合はそのまま返す
+                  if (cachedManga.seriesName && cachedManga.seriesName !== '') {
+                    console.log(`[Hydration] Slot ${idx}: Cache HIT with SeriesName for ISBN ${isbn}`);
+                    return cachedManga;
+                  }
+                  console.log(`[Hydration] Slot ${idx}: Cache HIT but MISSING SeriesName for ISBN ${isbn}. Re-fetching...`);
                 }
                 
-                console.log(`[Hydration] Slot ${idx}: Cache MISS for ISBN ${isbn}. Trying fallback to Rakuten API...`);
-                // キャッシュになければ、一度だけ楽天APIから直接取得を試める（救済策）
+                console.log(`[Hydration] Slot ${idx}: Fetching from Rakuten API to heal data. ISBN: ${isbn}`);
+                // キャッシュにない、またはシリーズ名が欠落している場合は楽天APIから取得
                 const appId = process.env.RAKUTEN_APPLICATION_ID;
                 if (appId && appId !== 'your_rakuten_app_id_here') {
-                  const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
+                  // seriesName を確実に取得するため BooksBook を使用
+                  const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
                   url.searchParams.set('applicationId', appId);
                   url.searchParams.set('isbn', isbn);
                   url.searchParams.set('formatVersion', '2');
                   
-                  const res = await fetch(url.toString());
+                  const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+                  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
+                  const headers: Record<string, string> = {
+                    'Referer': baseUrl,
+                    'Origin': baseUrl,
+                  };
+                  if (accessKey) {
+                    headers['Authorization'] = `Bearer ${accessKey}`;
+                  }
+
+                  const res = await fetch(url.toString(), {
+                    headers,
+                  });
                   const resData = await res.json();
                   if (resData.Items && resData.Items.length > 0) {
                     const item = resData.Items[0];
                     const manga: MangaItem = {
                       isbn: item.isbn,
                       title: item.title,
+                      seriesName: item.seriesName || '',
                       author: item.author,
                       imageUrl: item.largeImageUrl,
                       affiliateUrl: item.affiliateUrl || item.itemUrl,
                     };
-                    console.log(`[Hydration] Slot ${idx}: Successfully fetched from Rakuten for ISBN ${isbn}. Saving to cache...`);
-                    await setDoc(doc(db, 'manga_cache', isbn), { ...manga, updatedAt: Date.now() });
+                    console.log(`[Hydration] Slot ${idx}: Successfully healed seriesName for ISBN ${isbn}. Updating cache...`);
+                    await setDoc(doc(db, 'manga_cache', isbn), { ...manga, updatedAt: Date.now() }, { merge: true });
                     return manga;
                   } else {
-                    console.warn(`[Hydration] Slot ${idx}: Rakuten API returned no results for ISBN ${isbn}`);
+                    if (resData.errors || resData.error) {
+                      console.warn(`[Hydration] Slot ${idx}: Rakuten API Error:`, resData.errors || resData.error);
+                    } else {
+                      console.warn(`[Hydration] Slot ${idx}: Rakuten API returned no results for ISBN ${isbn} during healing`);
+                    }
                   }
                 }
               } catch (e) {
-                console.error(`[Hydration] Slot ${idx}: Error during hydration for ISBN ${isbn}:`, e);
+                console.error(`[Hydration] Slot ${idx}: Error during healing for ISBN ${isbn}:`, e);
               }
               // 全て失敗した場合は（あったものを活かすか、ISBNだけのオブジェクトを返す）
-              return typeof slot === 'object' ? slot : { isbn: isbn, title: '不明なマンガ', author: '', imageUrl: '', affiliateUrl: '' };
+              return typeof slot === 'object' ? slot : { isbn: isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
             }
             return slot as MangaItem | null;
           })
@@ -122,7 +146,7 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
               if (typeof slot === 'string' && slot.length > 0) {
                 const cacheSnap = await getDoc(doc(db, 'manga_cache', slot));
                 if (cacheSnap.exists()) return cacheSnap.data() as MangaItem;
-                return { isbn: slot, title: '不明なマンガ', author: '', imageUrl: '', affiliateUrl: '' };
+                return { isbn: slot, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
               }
               return slot as MangaItem | null;
             })
@@ -138,6 +162,103 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
       if (e instanceof Error && e.message.includes('index')) {
         console.error('Firestore needs an index! Please check the Firebase console URL in the error message.');
       }
+    }
+  }
+  return [];
+});
+// 特定の著者の作品一覧を取得する
+export const getMangaByAuthor = cache(async (authorName: string) => {
+  console.log(`[Firestore] Fetching manga by author: ${authorName}`);
+  const projectId = process.env.NEXT_PUBLIC_BASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (projectId && projectId !== 'your_project_id') {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      
+      const q = query(
+        collection(db, 'manga_cache'),
+        where('author', '==', authorName),
+        limit(50)
+      );
+      
+      const snaps = await getDocs(q);
+      const results = snaps.docs.map(snap => snap.data() as MangaItem);
+      return results;
+    } catch (e) {
+      console.error('Firestore error in getMangaByAuthor:', e);
+    }
+  }
+  return [];
+});
+
+// 著者が選ばれた累計コマ数を取得する (Phase 38 アップグレード)
+export const getSelectionCountByAuthor = cache(async (authorName: string) => {
+  console.log(`[Firestore] Calculating total selection count for author: ${authorName}`);
+  const projectId = process.env.NEXT_PUBLIC_BASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (projectId && projectId !== 'your_project_id') {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { collection, query, where, getDocs, limit, orderBy } = await import('firebase/firestore');
+      
+      // 著者が含まれるリストを取得（インデックスエラー回避のため orderBy を外し、limit を広めに設定）
+      const q = query(
+        collection(db, 'lists'),
+        where('authors', 'array-contains', authorName),
+        limit(500)
+      );
+      
+      const snaps = await getDocs(q);
+      let totalSelectionCount = 0;
+      const normalizedAuthorName = authorName.trim();
+      
+      snaps.docs.forEach(snap => {
+        const data = snap.data() as { slots: (MangaItem | string | null)[] };
+        if (data.slots) {
+          // 各スロット内で著者が一致するものをカウント
+          const countInList = data.slots.filter(slot => {
+            if (!slot || typeof slot === 'string') return false; 
+            const slotAuthor = (slot.author || '').trim();
+            // 完全一致または、共著などの場合を考慮して includes で判定
+            return slotAuthor === normalizedAuthorName || slotAuthor.includes(normalizedAuthorName);
+          }).length;
+          totalSelectionCount += countInList;
+        }
+      });
+      
+      return totalSelectionCount;
+    } catch (e) {
+      console.error('Firestore error in getSelectionCountByAuthor:', e);
+    }
+  }
+  return 0;
+});
+
+// 特定の著者の作品を含むリストを取得する
+export const getListsByAuthor = cache(async (authorName: string, limitCount: number = 20) => {
+  console.log(`[Firestore] Fetching lists containing works by author: ${authorName}`);
+  const projectId = process.env.NEXT_PUBLIC_BASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (projectId && projectId !== 'your_project_id') {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
+      
+      // authors 配列 (array-contains) による検索 (Phase 38 新方式 - フォールバック削除済み)
+      console.log(`[Firestore] Querying with authorName: "${authorName}"`);
+      const q = query(
+        collection(db, 'lists'),
+        where('authors', 'array-contains', authorName),
+        limit(limitCount)
+      );
+      
+      const snaps = await getDocs(q);
+      const results = snaps.docs.map(snap => ({
+        ...snap.data(),
+        id: snap.id
+      })) as { id: string; slots: (MangaItem | null)[]; authorName: string; authors?: string[]; theme?: string; createdAt: number }[];
+      
+      return results;
+    } catch (e) {
+      console.error('Firestore error in getListsByAuthor:', e);
     }
   }
   return [];

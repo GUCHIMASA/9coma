@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import type { MangaItem } from '@/types';
 import PromotionUnit from '@/components/PromotionUnit';
 
@@ -270,8 +271,13 @@ export default function ListViewClient({ data }: ListViewClientProps) {
             
             // Amazon トラッキング ID を設定
             const AMAZON_ASSOCIATE_ID = '9coma-22';
-            const amazonUrl = `https://www.amazon.co.jp/s?k=${manga.isbn}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
+            const displayTitle = manga.title;
+            const linkKeyword = manga.title;
+            const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(linkKeyword)}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
             
+            // 楽天ブックス 検索URL
+            const rakutenUrl = manga.affiliateUrl || `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(manga.title)}/`;
+
             const isLast = idx === data.slots.reduce((last, m, i) => m ? i : last, -1);
 
             return (
@@ -298,14 +304,30 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                     textOverflow: 'ellipsis'
                   }}>
                     <span style={{ color: 'var(--color-primary)', marginRight: '6px' }}>#{idx + 1}</span>
-                    {manga.title}
+                    {displayTitle}
                   </p>
+                  {manga.author && (
+                    <div style={{ marginTop: '2px' }}>
+                      <Link 
+                        href={`/author/${encodeURIComponent(manga.author)}`}
+                        style={{
+                          fontSize: '0.8rem',
+                          color: 'var(--color-text-secondary)',
+                          textDecoration: 'none',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                      >
+                        {manga.author}
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {/* 右側: ボタン群 */}
                 <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                   <a
-                    href={manga.affiliateUrl}
+                    href={rakutenUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

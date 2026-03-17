@@ -35,10 +35,18 @@ export async function POST(request: Request) {
                 const { db } = await import('@/lib/firebase');
                 const { doc, setDoc, getDoc } = await import('firebase/firestore');
                 
+                // 著者一覧の抽出
+                const authors = Array.from(new Set(
+                    slots
+                        .filter(s => s !== null && typeof s === 'object' && s.author)
+                        .map(s => s!.author)
+                ));
+                
                 // リスト自体の保存
                 await setDoc(doc(db, 'lists', id), { 
                     slots, 
                     authorName, 
+                    authors,
                     ...(theme ? { theme } : {}), 
                     ...(deviceId ? { userId: deviceId } : {}),
                     createdAt 

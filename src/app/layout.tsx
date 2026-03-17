@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
+import ScrollToTop from '@/components/ScrollToTop';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   ? process.env.NEXT_PUBLIC_BASE_URL
@@ -59,6 +60,7 @@ export default function RootLayout({
         <div style={{ flex: 1 }}>
           {children}
         </div>
+        <ScrollToTop />
         <footer
           className="google-anno-skip"
           style={{

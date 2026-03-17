@@ -32,20 +32,21 @@ export async function GET(request: Request) {
         }
 
         // 全slotsを集め、isbnをキーに出現回数をカウント
-        const mangaMap: Record<string, { title: string; author: string; imageUrl: string; isbn: string; count: number }> = {};
+        const mangaMap: Record<string, { title: string; seriesName: string; author: string; imageUrl: string; isbn: string; count: number }> = {};
 
         snapshot.docs.forEach((doc) => {
             const data = doc.data();
             const slots = data.slots as Array<{ title?: string; author?: string; imageUrl?: string; isbn?: string } | null> | undefined;
             if (!slots || !Array.isArray(slots)) return;
 
-            slots.forEach((manga) => {
+            slots.forEach((manga: { title?: string; seriesName?: string; author?: string; imageUrl?: string; isbn?: string } | null) => {
                 if (!manga || !manga.isbn) return;
                 if (mangaMap[manga.isbn]) {
                     mangaMap[manga.isbn].count += 1;
                 } else {
                     mangaMap[manga.isbn] = {
                         title: manga.title || '',
+                        seriesName: manga.seriesName || '',
                         author: manga.author || '',
                         imageUrl: manga.imageUrl || '',
                         isbn: manga.isbn,

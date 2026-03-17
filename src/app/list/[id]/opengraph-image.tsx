@@ -46,10 +46,10 @@ export default async function Image({ params }: { params: { id: string } }) {
               justifyContent: 'center',
               fontSize: '24px',
               fontWeight: 800,
-              letterSpacing: '0.2em',
+              letterSpacing: '0.1em',
             }}
           >
-            {data.theme ? `＃${data.theme}` : '9コマ'}
+            {data.theme ? `＃${data.theme}` : '私を構成する9つのマンガ'}
           </div>
 
           {/* Large Box (Slot 5) */}

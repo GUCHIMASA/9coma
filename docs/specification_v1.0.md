@@ -4,9 +4,9 @@
 「9coma」は、ユーザーが自身を形成した「私を構成する9つのマンガ」を検索・選択し、1つのWebページとしてまとめ、SNS（主にX等）でシェアすることができるWebサービスです。
 
 ## 本番環境 / インフラ
-- **本番環境URL:** https://9coma.com (Hosting URL: https://coma-5555b.web.app)
+- **本番環境URL:** https://9coma.com
 - **フロントエンド:** Next.js 14 (App Router), React 18, TypeScript
-- **ホスティング:** Firebase Hosting
+- **ホスティング:** Vercel
 - **データベース:** Firebase Firestore (`lists` コレクション)
 
 ## 主要機能と仕様
