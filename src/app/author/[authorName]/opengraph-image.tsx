@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getSelectionCountByAuthor, getListsByAuthor } from '@/lib/list';
+import { ComicList } from '@/types';
+
 
 // 安定動作のため Node.js ランタイムを指定
 export const runtime = 'nodejs';
@@ -24,8 +26,9 @@ export default async function Image({ params }: { params: { authorName: string }
     // 表示するリスト（最大3つ）
     const displayLists = lists.slice(0, 3);
     if (displayLists.length === 0) {
-      displayLists.push({ id: 'dummy', slots: Array(9).fill(null) } as any);
+      displayLists.push({ id: 'dummy', slots: Array(9).fill(null), authorName: '', createdAt: Date.now() } as ComicList);
     }
+
 
     return new ImageResponse(
       (
@@ -159,7 +162,8 @@ export default async function Image({ params }: { params: { authorName: string }
             justifyContent: 'center',
             zIndex: 50,
           }}>
-            {displayLists.map((list: any, index: number) => {
+            {displayLists.map((list, index: number) => {
+
               const reverseIndex = displayLists.length - 1 - index;
               const offsetX = reverseIndex * 100 - 40;
               const offsetY = reverseIndex * -24;
@@ -191,7 +195,8 @@ export default async function Image({ params }: { params: { authorName: string }
                     height: '544px',
                     gap: '4px',
                   }}>
-                    {slots.slice(0, 9).map((slot: any, i: number) => {
+                    {slots.slice(0, 9).map((slot, i: number) => {
+
                       const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
                       return (
                         <div

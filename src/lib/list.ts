@@ -198,7 +198,7 @@ export const getSelectionCountByAuthor = cache(async (authorName: string) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, where, getDocs, limit, orderBy } = await import('firebase/firestore');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
       
       // 著者が含まれるリストを取得（インデックスエラー回避のため orderBy を外し、limit を広めに設定）
       const q = query(
