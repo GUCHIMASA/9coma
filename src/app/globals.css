@@ -172,3 +172,24 @@ img {
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ===== Responsive Utilities ===== */
+@media (max-width: 768px) {
+  .mobile-horizontal-scroll {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    gap: 16px !important;
+    padding-bottom: 1rem;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-horizontal-scroll::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+  .mobile-horizontal-scroll > * {
+    flex: 0 0 140px !important;
+    scroll-snap-align: start;
+  }
+}

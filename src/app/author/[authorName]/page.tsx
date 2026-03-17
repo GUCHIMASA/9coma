@@ -30,9 +30,12 @@ export default async function AuthorPage({ params }: Props) {
 
   // 重複を除いたユニークな作品名を取得（シリーズ名があればそちらを優先）
   const uniqueManga = Array.from(new Map(mangaItems.map(m => [m.seriesName || m.title, m])).values());
+  
+  // ハッシュタグ用に著者名からスペースを削除
+  const authorHashtag = authorName.replace(/[\s\u3000]/g, '');
 
   const shareText = `${authorName}先生の作品は、これまで投稿した人の人生の ${totalSelectionCount} コマを構成しています。先生に伝われ！
-  #9コマ #9coma #9koma #${authorName}`;
+  #9コマ #9coma #9koma #${authorHashtag}`;
   const shareUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com'}/author/${params.authorName}`;
   const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
@@ -50,7 +53,7 @@ export default async function AuthorPage({ params }: Props) {
           {authorName} 先生
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.2rem', fontWeight: 600, marginBottom: '2rem' }}>
-          {authorName}先生の作品は、いまこれだけの人の人生を構成しています
+          みんなの『私を構成する9つのマンガ』から集計した、最新の統計データです。
         </p>
       </header>
 
@@ -64,10 +67,10 @@ export default async function AuthorPage({ params }: Props) {
         border: '3px solid var(--color-primary)'
       }}>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 900, marginBottom: '1rem' }}>
-          これまで投稿された皆さんの人生の
+          {authorName} 先生は、投稿された皆さんの人生の
         </h2>
         <p style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-text)' }}>
-          <span style={{ fontSize: '2rem', color: 'var(--color-primary)', margin: '0 0.5rem' }}>{totalSelectionCount} コマ</span> を構成しています！
+          累計 <span style={{ fontSize: '2rem', color: 'var(--color-primary)', margin: '0 0.5rem' }}>{totalSelectionCount} コマ</span> を構成しています！
         </p>
       </section>
 
@@ -82,11 +85,14 @@ export default async function AuthorPage({ params }: Props) {
           著書・関連作品
         </h2>
         {uniqueManga.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '20px'
-          }}>
+          <div 
+            className="mobile-horizontal-scroll"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+              gap: '20px'
+            }}
+          >
             {uniqueManga.map((manga) => (
               <div key={manga.isbn} style={{
                 background: 'white',
