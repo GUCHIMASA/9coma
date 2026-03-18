@@ -27,7 +27,7 @@ export default function AuthorShareButtons({ xShareUrl }: AuthorShareButtonsProp
         onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.transform = 'scale(1)'}
       >
-        𝕏 に実況を投稿
+        𝕏 でシェア
       </a>
     </div>
   );

@@ -73,21 +73,21 @@ export async function GET(request: Request) {
             url.searchParams.set('applicationId', appId);
             url.searchParams.set('affiliateId', affiliateId || '');
             if (accessKey) url.searchParams.set('accessKey', accessKey);
-            
+
             // パラメータを個別にセット
             if (title) url.searchParams.set('title', title);
             if (author) url.searchParams.set('author', author);
             if (keyword) url.searchParams.set('keyword', keyword);
-            
+
             if (!title && !author && !keyword) {
                 return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
             }
-            
+
             url.searchParams.set('booksGenreId', '001001'); // 漫画・コミック
             url.searchParams.set('hits', '30');
             url.searchParams.set('formatVersion', '2');
             url.searchParams.set('outOfStockFlag', '1');
-            
+
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
             const headers: Record<string, string> = {
                 'Referer': baseUrl,
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
                 next: { revalidate: 10800 }
             });
             const data = await res.json();
-            
+
             if (!data.errors && !data.error && res.ok && data.Items) {
                 interface RakutenItemDef {
                     isbn: string;
@@ -128,7 +128,7 @@ export async function GET(request: Request) {
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
                         const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                        
+
                         // 並列実行で効率化しつつ、エラーを適切にハンドル
                         await Promise.allSettled(
                             items.map(async (m: MangaItem) => {

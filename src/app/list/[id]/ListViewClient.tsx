@@ -154,10 +154,10 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               transition: 'var(--transition-base)'
             }}
           >
-            <span>Xでシェアする</span>
+            <span>𝕏 でシェア</span>
           </button>
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', margin: 0 }}>
-            🔗 XやLINEで「横長サムネイル」として表示されます
+            XやInstagramで「横長サムネイル」として表示されます
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
             <span>{isSharing ? '画像を作成中です...' : '📸 画像でシェア (スマホ推奨)'}</span>
           </button>
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', margin: 0 }}>
-            🖼️ スマホ全画面の「縦長 3×3 画像」を生成します
+            「縦長 3×3」の画像を生成し、他のアプリへ受け渡します
           </p>
         </div>
 
