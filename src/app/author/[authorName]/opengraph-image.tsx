@@ -1,9 +1,9 @@
 import { ImageResponse } from 'next/og';
 import { getSelectionCountByAuthor, getListsByAuthor } from '@/lib/list';
 import { ComicList } from '@/types';
+import { getFontData, getBase64Image } from '@/lib/og-helper';
 
-
-// 安定動作のため Node.js ランタイムを指定
+// 高速動作とコスト削減のため Edge Runtime を使用
 export const runtime = 'nodejs';
 
 export const alt = '9coma | 著者別ページ';
@@ -11,9 +11,11 @@ export const size = {
   width: 1200,
   height: 630,
 };
-export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: { authorName: string } }) {
+  // フォントとデータの取得
+  const fontData = await getFontData();
+
   try {
     const authorName = decodeURIComponent(params.authorName);
 
@@ -29,6 +31,22 @@ export default async function Image({ params }: { params: { authorName: string }
       displayLists.push({ id: 'dummy', slots: Array(9).fill(null), authorName: '', createdAt: Date.now() } as ComicList);
     }
 
+    // すべてのリストのすべてのスロットの画像を Data URL 化（並列実行）
+    const listsWithDataUrls = await Promise.all(
+      displayLists.map(async (list) => {
+        const slotsWithUrls = await Promise.all(
+          (list.slots || Array(9).fill(null)).map(async (slot) => {
+            const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
+            if (imageUrl) {
+              const result = await getBase64Image(imageUrl);
+              return { ...slot, imageUrl: result.success ? result.dataUrl : null };
+            }
+            return slot;
+          })
+        );
+        return { ...list, slots: slotsWithUrls };
+      })
+    );
 
     return new ImageResponse(
       (
@@ -60,15 +78,15 @@ export default async function Image({ params }: { params: { authorName: string }
             zIndex: 1,
           }} />
 
-          {/* 固定配置：ロゴ（下のボックスと幅を揃える） */}
+          {/* 固定配置：ロゴ */}
           <div style={{
             position: 'absolute',
             top: '48px',
             left: '48px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center', // テキストを中央寄せ
-            width: '460px', // 下のボックスと共通
+            justifyContent: 'center',
+            width: '460px',
             gap: '12px',
             background: '#1A1A1A',
             padding: '10px 24px',
@@ -84,24 +102,23 @@ export default async function Image({ params }: { params: { authorName: string }
           {/* 固定配置：著者名エリア */}
           <div style={{
             position: 'absolute',
-            top: '110px', // さらにロゴに近づける（110px -> 95px）
+            top: '110px',
             left: '48px',
             display: 'flex',
             flexDirection: 'column',
             width: '460px',
-            alignItems: 'flex-end', // コンテナ内の要素を右寄せ
+            alignItems: 'flex-end',
             zIndex: 100,
           }}>
             <div style={{
               fontSize: authorName.length > 10 ? '48px' : authorName.length > 7 ? '64px' : '84px',
               fontWeight: 900,
               color: '#1A1A1A',
-              lineHeight: 1.25, // 行間に少し余裕を持たせる
+              lineHeight: 1.25,
               textAlign: 'right',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',
-              // 見切れ防止のため maxHeight を十分に確保（1.25 * fontSize * 2 + α）
               maxHeight: authorName.length > 10 ? '130px' : authorName.length > 7 ? '175px' : '230px',
               overflow: 'hidden',
               wordBreak: 'break-all',
@@ -112,7 +129,7 @@ export default async function Image({ params }: { params: { authorName: string }
               fontSize: '44px',
               fontWeight: 800,
               color: '#333333',
-              marginTop: '0px', // 名前との距離を詰める
+              marginTop: '0px',
               textAlign: 'right',
             }}>
               先生
@@ -122,7 +139,7 @@ export default async function Image({ params }: { params: { authorName: string }
           {/* 固定配置：インサイトボックス */}
           <div style={{
             position: 'absolute',
-            bottom: '80px', // 少し下げてフッターとの距離を詰める
+            bottom: '80px',
             left: '48px',
             display: 'flex',
             flexDirection: 'column',
@@ -150,7 +167,7 @@ export default async function Image({ params }: { params: { authorName: string }
             </div>
           </div>
 
-          {/* 右側：複数コンテナのスタック表示（絶対配置で右側に固定） */}
+          {/* 右側：複数コンテナのスタック表示 */}
           <div style={{
             position: 'absolute',
             top: '24px',
@@ -162,9 +179,8 @@ export default async function Image({ params }: { params: { authorName: string }
             justifyContent: 'center',
             zIndex: 50,
           }}>
-            {displayLists.map((list, index: number) => {
-
-              const reverseIndex = displayLists.length - 1 - index;
+            {listsWithDataUrls.map((list, index: number) => {
+              const reverseIndex = listsWithDataUrls.length - 1 - index;
               const offsetX = reverseIndex * 100 - 40;
               const offsetY = reverseIndex * -24;
               const rotate = (reverseIndex === 0) ? 0 : (reverseIndex * 4);
@@ -196,7 +212,6 @@ export default async function Image({ params }: { params: { authorName: string }
                     gap: '4px',
                   }}>
                     {slots.slice(0, 9).map((slot, i: number) => {
-
                       const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
                       return (
                         <div
@@ -211,7 +226,6 @@ export default async function Image({ params }: { params: { authorName: string }
                           }}
                         >
                           {imageUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={imageUrl}
                               alt=""
@@ -244,7 +258,7 @@ export default async function Image({ params }: { params: { authorName: string }
             position: 'absolute',
             bottom: '32px',
             left: '48px',
-            width: '600px', // 幅を広げて見切れ防止
+            width: '600px',
             fontSize: '20px',
             fontWeight: 700,
             color: '#1A1A1A',
@@ -255,13 +269,33 @@ export default async function Image({ params }: { params: { authorName: string }
           </div>
         </div>
       ),
-      { ...size }
+      {
+        ...size,
+        fonts: [
+          {
+            name: 'Noto Sans JP',
+            data: fontData,
+            style: 'normal',
+            weight: 900,
+          },
+        ],
+      }
     );
   } catch (error) {
     console.error('OGP Error:', error);
     return new ImageResponse(
       <div style={{ width: '100%', height: '100%', backgroundColor: '#FFD600', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: 900 }}>9coma.com</div>,
-      { ...size }
+      {
+        ...size,
+        fonts: [
+          {
+            name: 'Noto Sans JP',
+            data: fontData,
+            style: 'normal',
+            weight: 900,
+          },
+        ],
+      }
     );
   }
 }

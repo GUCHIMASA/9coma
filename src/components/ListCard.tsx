@@ -29,7 +29,7 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
         className="list-card-hover"
       >
         {/* 3x3 Mini Grid Container */}
-        <div style={{
+        <span style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '2px',
@@ -42,11 +42,12 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
           {Array.from({ length: 9 }).map((_, i) => {
             const manga = slots[i];
             return (
-              <div key={i} style={{ 
+              <span key={i} style={{ 
                 position: 'relative', 
                 aspectRatio: '3 / 4', 
                 backgroundColor: '#eee', 
-                overflow: 'hidden' 
+                overflow: 'hidden',
+                display: 'block'
               }}>
                 {manga?.imageUrl ? (
                   <img 
@@ -56,17 +57,17 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
                     loading="lazy"
                   />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: '4px', height: '4px', backgroundColor: '#ccc', borderRadius: '50%' }} />
-                  </div>
+                  <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ width: '4px', height: '4px', backgroundColor: '#ccc', borderRadius: '50%' }} />
+                  </span>
                 )}
-              </div>
+              </span>
             );
           })}
-        </div>
+        </span>
 
         {/* Info Area */}
-        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <span style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <p style={{ 
             fontSize: '11px', 
             color: '#666', 
@@ -76,15 +77,15 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
             whiteSpace: 'nowrap', 
             textOverflow: 'ellipsis' 
           }}>
-            <Link 
-              href={`/author/${authorName.replace(/[\s\u3000]/g, '')}`}
+            {/* リンクの入れ子を避けるため span に変更し、クリックイベントを別途処理するか、デザインを再考 */}
+            <span 
               style={{ color: 'inherit', textDecoration: 'none' }}
               className="hover:underline"
             >
               {authorName}さん
-            </Link>
+            </span>
           </p>
-          <div style={{ display: 'flex' }}>
+          <span style={{ display: 'flex' }}>
             {theme ? (
               <span style={{ 
                 backgroundColor: '#fffbeb', 
@@ -102,20 +103,21 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
                 {theme}
               </span>
             ) : (
-              <p style={{ 
+              <span style={{ 
                 fontSize: '13px', 
                 fontWeight: 800, 
                 color: '#333', 
                 margin: 0,
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis'
+                textOverflow: 'ellipsis',
+                display: 'block'
               }}>
                 9つのマンガ
-              </p>
+              </span>
             )}
-          </div>
-        </div>
+          </span>
+        </span>
       </Link>
 
       {/* Clone Button - Positioned absolutely inside the relative container */}

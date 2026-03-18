@@ -97,7 +97,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                 {/* 1. マンガの表紙画像エリア */}
                 <img src={manga.imageUrl} alt={manga.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
-                <div style={{
+                <span style={{
                   position: 'absolute',
                   bottom: 0,
                   left: 0,
@@ -122,7 +122,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                   }}>
                     {manga.title}
                   </span>
-                </div>
+                </span>
               </a>
             ) : (
               <div style={{ width: '100%', height: '100%', background: 'var(--color-surface-2)' }} />
