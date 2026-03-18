@@ -128,18 +128,26 @@ export async function GET(request: Request) {
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
                         const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                        items.forEach(async (m: MangaItem) => {
-                            try {
-                                const cacheRef = doc(db, 'manga_cache', m.isbn);
-                                const cacheSnap = await getDoc(cacheRef);
-                                // シリーズ名が未取得の場合のみ書き込む（書き込み回数の抑制）
-                                if (!cacheSnap.exists() || !cacheSnap.data()?.seriesName) {
-                                    await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                        
+                        // 並列実行で効率化しつつ、エラーを適切にハンドル
+                        await Promise.allSettled(
+                            items.map(async (m: MangaItem) => {
+                                try {
+                                    const cacheRef = doc(db, 'manga_cache', m.isbn);
+                                    const cacheSnap = await getDoc(cacheRef);
+                                    // シリーズ名が未取得の場合、またはキャッシュがない場合のみ書き込む
+                                    if (!cacheSnap.exists() || !cacheSnap.data()?.seriesName) {
+                                        await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                                    }
+                                } catch (e) {
+                                    console.error(`[SearchCache] Failed to cache ISBN ${m.isbn}:`, e);
                                 }
-                            } catch {
-                            }
-                        });
-                    }).catch(() => {});
+                            })
+                        );
+                        console.log(`[SearchCache] Background caching completed for ${items.length} items`);
+                    }).catch((e) => {
+                        console.error('[SearchCache] Failed to load Firebase/Firestore for background caching:', e);
+                    });
                 }
 
                 return NextResponse.json({ items, isMock: false });

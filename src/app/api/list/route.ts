@@ -41,12 +41,18 @@ export async function POST(request: Request) {
                         .filter(s => s !== null && typeof s === 'object' && s.author)
                         .map(s => s!.author)
                 ));
+
+                // 著者スラッグ（スペース除去済み）の抽出
+                const authorSlugs = Array.from(new Set(
+                    authors.map(a => a.replace(/[\s\u3000]/g, ''))
+                ));
                 
                 // リスト自体の保存
                 await setDoc(doc(db, 'lists', id), { 
                     slots, 
                     authorName, 
                     authors,
+                    author_slugs: authorSlugs,
                     ...(theme ? { theme } : {}), 
                     ...(deviceId ? { userId: deviceId } : {}),
                     createdAt 

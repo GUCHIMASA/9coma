@@ -84,7 +84,7 @@ export default async function Image({ params }: { params: { authorName: string }
           {/* 固定配置：著者名エリア */}
           <div style={{
             position: 'absolute',
-            top: '95px', // さらにロゴに近づける（110px -> 95px）
+            top: '110px', // さらにロゴに近づける（110px -> 95px）
             left: '48px',
             display: 'flex',
             flexDirection: 'column',
@@ -102,7 +102,7 @@ export default async function Image({ params }: { params: { authorName: string }
               flexDirection: 'column',
               alignItems: 'flex-end',
               // 見切れ防止のため maxHeight を十分に確保（1.25 * fontSize * 2 + α）
-              maxHeight: authorName.length > 10 ? '130px' : authorName.length > 7 ? '175px' : '230px', 
+              maxHeight: authorName.length > 10 ? '130px' : authorName.length > 7 ? '175px' : '230px',
               overflow: 'hidden',
               wordBreak: 'break-all',
             }}>

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const revalidate = 3600; // 1時間ごとに再生成 (ISR)
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const theme = searchParams.get('theme');
@@ -61,7 +63,11 @@ export async function GET(request: Request) {
             .sort((a, b) => b.count - a.count)
             .slice(0, 12);
 
-        return NextResponse.json({ items: sorted });
+        return NextResponse.json({ items: sorted }, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=59',
+            }
+        });
     } catch (e) {
         console.error('Popular API error:', e);
         return NextResponse.json({ items: [] });

@@ -76,7 +76,13 @@ export default function ListCard({ id, authorName, theme, slots }: ListCardProps
             whiteSpace: 'nowrap', 
             textOverflow: 'ellipsis' 
           }}>
-            {authorName}さん
+            <Link 
+              href={`/author/${authorName.replace(/[\s\u3000]/g, '')}`}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              className="hover:underline"
+            >
+              {authorName}さん
+            </Link>
           </p>
           <div style={{ display: 'flex' }}>
             {theme ? (

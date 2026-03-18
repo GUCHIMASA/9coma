@@ -200,16 +200,18 @@ export const getSelectionCountByAuthor = cache(async (authorName: string) => {
       const { db } = await import('@/lib/firebase');
       const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
       
-      // 著者が含まれるリストを取得（インデックスエラー回避のため orderBy を外し、limit を広めに設定）
+      // 著者スラッグ（スペースなし）を生成
+      const authorSlug = authorName.replace(/[\s\u3000]/g, '');
+      
+      // 著者スラッグが含まれるリストを取得
       const q = query(
         collection(db, 'lists'),
-        where('authors', 'array-contains', authorName),
+        where('author_slugs', 'array-contains', authorSlug),
         limit(500)
       );
       
       const snaps = await getDocs(q);
       let totalSelectionCount = 0;
-      const normalizedAuthorName = authorName.trim();
       
       snaps.docs.forEach(snap => {
         const data = snap.data() as { slots: (MangaItem | string | null)[] };
@@ -218,8 +220,9 @@ export const getSelectionCountByAuthor = cache(async (authorName: string) => {
           const countInList = data.slots.filter(slot => {
             if (!slot || typeof slot === 'string') return false; 
             const slotAuthor = (slot.author || '').trim();
-            // 完全一致または、共著などの場合を考慮して includes で判定
-            return slotAuthor === normalizedAuthorName || slotAuthor.includes(normalizedAuthorName);
+            // スラッグ化して比較することで表記揺れを吸収
+            const slotAuthorSlug = slotAuthor.replace(/[\s\u3000]/g, '');
+            return slotAuthorSlug === authorSlug;
           }).length;
           totalSelectionCount += countInList;
         }
@@ -242,11 +245,14 @@ export const getListsByAuthor = cache(async (authorName: string, limitCount: num
       const { db } = await import('@/lib/firebase');
       const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
       
-      // authors 配列 (array-contains) による検索 (Phase 38 新方式 - フォールバック削除済み)
-      console.log(`[Firestore] Querying with authorName: "${authorName}"`);
+      // 著者スラッグ（スペースなし）を生成
+      const authorSlug = authorName.replace(/[\s\u3000]/g, '');
+      
+      // author_slugs 配列 (array-contains) による検索
+      console.log(`[Firestore] Querying with authorSlug: "${authorSlug}"`);
       const q = query(
         collection(db, 'lists'),
-        where('authors', 'array-contains', authorName),
+        where('author_slugs', 'array-contains', authorSlug),
         limit(limitCount)
       );
       

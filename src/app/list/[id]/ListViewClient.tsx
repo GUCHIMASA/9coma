@@ -39,7 +39,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
     try {
       const response = await fetch(`/list/${id}/share-image`);
       if (!response.ok) throw new Error('Failed to generate image');
-      
+
       const blob = await response.blob();
       const file = new File([blob], '9coma-share.png', { type: 'image/png' });
 
@@ -47,7 +47,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         const themeText = data.theme ? `：${data.theme}` : '';
         const shareUrl = window.location.href;
-        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n${shareUrl}\n#9コマ #9coma #9koma #My9manga`;
+        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n${shareUrl}\n#9コマ #9coma #9koma #My9manga #私を構成する9つのマンガ`;
 
         await navigator.share({
           files: [file],
@@ -264,17 +264,17 @@ export default function ListViewClient({ data }: ListViewClientProps) {
         <h2 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '1.5rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span>🛒 気になった作品をチェック</span>
         </h2>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {data.slots.map((manga, idx) => {
             if (!manga) return null;
-            
+
             // Amazon トラッキング ID を設定
             const AMAZON_ASSOCIATE_ID = '9coma-22';
             const displayTitle = manga.title;
             const linkKeyword = manga.title;
             const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(linkKeyword)}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
-            
+
             // 楽天ブックス 検索URL
             const rakutenUrl = manga.affiliateUrl || `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(manga.title)}/`;
 
@@ -294,10 +294,10 @@ export default function ListViewClient({ data }: ListViewClientProps) {
               >
                 {/* 左側: タイトル */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ 
-                    fontSize: '0.95rem', 
-                    fontWeight: 800, 
-                    color: 'var(--color-text)', 
+                  <p style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    color: 'var(--color-text)',
                     margin: 0,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -308,7 +308,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                   </p>
                   {manga.author && (
                     <div style={{ marginTop: '2px' }}>
-                      <Link 
+                      <Link
                         href={`/author/${encodeURIComponent(manga.author)}`}
                         style={{
                           fontSize: '0.8rem',
