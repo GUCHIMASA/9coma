@@ -131,9 +131,9 @@ export default function HomeClient() {
           {
             fps: 10,
             qrbox: (viewfinderWidth) => {
-              // ISBN 1段分に合わせたスリムな横長枠
+              // 1Dバーコード（ISBN）の認識にはある程度の縦幅が必要なため少し拡大
               const width = Math.min(viewfinderWidth * 0.8, 280);
-              const height = 100; // 高さを抑えて上下2段の混読を防ぐ
+              const height = 120; // 100px から 120px に拡大して精度向上
               return { width, height };
             }
           },
@@ -155,7 +155,7 @@ export default function HomeClient() {
               handleSearch('', decodedText, '');
             } else {
               // ISBN ではないバーコードを読み取った場合 (192始まり等)
-              setScanHint("ISBN ではないバーコードです。上の段を写してください");
+              setScanHint(`読み取り：${decodedText}\nISBN ではないバーコードです。上の段を写してください`);
               // 3秒後にヒントを消す
               setTimeout(() => setScanHint(null), 3000);
             }
@@ -688,9 +688,27 @@ export default function HomeClient() {
                     <div id="reader" style={{ width: '100%', height: '100%' }}></div>
                     {/* Visual Scan Frame Overlay */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      {scanHint && (
+                        <div style={{ 
+                          position: 'absolute',
+                          top: '20px', // 上部に表示して下の吹き出しと重ならないようにする
+                          background: 'rgba(255, 186, 186, 0.95)', 
+                          color: '#b00', 
+                          padding: '0.6rem 1rem', 
+                          borderRadius: '8px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                          whiteSpace: 'pre-wrap',
+                          zIndex: 20
+                        }}>
+                          {scanHint}
+                        </div>
+                      )}
                       <div style={{ 
                         width: '280px', 
-                        height: '100px', // qrbox に合わせて高さを削減
+                        height: '120px', 
                         border: '2px solid var(--color-primary)', 
                         borderRadius: '8px',
                         boxShadow: '0 0 0 4000px rgba(0,0,0,0.4)',
@@ -702,20 +720,6 @@ export default function HomeClient() {
                         <div style={{ position: 'absolute', bottom: '-2px', left: '-2px', width: '15px', height: '15px', borderBottom: '4px solid #fff', borderLeft: '4px solid #fff', borderBottomLeftRadius: '6px' }}></div>
                         <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '15px', height: '15px', borderBottom: '4px solid #fff', borderRight: '4px solid #fff', borderBottomRightRadius: '6px' }}></div>
                       </div>
-                      {scanHint && (
-                        <div style={{ 
-                          marginTop: '20px', 
-                          background: 'rgba(255, 186, 186, 0.9)', 
-                          color: '#b00', 
-                          padding: '0.4rem 1rem', 
-                          borderRadius: '8px', 
-                          fontSize: '0.75rem', 
-                          fontWeight: 700,
-                          animation: 'fadeIn 0.2s ease-out'
-                        }}>
-                          {scanHint}
-                        </div>
-                      )}
                     </div>
                     <div style={{ padding: '0.3rem 0.6rem', position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '99px', textAlign: 'center', pointerEvents: 'none', whiteSpace: 'nowrap', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                       <p style={{ fontSize: '0.75rem', fontWeight: 700, margin: '0 0 1px 0', color: '#fff' }}>
