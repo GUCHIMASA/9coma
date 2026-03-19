@@ -130,7 +130,7 @@ export default function HomeClient() {
           { facingMode: "environment" },
           {
             fps: 10,
-            qrbox: (viewfinderWidth, _viewfinderHeight) => {
+            qrbox: (viewfinderWidth) => {
               // ISBN 1段分に合わせたスリムな横長枠
               const width = Math.min(viewfinderWidth * 0.8, 280);
               const height = 100; // 高さを抑えて上下2段の混読を防ぐ
@@ -160,7 +160,7 @@ export default function HomeClient() {
               setTimeout(() => setScanHint(null), 3000);
             }
           },
-          (_errorMessage) => {
+          () => {
             // 解析失敗は無視
           }
         );
@@ -192,7 +192,7 @@ export default function HomeClient() {
         if (html5QrCode.isScanning) {
           html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
         } else {
-          try { html5QrCode.clear(); } catch (_e) {}
+          try { html5QrCode.clear(); } catch { }
         }
       }
     };

@@ -73,6 +73,7 @@ export async function GET(
                       <img 
                         src={imgUrl} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        alt=""
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center', fontSize: '12px', color: '#999', backgroundColor: '#222' }}>
@@ -99,6 +100,7 @@ export async function GET(
                       <img 
                         src={imgUrl} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        alt=""
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center', fontSize: '12px', color: '#999', backgroundColor: '#222' }}>
