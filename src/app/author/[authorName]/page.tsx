@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Metadata } from 'next';
 import { getMangaByAuthor, getListsByAuthor, getSelectionCountByAuthor } from '@/lib/list';
 import ListCard from '@/components/ListCard';

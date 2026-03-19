@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { MangaItem } from '@/types';
 
 // モック漫画データ（APIキー取得後に楽天APIへ差し替え）
 const MOCK_MANGA: Record<string, Record<string, string>[]> = {

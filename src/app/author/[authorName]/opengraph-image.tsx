@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
 import { getSelectionCountByAuthor, getListsByAuthor } from '@/lib/list';
 import { ComicList } from '@/types';
