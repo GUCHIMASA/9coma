@@ -76,10 +76,14 @@ export async function GET(request: Request) {
             if (accessKey) url.searchParams.set('accessKey', accessKey);
 
             // パラメータを個別にセット
-            if (isbn) url.searchParams.set('isbnjan', isbn); // ISBN専用パラメータ
-            if (title) url.searchParams.set('title', title);
-            if (author) url.searchParams.set('author', author);
-            if (keyword) url.searchParams.set('keyword', keyword);
+            // ISBN がある場合は、他のあやふやな条件（タイトル等）を混ぜない方が確実にヒットする
+            if (isbn) {
+                url.searchParams.set('isbnjan', isbn);
+            } else {
+                if (title) url.searchParams.set('title', title);
+                if (author) url.searchParams.set('author', author);
+                if (keyword) url.searchParams.set('keyword', keyword);
+            }
 
             if (!title && !author && !keyword && !isbn) {
                 return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
@@ -125,7 +129,7 @@ export async function GET(request: Request) {
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
                 }));
 
-                // Firestore キャッシュ保存 (バックグラウンド)
+                /* 一時的に Firestore への保存を停止して課金スパイクを防止
                 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
@@ -151,6 +155,7 @@ export async function GET(request: Request) {
                         console.error('[SearchCache] Failed to load Firebase/Firestore for background caching:', e);
                     });
                 }
+                */
 
                 return NextResponse.json({ items, isMock: false });
             } else {
@@ -164,11 +169,17 @@ export async function GET(request: Request) {
     // fallback to mock (basic selection)
     const allItems = MOCK_MANGA['default'];
     const filtered = allItems.filter((item: Record<string, string>) => {
-        if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false;
-        if (author && !item.author.toLowerCase().includes(author.toLowerCase())) return false;
-        if (keyword) {
-            const k = keyword.toLowerCase();
-            if (!item.title.toLowerCase().includes(k) && !item.author.toLowerCase().includes(k)) return false;
+        // ISBN が指定されている場合は最優先でフィルタ
+        if (isbn && item.isbn !== isbn) return false;
+        
+        // ISBN 指定がない場合のみ他のあやふやなフィルタを通す
+        if (!isbn) {
+            if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false;
+            if (author && !item.author.toLowerCase().includes(author.toLowerCase())) return false;
+            if (keyword) {
+                const k = keyword.toLowerCase();
+                if (!item.title.toLowerCase().includes(k) && !item.author.toLowerCase().includes(k)) return false;
+            }
         }
         return true;
     });

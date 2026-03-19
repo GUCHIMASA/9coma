@@ -701,6 +701,20 @@ export default function HomeClient() {
                 ) : (
                   <>
                     <div id="reader" style={{ width: '100%', height: '100%' }}></div>
+                    {/* スキャン範囲とプレビュー位置を確実に一致させるためのスタイル強制 */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+                      #reader { position: relative; }
+                      #reader video {
+                        object-fit: cover !important;
+                        position: absolute !important;
+                        top: 50% !important;
+                        left: 50% !important;
+                        transform: translate(-50%, -50%) !important;
+                        min-width: 100% !important;
+                        min-height: 100% !important;
+                      }
+                      #reader canvas { display: none; }
+                    ` }} />
                     {/* Visual Scan Frame Overlay */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       {scanHint && (
