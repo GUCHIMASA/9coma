@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import type { MangaItem } from '@/types';
@@ -92,6 +92,29 @@ export default function HomeClient() {
     }
   }, [slots, authorName, theme, isLoaded]);
 
+  // 検索処理
+  const handleSearch = useCallback(async (k: string, t: string, a: string) => {
+    if (!k.trim() && !t.trim() && !a.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams();
+      if (k.trim()) params.set('keyword', k.trim());
+      if (t.trim()) params.set('title', t.trim());
+      if (a.trim()) params.set('author', a.trim());
+
+      const res = await fetch(`/api/search?${params.toString()}`);
+      const data = await res.json();
+      setSearchResults(data.items || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
   // スキャナーの制御
   useEffect(() => {
     if (!isScanMode) return;
@@ -107,7 +130,7 @@ export default function HomeClient() {
           { facingMode: "environment" },
           {
             fps: 10,
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
+            qrbox: (viewfinderWidth, _viewfinderHeight) => {
               // ISBN 1段分に合わせたスリムな横長枠
               const width = Math.min(viewfinderWidth * 0.8, 280);
               const height = 100; // 高さを抑えて上下2段の混読を防ぐ
@@ -137,22 +160,24 @@ export default function HomeClient() {
               setTimeout(() => setScanHint(null), 3000);
             }
           },
-          (errorMessage) => {
+          (_errorMessage) => {
             // 解析失敗は無視
           }
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("[Scanner] Start failed:", err);
         let msg = "カメラの起動に失敗しました。";
+        
+        const error = err as Error;
         
         // セキュアコンテキストのチェック
         if (typeof window !== 'undefined' && !window.isSecureContext) {
           msg = "カメラの使用には HTTPS 接続が必要です。ローカル IP (http://192...) ではなく localhost または ngrok 等の HTTPS 環境で試してください。";
-        } else if (err?.name === "NotAllowedError") {
+        } else if (error?.name === "NotAllowedError") {
           msg = "カメラの使用が許可されていません。ブラウザの設定から許可してください。";
-        } else if (err?.name === "NotFoundError") {
+        } else if (error?.name === "NotFoundError") {
           msg = "カメラが見つかりません。デバイの設定を確認してください。";
-        } else if (err?.name === "NotReadableError") {
+        } else if (error?.name === "NotReadableError") {
           msg = "カメラが他のアプリで使用されている可能性があります。";
         }
         
@@ -167,11 +192,11 @@ export default function HomeClient() {
         if (html5QrCode.isScanning) {
           html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
         } else {
-          try { html5QrCode.clear(); } catch (e) {}
+          try { html5QrCode.clear(); } catch (_e) {}
         }
       }
     };
-  }, [isScanMode]);
+  }, [isScanMode, handleSearch]);
 
   // モーダルが開いた際の状態リセット
   useEffect(() => {
@@ -186,28 +211,6 @@ export default function HomeClient() {
     }
   }, [selectedSlotIndex]);
 
-  // 検索処理
-  const handleSearch = useCallback(async (k: string, t: string, a: string) => {
-    if (!k.trim() && !t.trim() && !a.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const params = new URLSearchParams();
-      if (k.trim()) params.set('keyword', k.trim());
-      if (t.trim()) params.set('title', t.trim());
-      if (a.trim()) params.set('author', a.trim());
-
-      const res = await fetch(`/api/search?${params.toString()}`);
-      const data = await res.json();
-      setSearchResults(data.items || []);
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
 
   // デバウンス的な検索
   useEffect(() => {
@@ -257,7 +260,7 @@ export default function HomeClient() {
     };
     fetchRecommendations();
     return () => { cancelled = true; };
-  }, [selectedSlotIndex, theme]); // 依存配列を最小限に整理
+  }, [selectedSlotIndex, theme, lastFetchedTheme, isLoadingRecommendations, themeRecommendations.length]); // 依存配列を最小限に整理
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;
