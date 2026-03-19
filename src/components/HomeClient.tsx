@@ -102,10 +102,14 @@ export default function HomeClient() {
     setIsSearching(true);
     try {
       const params = new URLSearchParams();
-      if (k.trim()) params.set('keyword', k.trim());
-      if (t.trim()) params.set('title', t.trim());
-      if (a.trim()) params.set('author', a.trim());
-      if (isbn.trim()) params.set('isbn', isbn.trim());
+      // ISBN が指定されている場合は、最高精度を期すため他条件を無視する
+      if (isbn.trim()) {
+        params.set('isbn', isbn.trim());
+      } else {
+        if (k.trim()) params.set('keyword', k.trim());
+        if (t.trim()) params.set('title', t.trim());
+        if (a.trim()) params.set('author', a.trim());
+      }
 
       const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
@@ -129,9 +133,10 @@ export default function HomeClient() {
       try {
         html5QrCode = new Html5Qrcode(readerId, { formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ], verbose: false });
         await html5QrCode.start(
-          { facingMode: "environment", aspectRatio: 1.2 },
+          { facingMode: "environment" },
           {
             fps: 10,
+            aspectRatio: 1.2, // config 側で指定することで起動エラーを回避しつつプレビューを固定
             qrbox: (viewfinderWidth) => {
               // アスペクト比を 1.2 に固定したため、viewfinderWidth/Height が
               // プレビュー表示領域と一致し、ガイド枠とのズレが解消される
