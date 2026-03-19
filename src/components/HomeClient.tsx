@@ -717,12 +717,12 @@ export default function HomeClient() {
                         </div>
                       )}
                     </div>
-                    <div style={{ padding: '0.8rem', position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', textAlign: 'center', pointerEvents: 'none' }}>
-                      <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: '0 0 4px 0' }}>
+                    <div style={{ padding: '0.3rem 0.6rem', position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '99px', textAlign: 'center', pointerEvents: 'none', whiteSpace: 'nowrap', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: 700, margin: '0 0 1px 0', color: '#fff' }}>
                         バーコードを中央の枠内に収めてください
                       </p>
                       <p style={{ fontSize: '0.7rem', color: '#FFD600', margin: 0 }}>
-                        ※上下2つ並んでいる場合は、上のバーコードを映してください。
+                        ※上下2段ある場合は、上のバーコードを。
                       </p>
                     </div>
                   </>
