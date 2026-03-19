@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import type { MangaItem } from '@/types';
 import { THEME_GRADIENTS } from '@/lib/themes';
 import PromotionUnit from '@/components/PromotionUnit';
@@ -26,6 +27,9 @@ export default function HomeClient() {
   const [deviceId, setDeviceId] = useState<string>('');
   const [postHistory, setPostHistory] = useState<{ id: string, theme?: string, date: number }[]>([]);
   const [lastFetchedTheme, setLastFetchedTheme] = useState<string | null>(null);
+  const [isScanMode, setIsScanMode] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanHint, setScanHint] = useState<string | null>(null);
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -88,6 +92,87 @@ export default function HomeClient() {
     }
   }, [slots, authorName, theme, isLoaded]);
 
+  // スキャナーの制御
+  useEffect(() => {
+    if (!isScanMode) return;
+
+    let html5QrCode: Html5Qrcode | null = null;
+    const readerId = "reader";
+
+    const startScanner = async () => {
+      setScanError(null);
+      try {
+        html5QrCode = new Html5Qrcode(readerId, { formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ], verbose: false });
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              // ISBN 1段分に合わせたスリムな横長枠
+              const width = Math.min(viewfinderWidth * 0.8, 280);
+              const height = 100; // 高さを抑えて上下2段の混読を防ぐ
+              return { width, height };
+            }
+          },
+          (decodedText) => {
+            console.log(`[Scanner] Decoded: ${decodedText}`);
+            // ISBN-13 (978で始まる13桁) のバリデーション
+            if (/^978\d{10}$/.test(decodedText)) {
+              console.log(`[Scanner] Valid ISBN detected: ${decodedText}`);
+              
+              // フィードバック
+              if (typeof window !== 'undefined' && window.navigator.vibrate) {
+                window.navigator.vibrate([100]);
+              }
+
+              // スキャン停止と検索実行
+              setIsScanMode(false);
+              setSearchTitle(decodedText);
+              // 即座に検索を実行 (useEffect のデバウンスを待たずに実行)
+              handleSearch('', decodedText, '');
+            } else {
+              // ISBN ではないバーコードを読み取った場合 (192始まり等)
+              setScanHint("ISBN ではないバーコードです。上の段を写してください");
+              // 3秒後にヒントを消す
+              setTimeout(() => setScanHint(null), 3000);
+            }
+          },
+          (errorMessage) => {
+            // 解析失敗は無視
+          }
+        );
+      } catch (err: any) {
+        console.error("[Scanner] Start failed:", err);
+        let msg = "カメラの起動に失敗しました。";
+        
+        // セキュアコンテキストのチェック
+        if (typeof window !== 'undefined' && !window.isSecureContext) {
+          msg = "カメラの使用には HTTPS 接続が必要です。ローカル IP (http://192...) ではなく localhost または ngrok 等の HTTPS 環境で試してください。";
+        } else if (err?.name === "NotAllowedError") {
+          msg = "カメラの使用が許可されていません。ブラウザの設定から許可してください。";
+        } else if (err?.name === "NotFoundError") {
+          msg = "カメラが見つかりません。デバイの設定を確認してください。";
+        } else if (err?.name === "NotReadableError") {
+          msg = "カメラが他のアプリで使用されている可能性があります。";
+        }
+        
+        setScanError(msg);
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      if (html5QrCode) {
+        if (html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
+        } else {
+          try { html5QrCode.clear(); } catch (e) {}
+        }
+      }
+    };
+  }, [isScanMode]);
+
   // モーダルが開いた際の状態リセット
   useEffect(() => {
     if (selectedSlotIndex !== null) {
@@ -95,6 +180,9 @@ export default function HomeClient() {
       setSearchTitle('');
       setSearchAuthor('');
       setSearchResults([]);
+      setIsScanMode(false);
+      setScanError(null);
+      setScanHint(null);
     }
   }, [selectedSlotIndex]);
 
@@ -508,14 +596,48 @@ export default function HomeClient() {
                 </div>
                 <button onClick={() => setSelectedSlotIndex(null)} style={{ background: 'var(--color-surface-2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-text-secondary)', transition: 'var(--transition-fast)' }}>✕</button>
               </div>
-              <input
-                type="text"
-                autoFocus
-                placeholder="作品名で探す..."
-                value={searchTitle}
-                onChange={(e) => setSearchTitle(e.target.value)}
-                style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
-              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="作品名で探す..."
+                  value={searchTitle}
+                  onChange={(e) => setSearchTitle(e.target.value)}
+                  style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                />
+                <button
+                  onClick={() => setIsScanMode(!isScanMode)}
+                  title="バーコードスキャン"
+                  style={{
+                    background: isScanMode ? 'var(--color-primary)' : 'var(--color-surface-2)',
+                    color: isScanMode ? 'white' : 'var(--color-text)',
+                    border: '2px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    width: '48px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'var(--transition-fast)',
+                    flexShrink: 0
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {/* Corners */}
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                    {/* Barcode lines with varying widths */}
+                    <rect x="7" y="7" width="1.5" height="10" fill="currentColor" stroke="none" />
+                    <rect x="10.5" y="7" width="3" height="10" fill="currentColor" stroke="none" />
+                    <rect x="15.5" y="7" width="1" height="10" fill="currentColor" stroke="none" />
+                    {/* Scan line (optional, adding a slight horizontal accent) */}
+                    <line x1="6" y1="12" x2="18" y2="12" stroke="var(--color-primary)" strokeWidth="1.5" opacity="0.8" />
+                  </svg>
+                </button>
+              </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input
                   type="text"
@@ -533,6 +655,97 @@ export default function HomeClient() {
                 />
               </div>
             </div>
+            {isScanMode && (
+              <div style={{ 
+                margin: '0 1.5rem 1rem',
+                background: '#000', 
+                borderRadius: 'var(--radius-md)', 
+                aspectRatio: '1.2 / 1', 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#fff',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid var(--color-primary)'
+              }}>
+                {scanError ? (
+                  <div style={{ padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ color: '#ffbaba', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 700 }}>{scanError}</p>
+                    <button 
+                      onClick={() => setIsScanMode(false)}
+                      style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid #fff', color: '#fff', padding: '0.4rem 1rem', borderRadius: '99px', fontSize: '0.8rem' }}
+                    >
+                      閉じる
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div id="reader" style={{ width: '100%', height: '100%' }}></div>
+                    {/* Visual Scan Frame Overlay */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ 
+                        width: '280px', 
+                        height: '100px', // qrbox に合わせて高さを削減
+                        border: '2px solid var(--color-primary)', 
+                        borderRadius: '8px',
+                        boxShadow: '0 0 0 4000px rgba(0,0,0,0.4)',
+                        position: 'relative'
+                      }}>
+                        {/* Corners */}
+                        <div style={{ position: 'absolute', top: '-2px', left: '-2px', width: '15px', height: '15px', borderTop: '4px solid #fff', borderLeft: '4px solid #fff', borderTopLeftRadius: '6px' }}></div>
+                        <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '15px', height: '15px', borderTop: '4px solid #fff', borderRight: '4px solid #fff', borderTopRightRadius: '6px' }}></div>
+                        <div style={{ position: 'absolute', bottom: '-2px', left: '-2px', width: '15px', height: '15px', borderBottom: '4px solid #fff', borderLeft: '4px solid #fff', borderBottomLeftRadius: '6px' }}></div>
+                        <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '15px', height: '15px', borderBottom: '4px solid #fff', borderRight: '4px solid #fff', borderBottomRightRadius: '6px' }}></div>
+                      </div>
+                      {scanHint && (
+                        <div style={{ 
+                          marginTop: '20px', 
+                          background: 'rgba(255, 186, 186, 0.9)', 
+                          color: '#b00', 
+                          padding: '0.4rem 1rem', 
+                          borderRadius: '8px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 700,
+                          animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                          {scanHint}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: '0.8rem', position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', textAlign: 'center', pointerEvents: 'none' }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: '0 0 4px 0' }}>
+                        バーコードを中央の枠内に収めてください
+                      </p>
+                      <p style={{ fontSize: '0.7rem', color: '#FFD600', margin: 0 }}>
+                        ※上下2つ並んでいる場合は、上のバーコードを映してください。
+                      </p>
+                    </div>
+                  </>
+                )}
+                <button 
+                  onClick={() => setIsScanMode(false)}
+                  style={{ 
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: 'rgba(0,0,0,0.5)', 
+                    border: '1px solid #fff', 
+                    color: '#fff', 
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%', 
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    zIndex: 10
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             <div style={{ overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', flexGrow: 1, alignContent: 'start' }}>
               {isSearching ? (
