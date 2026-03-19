@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
 import { THEME_GRADIENTS } from '@/lib/themes';
