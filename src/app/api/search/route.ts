@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { MangaItem } from '@/types';
 
 // モック漫画データ（APIキー取得後に楽天APIへ差し替え）
 const MOCK_MANGA: Record<string, Record<string, string>[]> = {
@@ -128,7 +129,7 @@ export async function GET(request: Request) {
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
                 }));
 
-                /* 一時的に Firestore への保存を停止して課金スパイクを防止
+                // Firestore への保存を再開し、パフォーマンスを向上
                 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
                 if (projectId && projectId !== 'your_project_id' && items.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
@@ -154,7 +155,6 @@ export async function GET(request: Request) {
                         console.error('[SearchCache] Failed to load Firebase/Firestore for background caching:', e);
                     });
                 }
-                */
 
                 return NextResponse.json({ items, isMock: false });
             } else {
