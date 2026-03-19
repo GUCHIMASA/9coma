@@ -60,6 +60,7 @@ export async function GET(request: Request) {
     const keyword = searchParams.get('keyword') || '';
     const title = searchParams.get('title') || '';
     const author = searchParams.get('author') || '';
+    const isbn = searchParams.get('isbn') || '';
 
     // 楽天APIキー
     const appId = process.env.RAKUTEN_APPLICATION_ID;
@@ -75,11 +76,12 @@ export async function GET(request: Request) {
             if (accessKey) url.searchParams.set('accessKey', accessKey);
 
             // パラメータを個別にセット
+            if (isbn) url.searchParams.set('isbnjan', isbn); // ISBN専用パラメータ
             if (title) url.searchParams.set('title', title);
             if (author) url.searchParams.set('author', author);
             if (keyword) url.searchParams.set('keyword', keyword);
 
-            if (!title && !author && !keyword) {
+            if (!title && !author && !keyword && !isbn) {
                 return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
             }
 

@@ -14,6 +14,7 @@ export default function HomeClient() {
   const [keyword, setKeyword] = useState('');
   const [searchTitle, setSearchTitle] = useState('');
   const [searchAuthor, setSearchAuthor] = useState('');
+  const [searchIsbn, setSearchIsbn] = useState('');
   const [searchResults, setSearchResults] = useState<MangaItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -93,8 +94,8 @@ export default function HomeClient() {
   }, [slots, authorName, theme, isLoaded]);
 
   // 検索処理
-  const handleSearch = useCallback(async (k: string, t: string, a: string) => {
-    if (!k.trim() && !t.trim() && !a.trim()) {
+  const handleSearch = useCallback(async (k: string, t: string, a: string, isbn: string = '') => {
+    if (!k.trim() && !t.trim() && !a.trim() && !isbn.trim()) {
       setSearchResults([]);
       return;
     }
@@ -104,6 +105,7 @@ export default function HomeClient() {
       if (k.trim()) params.set('keyword', k.trim());
       if (t.trim()) params.set('title', t.trim());
       if (a.trim()) params.set('author', a.trim());
+      if (isbn.trim()) params.set('isbn', isbn.trim());
 
       const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
@@ -127,13 +129,14 @@ export default function HomeClient() {
       try {
         html5QrCode = new Html5Qrcode(readerId, { formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ], verbose: false });
         await html5QrCode.start(
-          { facingMode: "environment" },
+          { facingMode: "environment", aspectRatio: 1.2 },
           {
             fps: 10,
             qrbox: (viewfinderWidth) => {
-              // 1Dバーコード（ISBN）の認識にはある程度の縦幅が必要なため少し拡大
+              // アスペクト比を 1.2 に固定したため、viewfinderWidth/Height が
+              // プレビュー表示領域と一致し、ガイド枠とのズレが解消される
               const width = Math.min(viewfinderWidth * 0.8, 280);
-              const height = 120; // 100px から 120px に拡大して精度向上
+              const height = 120; 
               return { width, height };
             }
           },
@@ -147,12 +150,12 @@ export default function HomeClient() {
               if (typeof window !== 'undefined' && window.navigator.vibrate) {
                 window.navigator.vibrate([100]);
               }
-
+ 
               // スキャン停止と検索実行
               setIsScanMode(false);
-              setSearchTitle(decodedText);
-              // 即座に検索を実行 (useEffect のデバウンスを待たずに実行)
-              handleSearch('', decodedText, '');
+              setSearchIsbn(decodedText);
+              // 即座に検索を実行
+              handleSearch('', '', '', decodedText);
             } else {
               // ISBN ではないバーコードを読み取った場合 (192始まり等)
               setScanHint(`読み取り：${decodedText}\nISBN ではないバーコードです。上の段を写してください`);
@@ -204,6 +207,7 @@ export default function HomeClient() {
       setKeyword('');
       setSearchTitle('');
       setSearchAuthor('');
+      setSearchIsbn('');
       setSearchResults([]);
       setIsScanMode(false);
       setScanError(null);
@@ -215,10 +219,10 @@ export default function HomeClient() {
   // デバウンス的な検索
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleSearch(keyword, searchTitle, searchAuthor);
+      handleSearch(keyword, searchTitle, searchAuthor, searchIsbn);
     }, 500);
     return () => clearTimeout(timer);
-  }, [keyword, searchTitle, searchAuthor, handleSearch]);
+  }, [keyword, searchTitle, searchAuthor, searchIsbn, handleSearch]);
 
   // モーダルが開いたときにテーマ別おすすめを取得
   useEffect(() => {
@@ -627,19 +631,25 @@ export default function HomeClient() {
                   }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Corners */}
                     <path d="M3 7V5a2 2 0 0 1 2-2h2" />
                     <path d="M17 3h2a2 2 0 0 1 2 2v2" />
                     <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
                     <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                    {/* Barcode lines with varying widths */}
                     <rect x="7" y="7" width="1.5" height="10" fill="currentColor" stroke="none" />
                     <rect x="10.5" y="7" width="3" height="10" fill="currentColor" stroke="none" />
                     <rect x="15.5" y="7" width="1" height="10" fill="currentColor" stroke="none" />
-                    {/* Scan line (optional, adding a slight horizontal accent) */}
                     <line x1="6" y1="12" x2="18" y2="12" stroke="var(--color-primary)" strokeWidth="1.5" opacity="0.8" />
                   </svg>
                 </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="ISBN (13桁) で探す..."
+                  value={searchIsbn}
+                  onChange={(e) => setSearchIsbn(e.target.value)}
+                  style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                />
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input
