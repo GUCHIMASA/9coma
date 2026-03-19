@@ -68,27 +68,27 @@ export async function GET(request: Request) {
 
     if (appId && appId !== 'your_rakuten_app_id_here') {
         try {
-            // エンドポイントを BooksBook に設定（タイトル・著者の個別パラメータを正確に反映させるため）
-            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
+            // ISBN 検索の確実性を。より広範な BooksTotal を使用。
+            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404');
             url.searchParams.set('applicationId', appId);
             url.searchParams.set('affiliateId', affiliateId || '');
             if (accessKey) url.searchParams.set('accessKey', accessKey);
 
             // パラメータを個別にセット
-            // ISBN がある場合は、他のあやふやな条件（タイトル等）を混ぜない方が確実にヒットする
+            // ISBN がある場合は、他の絞り込み条件やジャンル（1001:漫画等）を一切含めない（特定の本を確実に拾うため）
             if (isbn) {
                 url.searchParams.set('isbnjan', isbn);
             } else {
                 if (title) url.searchParams.set('title', title);
                 if (author) url.searchParams.set('author', author);
                 if (keyword) url.searchParams.set('keyword', keyword);
+                url.searchParams.set('booksGenreId', '001001'); // 通常検索時は漫画に限定
             }
 
             if (!title && !author && !keyword && !isbn) {
                 return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
             }
 
-            url.searchParams.set('booksGenreId', '001001'); // 漫画・コミック
             url.searchParams.set('hits', '30');
             url.searchParams.set('formatVersion', '2');
             url.searchParams.set('outOfStockFlag', '1');

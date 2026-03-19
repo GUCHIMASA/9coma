@@ -794,9 +794,9 @@ export default function HomeClient() {
                     <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
                   </div>
                 ))
-              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && (isLoadingRecommendations || !lastFetchedTheme || theme !== lastFetchedTheme) ? (
+              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && (isLoadingRecommendations || !lastFetchedTheme || theme !== lastFetchedTheme) ? (
                 Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
-              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && themeRecommendations.length > 0 ? (
+              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && themeRecommendations.length > 0 ? (
                 <>
                   <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0' }}>
                     📚 {theme} で多くの人が選んでいる作品：
@@ -808,7 +808,7 @@ export default function HomeClient() {
                     </div>
                   ))}
                 </>
-              ) : (keyword.trim() || searchTitle.trim() || searchAuthor.trim()) && (
+              ) : (keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
               )}
               <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
