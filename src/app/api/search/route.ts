@@ -136,7 +136,7 @@ export async function GET(request: Request) {
 
                 // 【監督者承認済み】最終防衛ライン：ISBN検索時に一般書（こころ等）が混入するのを防ぐ
                 // 楽天 API は isbn 指定時に booksGenreId を無視するため、事後フィルタリングを行う。
-                const filteredItems = items.filter((item: any) => 
+                const filteredItems = items.filter((item: { booksGenreId?: string }) => 
                     item.booksGenreId?.startsWith('001001')
                 );
 
