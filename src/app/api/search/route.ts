@@ -69,27 +69,25 @@ export async function GET(request: Request) {
 
     if (appId && appId !== 'your_rakuten_app_id_here') {
         try {
-            // ISBN 検索時は広範な BooksTotal、通常検索時は詳細指定が可能な BooksBook を使い分け
-            const endpoint = isbn 
-                ? 'https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404'
-                : 'https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404';
-            
-            const url = new URL(endpoint);
+            // パラメータ対応が確実な BooksBook エンドポイントに統一
+            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
             url.searchParams.set('applicationId', appId);
             url.searchParams.set('affiliateId', affiliateId || '');
             if (accessKey) url.searchParams.set('accessKey', accessKey);
 
             // パラメータをセット
             if (isbn) {
-                // ISBN 検索時は、特定の一冊を確実に拾うためジャンル制限や他条件を混ぜない
-                url.searchParams.set('isbnjan', isbn);
+                // BooksBook/Search/20170404 の正しいパラメータ名は 'isbn' (isbnjan ではない)
+                url.searchParams.set('isbn', isbn);
             } else {
-                // 通常検索時は漫画（001001）に限定し、タイトル・著者・キーワードを詳細に引き当てる
+                // 通常検索時は漫画（001001）に限定
                 if (title) url.searchParams.set('title', title);
                 if (author) url.searchParams.set('author', author);
                 if (keyword) url.searchParams.set('keyword', keyword);
-                url.searchParams.set('booksGenreId', '001001');
             }
+            
+            // 常にマンガジャンルを指定（ISBN指定時はAPI側で無視されるが、安全のため残す）
+            url.searchParams.set('booksGenreId', '001001');
 
             if (!title && !author && !keyword && !isbn) {
                 return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
@@ -123,8 +121,9 @@ export async function GET(request: Request) {
                     largeImageUrl: string;
                     affiliateUrl?: string;
                     itemUrl?: string;
+                    booksGenreId?: string;
                 }
-                // フィルタリングせずそのまま返して、API 本来の結果を確認する
+                
                 const items = data.Items.map((item: RakutenItemDef) => ({
                     isbn: item.isbn,
                     title: item.title,
@@ -132,17 +131,26 @@ export async function GET(request: Request) {
                     author: item.author,
                     imageUrl: item.largeImageUrl,
                     affiliateUrl: item.affiliateUrl || item.itemUrl,
+                    booksGenreId: item.booksGenreId,
                 }));
 
+                // 【監督者承認済み】最終防衛ライン：ISBN検索時に一般書（こころ等）が混入するのを防ぐ
+                // 楽天 API は isbn 指定時に booksGenreId を無視するため、事後フィルタリングを行う。
+                const filteredItems = items.filter((item: any) => 
+                    item.booksGenreId?.startsWith('001001')
+                );
+
+                console.log(`Search result: ${filteredItems.length} items found (Original: ${items.length})`);
+                
                 // Firestore への保存を再開し、パフォーマンスを向上
                 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                if (projectId && projectId !== 'your_project_id' && items.length > 0) {
+                if (projectId && projectId !== 'your_project_id' && filteredItems.length > 0) {
                     import('@/lib/firebase').then(async ({ db }) => {
                         const { doc, setDoc, getDoc } = await import('firebase/firestore');
 
                         // 並列実行で効率化しつつ、エラーを適切にハンドル
                         await Promise.allSettled(
-                            items.map(async (m: MangaItem) => {
+                            filteredItems.map(async (m: MangaItem) => {
                                 try {
                                     const cacheRef = doc(db, 'manga_cache', m.isbn);
                                     const cacheSnap = await getDoc(cacheRef);
@@ -155,13 +163,17 @@ export async function GET(request: Request) {
                                 }
                             })
                         );
-                        console.log(`[SearchCache] Background caching completed for ${items.length} items`);
+                        console.log(`[SearchCache] Background caching completed for ${filteredItems.length} items`);
                     }).catch((e) => {
                         console.error('[SearchCache] Failed to load Firebase/Firestore for background caching:', e);
                     });
                 }
 
-                return NextResponse.json({ items, isMock: false });
+                return NextResponse.json({ 
+                    items: filteredItems, 
+                    isMock: false,
+                    totalCount: data.count || filteredItems.length
+                });
             } else {
                 console.warn('Rakuten API Error:', data.errors || data.error);
             }
