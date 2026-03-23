@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
-import { THEME_GRADIENTS } from '@/lib/themes';
+import { COLOR_THEMES } from '@/lib/colors';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
+
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,13 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: { id: string } }) {
   const data = await getListById(params.id);
   if (!data) return new Response('Not found', { status: 404 });
+
+  // 配色システムの適用
+  const themeId = data.colorThemeId || '01';
+  const theme = COLOR_THEMES[themeId] || COLOR_THEMES['01'];
+  const themeBg = theme.bg;
+  const textColor = theme.text;
+  const isDark = themeId === '02' || themeId === '03' || themeId === '05' || themeId === '07' || themeId === '09' || themeId === '11';
 
   // フォントとデータの取得
   const fontData = await getFontData();
@@ -36,37 +44,52 @@ export default async function Image({ params }: { params: { id: string } }) {
   const centerImageUrl = imageUrls[4];
   const centerSlot = data.slots[4];
 
+  // レイアウト定数
+  const padding = 32;
+  const leftColWidth = 350;
+  const horizontalGap = 30;
+  const rightGridGap = 16;
+  const rightColWidth = 1200 - padding * 2 - leftColWidth - horizontalGap; // 756
+  
+  const boxBorderRadius = '6px';
+  const shadowColor = 'rgba(0,0,0,0.15)';
+
+  // 垂直パッキングの再計算: 左側の全高 (Badge: 52 + Gap: 16 + Box5: 498 = 566)
+  const leftTotalHeight = 52 + 16 + 498; 
+  // 右側の各ボックスの高さ: (566 - gap) / 2 = 275px
+  const rightBoxHeight = (leftTotalHeight - rightGridGap) / 2;
+
   return new ImageResponse(
     (
       <div
         style={{
           width: '100%',
           height: '100%',
-          background: 'linear-gradient(180deg, #FFD600 0%, #FFB300 100%)',
+          backgroundColor: themeBg,
+          color: textColor,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '32px',
-          gap: '16px',
+          padding: `${padding}px`,
+          gap: `${horizontalGap}px`,
         }}
       >
         {/* Left Column (Badge + Slot 5) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '352px' }}>
-          {/* Badge */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: `${leftColWidth}px`, height: `${leftTotalHeight}px` }}>
+          {/* Badge (Header Area) */}
           <div
             style={{
               width: '100%',
               height: '52px',
-              background: data.theme && THEME_GRADIENTS[data.theme] ? THEME_GRADIENTS[data.theme] : '#1A1A1A',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
               borderRadius: '99px',
-              color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '24px',
-              fontWeight: 800,
-              letterSpacing: '0.1em',
+              fontSize: '22px',
+              fontWeight: 900,
+              color: textColor,
             }}
           >
             {data.theme ? `＃${data.theme}` : '私を構成する9つのマンガ'}
@@ -77,127 +100,132 @@ export default async function Image({ params }: { params: { id: string } }) {
             style={{
               width: '100%',
               height: '498px',
-              background: '#FFFFFF',
-              border: '4px solid #1A1A1A',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               display: 'flex',
-              flexDirection: 'column',
+              borderRadius: boxBorderRadius,
               overflow: 'hidden',
+              position: 'relative',
+              boxShadow: `0 8px 24px ${shadowColor}`,
             }}
           >
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-              {centerImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={centerImageUrl}
-                  alt={centerSlot?.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    background: '#FFA8B8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#CCCCCC',
-                    fontSize: '120px',
-                    fontWeight: 900,
-                  }}
-                >
-                  5
-                </div>
-              )}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                background: '#1A1A1A',
-                color: '#FFFFFF',
-                padding: '0 12px',
-                height: '40px',
-                alignItems: 'center',
-                justifyContent: 'center',
+            {centerImageUrl ? (
+              <img
+                src={centerImageUrl}
+                alt={centerSlot?.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: textColor,
+                  opacity: 0.2,
+                  fontSize: '120px',
+                  fontWeight: 900,
+                }}
+              >
+                5
+              </div>
+            )}
+            {centerSlot?.title && (
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                padding: '50px 16px 16px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%)',
+                color: 'white',
                 fontSize: '18px',
                 fontWeight: 800,
-              }}
-            >
-              <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {centerSlot?.title || '本のタイトル'}
+                textAlign: 'center',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-end',
+              }}>
+                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {centerSlot.title}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Right Column (Grid 2x4) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '768px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: `${rightGridGap}px`, width: `${rightColWidth}px`, height: `${leftTotalHeight}px` }}>
           {/* Top Row (1, 2, 3, 4) */}
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: `${rightGridGap}px` }}>
             {topRowImageUrls.map((imgUrl, idx) => {
               const manga = data.slots[idx];
               return (
                 <div
                   key={idx}
                   style={{
-                    width: '180px',
-                    height: '241px',
-                    background: '#FFFFFF',
-                    border: '3px solid #1A1A1A',
+                    width: '177px',
+                    height: `${rightBoxHeight}px`,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    flexDirection: 'column',
+                    borderRadius: boxBorderRadius,
                     overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: `0 6px 16px ${shadowColor}`,
                   }}
                 >
-                  <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                    {imgUrl ? (
-                      <img
-                        src={imgUrl}
-                        alt={manga?.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          background: '#E0E0E0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#999',
-                          fontSize: '48px',
-                          fontWeight: 900,
-                        }}
-                      >
-                        {idx + 1}
-                      </div>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      background: '#1A1A1A',
-                      color: '#FFFFFF',
-                      padding: '2px 8px',
-                      height: '32px',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {manga?.title || '本のタイトル'}
+                  {imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={manga?.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: textColor,
+                        opacity: 0.2,
+                        fontSize: '48px',
+                        fontWeight: 900,
+                      }}
+                    >
+                      {idx + 1}
                     </div>
-                  </div>
+                  )}
+                  {manga?.title && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '100%',
+                      padding: '30px 8px 8px',
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%)',
+                      color: 'white',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'flex-end',
+                    }}>
+                      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {manga.title}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
           {/* Bottom Row (6, 7, 8, 9) */}
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: `${rightGridGap}px` }}>
             {bottomRowImageUrls.map((imgUrl, idx) => {
               const actualIdx = idx + 5;
               const manga = data.slots[actualIdx];
@@ -205,57 +233,60 @@ export default async function Image({ params }: { params: { id: string } }) {
                 <div
                   key={actualIdx}
                   style={{
-                    width: '180px',
-                    height: '241px',
-                    background: '#FFFFFF',
-                    border: '3px solid #1A1A1A',
+                    width: '177px',
+                    height: `${rightBoxHeight}px`,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    flexDirection: 'column',
+                    borderRadius: boxBorderRadius,
                     overflow: 'hidden',
+                    position: 'relative',
+                    boxShadow: `0 6px 16px ${shadowColor}`,
                   }}
                 >
-                  <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                    {imgUrl ? (
-                      <img
-                        src={imgUrl}
-                        alt={manga?.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          background: '#E0E0E0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#999',
-                          fontSize: '48px',
-                          fontWeight: 900,
-                        }}
-                      >
-                        {actualIdx + 1}
-                      </div>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      background: '#1A1A1A',
-                      color: '#FFFFFF',
-                      padding: '2px 8px',
-                      height: '32px',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {manga?.title || '本のタイトル'}
+                  {imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={manga?.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: textColor,
+                        opacity: 0.2,
+                        fontSize: '48px',
+                        fontWeight: 900,
+                      }}
+                    >
+                      {actualIdx + 1}
                     </div>
-                  </div>
+                  )}
+                  {manga?.title && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '100%',
+                      padding: '30px 8px 8px',
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%)',
+                      color: 'white',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'flex-end',
+                    }}>
+                      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {manga.title}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

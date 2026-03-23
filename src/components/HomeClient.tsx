@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import type { MangaItem } from '@/types';
 import { THEME_GRADIENTS } from '@/lib/themes';
+import { COLOR_THEMES, COLOR_THEMES_ORDER } from '@/lib/colors';
 import PromotionUnit from '@/components/PromotionUnit';
 
 export default function HomeClient() {
@@ -22,6 +23,7 @@ export default function HomeClient() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [authorName, setAuthorName] = useState('');
   const [theme, setTheme] = useState('');
+  const [bgColorId, setBgColorId] = useState('01');
   const [isSharing, setIsSharing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [themeRecommendations, setThemeRecommendations] = useState<MangaItem[]>([]);
@@ -57,6 +59,8 @@ export default function HomeClient() {
             const parsed = JSON.parse(saved);
             if (parsed.slots) setSlots(parsed.slots);
             if (parsed.authorName) setAuthorName(parsed.authorName);
+            if (parsed.bgColorId) setBgColorId(parsed.bgColorId);
+            // URL パラメータがない場合のみドラフトから復元
             if (parsed.theme) setTheme(parsed.theme);
           } catch (e) {
             console.error('Draft parsing failed:', e);
@@ -90,9 +94,50 @@ export default function HomeClient() {
   // 状態が変わるたびに下書きを保存
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('draft_9coma', JSON.stringify({ slots, authorName, theme }));
+      localStorage.setItem('draft_9coma', JSON.stringify({ slots, authorName, theme, bgColorId }));
     }
-  }, [slots, authorName, theme, isLoaded]);
+  }, [slots, authorName, theme, bgColorId, isLoaded]);
+
+  // 背景色のページ全体への適用
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const selected = COLOR_THEMES[bgColorId] || COLOR_THEMES['01'];
+      document.body.style.backgroundColor = selected.bg;
+      document.body.style.transition = 'background-color 0.3s ease';
+      
+      const isDark = selected.text === '#FFFFFF';
+      document.body.style.backgroundColor = selected.bg;
+      document.body.style.transition = 'background-color 0.3s ease';
+      
+      // 全体背景とテキストの適用（スクロールバーや固定ボタンにも連動）
+      document.documentElement.style.setProperty('--color-bg', selected.bg);
+      document.documentElement.style.setProperty('--color-text', selected.text);
+      document.documentElement.style.setProperty('--color-text-secondary', isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)');
+      
+      // コンテナやモーダルの背景色
+      document.documentElement.style.setProperty('--color-surface', isDark ? 'rgba(255, 255, 255, 0.1)' : '#ffffff');
+      document.documentElement.style.setProperty('--color-surface-2', isDark ? 'rgba(255, 255, 255, 0.2)' : '#f9fafb');
+      document.documentElement.style.setProperty('--color-border', isDark ? 'rgba(255, 255, 255, 0.2)' : '#e5e7eb');
+
+      // 検索モーダルのオーバーレイ背景色
+      document.documentElement.style.setProperty('--color-overlay', isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.6)');
+
+      // 5番スロットのほんのり強調用ピンク (透明度を下げて背景色に馴染ませる)
+      document.documentElement.style.setProperty('--color-highlight', 'rgba(244, 143, 177, 0.25)');
+
+      // デフォルト（黄）以外の場合は、タイトル等の強調色（プライマリカラー）も統一感のある色に変更
+      if (bgColorId === '01') {
+        document.documentElement.style.setProperty('--color-primary', '#0066FF');
+        document.documentElement.style.setProperty('--gradient-primary', 'linear-gradient(135deg, #0066FF 0%, #FF0066 100%)');
+        document.documentElement.style.setProperty('--color-primary-text', '#FFFFFF');
+      } else {
+        document.documentElement.style.setProperty('--color-primary', isDark ? '#FFD600' : '#1A1A1A'); // 暗所では黄色、明所では黒をアクセントに
+        document.documentElement.style.setProperty('--gradient-primary', isDark ? 'linear-gradient(135deg, #FFFFFF 0%, #CCCCCC 100%)' : 'linear-gradient(135deg, #1A1A1A 0%, #444444 100%)');
+        document.documentElement.style.setProperty('--color-primary-text', isDark ? '#1A1A1A' : '#FFFFFF');
+      }
+    }
+  }, [bgColorId]);
+
 
   // 検索処理
   const handleSearch = useCallback(async (k: string, t: string, a: string, isbn: string = '') => {
@@ -344,7 +389,8 @@ export default function HomeClient() {
     const currentPostContent = {
       slots: slots.map(s => s ? s.isbn : null),
       authorName: authorName || '私',
-      theme: theme || undefined
+      theme: theme || undefined,
+      colorThemeId: bgColorId
     };
 
     const lastPostStr = localStorage.getItem('last_post_9coma');
@@ -369,9 +415,11 @@ export default function HomeClient() {
           slots,
           authorName: authorName || '私',
           theme: theme || undefined,
+          colorThemeId: bgColorId,
           deviceId
         }),
       });
+
       const data = await res.json();
       if (data.id) {
         localStorage.setItem('last_post_9coma', JSON.stringify({
@@ -444,6 +492,38 @@ export default function HomeClient() {
           </select>
         </div>
 
+        {/* カラー選択 UI */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <label style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '6px', whiteSpace: 'nowrap' }}>背景色</label>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', flex: 1, overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+
+            <style dangerouslySetInnerHTML={{ __html: `div::-webkit-scrollbar { display: none; }` }} />
+
+            {COLOR_THEMES_ORDER.map((id: string) => {
+              const c = COLOR_THEMES[id];
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setBgColorId(c.id)}
+                  title={c.name}
+                  style={{
+                     width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                     backgroundColor: c.bg,
+                     border: bgColorId === c.id ? `3px solid var(--color-primary)` : `2px solid var(--color-border)`,
+                     boxShadow: bgColorId === c.id ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
+                     cursor: 'pointer',
+                     padding: 0,
+                     transition: 'all 0.2s ease',
+                     transform: bgColorId === c.id ? 'scale(1.1)' : 'scale(1)'
+                  }}
+
+                />
+              )
+            })}
+          </div>
+        </div>
+
+
         {(() => {
           const filledCount = slots.filter(s => s !== null).length;
           const pct = (filledCount / 9) * 100;
@@ -474,7 +554,9 @@ export default function HomeClient() {
           );
         })()}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
+        <div style={{ 
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'
+        }}>
           {slots.map((manga, idx) => (
             <div
               key={idx}
@@ -487,13 +569,14 @@ export default function HomeClient() {
               onClick={() => setSelectedSlotIndex(idx)}
               style={{
                 position: 'relative',
-                background: idx === 4 ? '#FFA8B8' : 'var(--color-surface-2)',
+                background: idx === 4 && !manga ? 'var(--color-highlight)' : 'var(--color-surface-2)',
                 borderRadius: 'var(--radius-sm)',
                 overflow: 'hidden',
                 cursor: manga ? 'grab' : 'pointer',
                 border: dragOverIndex === idx ? '3px dashed var(--color-primary)'
                   : selectedSlotIndex === idx ? '3px solid var(--color-primary)'
-                    : '2px solid var(--color-border)',
+                    : 'none',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 transition: 'var(--transition-fast)',
                 aspectRatio: '1 / 1.4',
                 display: 'flex',
@@ -505,6 +588,34 @@ export default function HomeClient() {
               {manga ? (
                 <>
                   <img src={manga.imageUrl} alt={manga.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {/* タイトル表示帯の統一（下から上へのグラデーション） */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
+                    padding: '32px 8px 8px',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'center',
+                    pointerEvents: 'none'
+                  }}>
+                    <span style={{
+                      color: '#ffffff',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      lineHeight: '1.2',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.8)'
+                    }}>
+                      {manga.title}
+                    </span>
+                  </div>
                   <button
                     onClick={(e) => removeManga(idx, e)}
                     style={{
@@ -574,7 +685,7 @@ export default function HomeClient() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+          backgroundColor: 'var(--color-overlay)',
           backdropFilter: 'blur(5px)',
           zIndex: 1000,
           display: 'flex',
@@ -835,7 +946,7 @@ export default function HomeClient() {
             padding: '1rem',
             borderRadius: 'var(--radius-md)',
             background: 'var(--gradient-primary)',
-            color: 'white',
+            color: 'var(--color-primary-text)',
             fontWeight: 700,
             fontSize: '1.1rem',
             boxShadow: 'var(--shadow-primary)',

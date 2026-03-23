@@ -14,10 +14,9 @@ export const getListById = cache(async (id: string) => {
       const snap = await getDoc(doc(db, 'lists', id));
       if (snap.exists()) {
         const rawData = snap.data();
-        // 開発時の調査用ログ
-        console.log(`[Diagnostic] Raw Firestore data for list ${id}:`, JSON.stringify(rawData));
-        
-        const data = rawData as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; createdAt: number };
+        const data = rawData as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number };
+
+
         
         // データの補完 (ISBNのみの場合、または画像URLがない場合にキャッシュから情報を取得)
         console.log(`[Hydration] Starting hydration for list ${id}. Author: ${data.authorName}`);
@@ -102,8 +101,8 @@ export const getListById = cache(async (id: string) => {
             return slot as MangaItem | null;
           })
         );
-        console.log(`[Hydration] Completed hydration for list ${id}`);
-        return { ...data, slots: hydratedSlots, id } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
+        return { ...data, slots: hydratedSlots, id } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number; id: string };
+
       }
     } catch (e) {
       console.error('Firestore error in getListById:', e);
@@ -115,9 +114,11 @@ export const getListById = cache(async (id: string) => {
     id,
     authorName: '名無し',
     theme: undefined,
+    colorThemeId: '01',
     slots: Array(9).fill(null),
     createdAt: Date.now()
-  } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; createdAt: number; id: string };
+  } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number; id: string };
+
 });
 
 // 最新のリストを取得する

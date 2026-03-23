@@ -77,20 +77,21 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      {/* 9つのマンガを並べるグリッドレイアウト（背景が少し暗い領域） */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: 'var(--color-border)', padding: '12px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}>
+      {/* 9つのマンガを並べるグリッドレイアウト（背景透過・シャドウ付きコンテナ） */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
         {data.slots.map((manga, idx) => (
           <div
             key={idx}
             style={{
-              background: 'var(--color-surface-2)',
+              background: idx === 4 && !manga ? 'var(--color-highlight)' : 'var(--color-surface-2)',
               borderRadius: 'var(--radius-sm)',
               overflow: 'hidden',
               aspectRatio: '1 / 1.4',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid var(--color-border)'
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              position: 'relative',
             }}
           >
             {manga ? (
@@ -98,32 +99,35 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                 {/* 1. マンガの表紙画像エリア */}
                 <img src={manga.imageUrl} alt={manga.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
-                <span style={{
+                {/* タイトル表示帯の統一（下から上へのグラデーション） */}
+                <div style={{
                   position: 'absolute',
                   bottom: 0,
                   left: 0,
-                  width: '100%',
-                  padding: '3px 3px',
-                  background: 'rgba(26, 26, 26, 0.8)',
+                  right: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)',
+                  padding: '32px 8px 8px',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-end',
                   justifyContent: 'center',
+                  pointerEvents: 'none'
                 }}>
                   {/* タイトルのテキスト要素（最大2行で省略する設定） */}
                   <span style={{
-                    fontSize: '0.70rem',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
                     fontWeight: 700,
-                    color: '#FFFFFF',
                     textAlign: 'center',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    lineHeight: '1.2'
+                    lineHeight: '1.2',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.8)'
                   }}>
                     {manga.title}
                   </span>
-                </span>
+                </div>
               </a>
             ) : (
               <div style={{ width: '100%', height: '100%', background: 'var(--color-surface-2)' }} />

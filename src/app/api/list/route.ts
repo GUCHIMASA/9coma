@@ -14,12 +14,14 @@ function generateId(): string {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { slots, authorName, theme, deviceId } = body as { 
+        const { slots, authorName, theme, colorThemeId, deviceId } = body as { 
             slots: (MangaItem | null)[]; 
             authorName: string; 
             theme?: string;
+            colorThemeId?: string;
             deviceId?: string;
         };
+
 
         if (!slots || !Array.isArray(slots) || slots.length !== 9) {
             return NextResponse.json({ error: '9枠のデータが必要です' }, { status: 400 });
@@ -54,9 +56,11 @@ export async function POST(request: Request) {
                     authors,
                     author_slugs: authorSlugs,
                     ...(theme ? { theme } : {}), 
+                    ...(colorThemeId ? { colorThemeId } : {}),
                     ...(deviceId ? { userId: deviceId } : {}),
                     createdAt 
                 });
+
 
                 // マンガ情報のキャッシュ保存 (救済・高速化用)
                 try {
@@ -85,9 +89,11 @@ export async function POST(request: Request) {
             slots, 
             authorName, 
             ...(theme ? { theme } : {}), 
+            ...(colorThemeId ? { colorThemeId } : {}),
             ...(deviceId ? { userId: deviceId } : {}),
             createdAt 
         };
+
         return NextResponse.json({ id, isMock: true });
     } catch {
         return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 });

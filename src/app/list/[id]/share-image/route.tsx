@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
 import { NextResponse } from 'next/server';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
+import { COLOR_THEMES } from '@/lib/colors';
 
 export const runtime = 'nodejs';
 
@@ -18,24 +19,23 @@ export async function GET(
     const data = await getListById(id);
     if (!data) return new Response('Not found', { status: 404 });
 
-    // フォントと画像データの取得
+    // フォントデータの取得
     const fontData = await getFontData();
 
     if (isDebug) {
-      const testManga = data.slots.find(s => s?.imageUrl);
-      if (!testManga) return NextResponse.json({ error: 'No manga with image found in this list' });
-      const result = await getBase64Image(testManga.imageUrl!);
       return NextResponse.json({
         id,
-        testUrl: testManga.imageUrl,
-        fontDataSize: fontData.byteLength,
-        result: result.success ? { success: true, size: result.size, base64Start: result.dataUrl?.substring(0, 50) + '...' } : result
+        colorThemeId: data.colorThemeId,
+        theme: data.theme,
+        authorName: data.authorName
       });
     }
 
-    // ユーザー指定の「黄色背景・黒テキスト」を適用
-    const themeBg = '#ffdd00'; 
-    const textColor = '#000000';
+    // 配色の取得
+    const theme = COLOR_THEMES[data.colorThemeId || '01'] || COLOR_THEMES['01'];
+    const themeBg = theme.bg;
+    const textColor = theme.text;
+    const isDark = textColor === '#FFFFFF';
 
     // すべてのスロットの画像を Data URL 化（並列実行）
     const imageUrls = await Promise.all(
@@ -48,110 +48,157 @@ export async function GET(
       })
     );
 
+    // レイアウト定数 (720x1280 の中で最高のバランスを追求)
+    const headerHeight = 50;
+    const headerToGridGap = 10;
+    const gridGap = 12;
+    const coverWidth = 218;
+    const coverHeight = 285; 
+    const gridHeight = coverHeight * 3 + gridGap * 2; // 879px
+    
+    // 全体位置調整: 上部見切れを防ぐ 160px を維持しつつ、下辺を理想の位置へ
+    const marginTop = 160; 
+
     return new ImageResponse(
       (
-        <div style={{ width: '720px', height: '1280px', display: 'flex', flexDirection: 'column', backgroundColor: themeBg, padding: '40px', color: textColor, justifyContent: 'space-between' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', flexDirection: 'column', height: '150px', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', opacity: 0.8, marginBottom: '8px', fontWeight: 400, margin: 0, display: 'flex', justifyContent: 'center' }}>
-              {data.theme ? `${data.authorName}を構成する9つのマンガ` : `${data.authorName}を構成する`}
+        <div style={{ 
+          width: '720px', 
+          height: '1280px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          backgroundColor: themeBg, 
+          color: textColor,
+          position: 'relative'
+        }}>
+          {/* Main Content Area */}
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            width: '100%',
+            marginTop: `${marginTop}px`
+          }}>
+            {/* Header (Single Line) */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              height: `${headerHeight}px`, 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              textAlign: 'center',
+              width: '678px',
+              marginBottom: `${headerToGridGap}px`
+            }}>
+              <div style={{ fontSize: '24px', fontWeight: 900, lineHeight: 1, margin: 0, display: 'flex', alignItems: 'center' }}>
+                <span style={{ opacity: 0.8, fontWeight: 400, marginRight: '8px' }}>
+                  {data.theme ? `${data.authorName}を構成する9つのマンガ` : `${data.authorName}を構成する`}
+                </span>
+                {data.theme || '9つのマンガ'}
+              </div>
             </div>
-            <div style={{ fontSize: '64px', fontWeight: 900, lineHeight: 1.1, margin: 0, display: 'flex', justifyContent: 'center' }}>
-              {data.theme || '9つのマンガ'}
+
+            {/* Grid Area */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: `${gridGap}px`,
+              alignItems: 'center'
+            }}>
+              {[0, 1, 2].map(row => (
+                <div key={row} style={{ display: 'flex', gap: `${gridGap}px` }}>
+                  {[0, 1, 2].map(col => {
+                    const idx = row * 3 + col;
+                    const manga = data.slots[idx];
+                    const imgUrl = imageUrls[idx];
+                    const isCenter = idx === 4;
+                    
+                    return (
+                      <div key={idx} style={{ 
+                        width: `${coverWidth}px`, 
+                        height: `${coverHeight}px`, 
+                        backgroundColor: isCenter ? 'rgba(244, 143, 177, 0.15)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'), 
+                        display: 'flex', 
+                        borderRadius: '4px', 
+                        overflow: 'hidden', 
+                        position: 'relative',
+                        boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+                        border: 'none'
+                      }}>
+                        {imgUrl ? (
+                          <img 
+                            src={imgUrl} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            alt=""
+                          />
+                        ) : (
+                          <div style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            padding: '10px', 
+                            textAlign: 'center', 
+                            fontSize: '18px', 
+                            color: textColor,
+                            opacity: 0.3
+                          }}>
+                            {manga?.imageUrl ? 'LOADING...' : (idx + 1)}
+                          </div>
+                        )}
+                        {manga?.title && (
+                          <div style={{ 
+                            position: 'absolute', 
+                            bottom: 0, 
+                            left: 0, 
+                            width: '100%', 
+                            padding: '40px 8px 12px', 
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
+                            color: 'white', 
+                            fontSize: '14px', 
+                            textAlign: 'center', 
+                            lineHeight: 1.2, 
+                            display: 'flex', 
+                            justifyContent: 'center',
+                            alignItems: 'flex-end'
+                          }}>
+                            <div style={{ 
+                              whiteSpace: 'nowrap', 
+                              overflow: 'hidden', 
+                              textOverflow: 'ellipsis',
+                              textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                              fontWeight: 700
+                            }}>
+                              {manga.title}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Grid Area */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '6px', justifyContent: 'center' }}>
-            {/* Row 1 */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {[0, 1, 2].map((idx) => {
-                const manga = data.slots[idx];
-                const imgUrl = imageUrls[idx];
-                return (
-                  <div key={idx} style={{ width: '220px', height: '300px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
-                    {imgUrl ? (
-                      <img 
-                        src={imgUrl} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        alt=""
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center', fontSize: '12px', color: '#999', backgroundColor: '#222' }}>
-                        {manga?.imageUrl ? 'FETCH FAILED' : 'NO IMAGE'}
-                      </div>
-                    )}
-                    {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '6px 8px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '14px', textAlign: 'center', lineHeight: 1.2, display: 'flex', justifyContent: 'center' }}>
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{manga.title}</div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {/* Row 2 */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {[3, 4, 5].map((idx) => {
-                const manga = data.slots[idx];
-                const imgUrl = imageUrls[idx];
-                return (
-                  <div key={idx} style={{ width: '220px', height: '300px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
-                    {imgUrl ? (
-                      <img 
-                        src={imgUrl} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        alt=""
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center', fontSize: '12px', color: '#999', backgroundColor: '#222' }}>
-                        {manga?.imageUrl ? 'FETCH FAILED' : 'NO IMAGE'}
-                      </div>
-                    )}
-                    {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '6px 8px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '14px', textAlign: 'center', lineHeight: 1.2, display: 'flex', justifyContent: 'center' }}>
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{manga.title}</div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {/* Row 3 */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {[6, 7, 8].map((idx) => {
-                const manga = data.slots[idx];
-                const imgUrl = imageUrls[idx];
-                return (
-                  <div key={idx} style={{ width: '220px', height: '300px', backgroundColor: '#333', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '4px solid #000', position: 'relative' }}>
-                    {imgUrl ? (
-                      <img 
-                        src={imgUrl} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        alt=""
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', textAlign: 'center', fontSize: '12px', color: '#999', backgroundColor: '#222' }}>
-                        {manga?.imageUrl ? 'FETCH FAILED' : 'NO IMAGE'}
-                      </div>
-                    )}
-                    {manga?.title && (
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '6px 8px', backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '14px', textAlign: 'center', lineHeight: 1.2, display: 'flex', justifyContent: 'center' }}>
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{manga.title}</div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Footer - QRなしでシンプルに */}
-          <div style={{ display: 'flex', width: '100%', height: '180px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: '72px', fontWeight: 900, margin: 0, padding: 0, lineHeight: 1 }}>9コマ</div>
-              <div style={{ fontSize: '24px', opacity: 0.8, margin: '8px 0', fontWeight: 700 }}>https://9coma.com</div>
-            </div>
+
+
+
+
+          {/* Footer - Always at bottom */}
+          <div style={{ 
+            position: 'absolute',
+            bottom: '40px',
+            left: 0,
+            width: '100%',
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            textAlign: 'center' 
+          }}>
+            <div style={{ fontSize: '48px', fontWeight: 900, margin: 0, padding: 0, lineHeight: 1 }}>9コマ</div>
+            <div style={{ fontSize: '20px', opacity: 0.6, margin: '4px 0', fontWeight: 700 }}>https://9coma.com</div>
           </div>
         </div>
       ),
@@ -176,3 +223,4 @@ export async function GET(
     return new Response('Internal error', { status: 500 });
   }
 }
+
