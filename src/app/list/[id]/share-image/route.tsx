@@ -52,9 +52,8 @@ export async function GET(
     const headerHeight = 50;
     const headerToGridGap = 10;
     const gridGap = 12;
-    const coverWidth = 218;
     const coverHeight = 285; 
-    const gridHeight = coverHeight * 3 + gridGap * 2; // 879px
+    const coverWidth = 218;
     
     // 全体位置調整: 上部見切れを防ぐ 160px を維持しつつ、下辺を理想の位置へ
     const marginTop = 160; 
