@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MangaItem } from '@/types';
+import { COLOR_THEMES } from '@/lib/colors';
 import PromotionUnit from '@/components/PromotionUnit';
 
 interface ListViewClientProps {
@@ -12,6 +13,7 @@ interface ListViewClientProps {
     slots: (MangaItem | null)[];
     authorName: string;
     theme?: string;
+    colorThemeId?: string;
   };
 }
 
@@ -74,6 +76,46 @@ export default function ListViewClient({ data }: ListViewClientProps) {
       setIsSharing(false);
     }
   };
+
+  const bgColorId = data.colorThemeId || '01';
+
+  // 背景色のページ全体への適用
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const selected = COLOR_THEMES[bgColorId] || COLOR_THEMES['01'];
+      document.body.style.backgroundColor = selected.bg;
+      document.body.style.transition = 'background-color 0.3s ease';
+      
+      const isDark = selected.text === '#FFFFFF';
+      
+      // 全体背景とテキストの適用（スクロールバーや固定ボタンにも連動）
+      document.documentElement.style.setProperty('--color-bg', selected.bg);
+      document.documentElement.style.setProperty('--color-text', selected.text);
+      document.documentElement.style.setProperty('--color-text-secondary', isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)');
+      
+      // コンテナやモーダルの背景色
+      document.documentElement.style.setProperty('--color-surface', isDark ? 'rgba(255, 255, 255, 0.1)' : '#ffffff');
+      document.documentElement.style.setProperty('--color-surface-2', isDark ? 'rgba(255, 255, 255, 0.2)' : '#f9fafb');
+      document.documentElement.style.setProperty('--color-border', isDark ? 'rgba(255, 255, 255, 0.2)' : '#e5e7eb');
+
+      // 検索モーダルのオーバーレイ背景色
+      document.documentElement.style.setProperty('--color-overlay', isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.6)');
+
+      // 5番スロットのほんのり強調用ピンク
+      document.documentElement.style.setProperty('--color-highlight', 'rgba(244, 143, 177, 0.25)');
+
+      // プライマリカラーの調整
+      if (bgColorId === '01') {
+        document.documentElement.style.setProperty('--color-primary', '#0066FF');
+        document.documentElement.style.setProperty('--gradient-primary', 'linear-gradient(135deg, #0066FF 0%, #FF0066 100%)');
+        document.documentElement.style.setProperty('--color-primary-text', '#FFFFFF');
+      } else {
+        document.documentElement.style.setProperty('--color-primary', isDark ? '#FFD600' : '#1A1A1A');
+        document.documentElement.style.setProperty('--gradient-primary', isDark ? 'linear-gradient(135deg, #FFFFFF 0%, #CCCCCC 100%)' : 'linear-gradient(135deg, #1A1A1A 0%, #444444 100%)');
+        document.documentElement.style.setProperty('--color-primary-text', isDark ? '#1A1A1A' : '#FFFFFF');
+      }
+    }
+  }, [bgColorId]);
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>

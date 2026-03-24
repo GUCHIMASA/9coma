@@ -15,6 +15,7 @@ export interface ComicList {
   authorName: string;
   theme?: string;
   slots: (MangaItem | null)[];
+  colorThemeId?: string;
   createdAt: number;
 }
 
