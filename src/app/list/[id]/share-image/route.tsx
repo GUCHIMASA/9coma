@@ -14,7 +14,7 @@ export async function GET(
   const id = params.id;
   const { searchParams } = new URL(request.url);
   const isDebug = searchParams.get('debug') === '1';
-  
+
   try {
     const data = await getListById(id);
     if (!data) return new Response('Not found', { status: 404 });
@@ -52,38 +52,123 @@ export async function GET(
     const headerHeight = 50;
     const headerToGridGap = 10;
     const gridGap = 12;
-    const coverHeight = 285; 
+    const coverHeight = 285;
     const coverWidth = 218;
-    
+
     // 全体位置調整: 上部見切れを防ぐ 160px を維持しつつ、下辺を理想の位置へ
-    const marginTop = 160; 
+    const marginTop = 160;
 
     return new ImageResponse(
       (
-        <div style={{ 
-          width: '720px', 
-          height: '1280px', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          backgroundColor: themeBg, 
+        <div style={{
+          width: '720px',
+          height: '1280px',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: themeBg,
           color: textColor,
           position: 'relative'
         }}>
+          {/* Hidden Header Area (Visible only on full view) */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '720px',
+            height: '160px',
+            display: 'flex',
+            backgroundColor: themeBg,
+            overflow: 'hidden',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+            zIndex: 0
+          }}>
+            {/* Background: Center Manga (Slot 5) Only */}
+            {imageUrls[4] && (
+              <img
+                src={imageUrls[4]}
+                style={{
+                  position: 'absolute',
+                  top: '-20%', // 少し上にずらして中央付近を出す
+                  left: 0,
+                  width: '720px',
+                  height: '240px', // 引き伸ばして迫力を出す
+                  objectFit: 'cover',
+                  opacity: isDark ? 0.8 : 0.7,
+                }}
+                alt=""
+              />
+            )}
+
+            {/* Theme Overlay for branding visibility */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              background: `linear-gradient(to bottom, ${themeBg} 0%, rgba(255,255,255,0) 50%, ${themeBg} 100%)`,
+              opacity: 0.4
+            }} />
+
+            {/* Phase 51: Text color overlay for contrast */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              backgroundColor: textColor,
+              opacity: 0.4
+            }} />
+
+            {/* Logo Branding */}
+            <div style={{
+              display: 'flex',
+              width: '100%',
+              height: '100%',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10
+            }}>
+              <div style={{
+                fontSize: '60px',
+                fontWeight: 900,
+                color: themeBg,
+                letterSpacing: '0.12em',
+                marginBottom: '2px',
+              }}>
+                MY 9 COMICS
+              </div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                color: themeBg,
+                opacity: 0.7,
+                letterSpacing: '0.22em'
+              }}>
+                THE MASTERPIECES OF MY LIFE
+              </div>
+            </div>
+          </div>
+
           {/* Main Content Area */}
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
             marginTop: `${marginTop}px`
           }}>
             {/* Header (Single Line) */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'row', 
-              height: `${headerHeight}px`, 
-              alignItems: 'center', 
-              justifyContent: 'center', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              height: `${headerHeight}px`,
+              alignItems: 'center',
+              justifyContent: 'center',
               textAlign: 'center',
               width: '678px',
               marginBottom: `${headerToGridGap}px`
@@ -97,9 +182,9 @@ export async function GET(
             </div>
 
             {/* Grid Area */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: `${gridGap}px`,
               alignItems: 'center'
             }}>
@@ -110,35 +195,35 @@ export async function GET(
                     const manga = data.slots[idx];
                     const imgUrl = imageUrls[idx];
                     const isCenter = idx === 4;
-                    
+
                     return (
-                      <div key={idx} style={{ 
-                        width: `${coverWidth}px`, 
-                        height: `${coverHeight}px`, 
-                        backgroundColor: isCenter ? 'rgba(244, 143, 177, 0.15)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'), 
-                        display: 'flex', 
-                        borderRadius: '4px', 
-                        overflow: 'hidden', 
+                      <div key={idx} style={{
+                        width: `${coverWidth}px`,
+                        height: `${coverHeight}px`,
+                        backgroundColor: isCenter ? 'rgba(244, 143, 177, 0.15)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'),
+                        display: 'flex',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
                         position: 'relative',
                         boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
                         border: 'none'
                       }}>
                         {imgUrl ? (
-                          <img 
-                            src={imgUrl} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          <img
+                            src={imgUrl}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             alt=""
                           />
                         ) : (
-                          <div style={{ 
-                            width: '100%', 
-                            height: '100%', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            padding: '10px', 
-                            textAlign: 'center', 
-                            fontSize: '18px', 
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '10px',
+                            textAlign: 'center',
+                            fontSize: '18px',
                             color: textColor,
                             opacity: 0.3
                           }}>
@@ -146,24 +231,24 @@ export async function GET(
                           </div>
                         )}
                         {manga?.title && (
-                          <div style={{ 
-                            position: 'absolute', 
-                            bottom: 0, 
-                            left: 0, 
-                            width: '100%', 
-                            padding: '40px 8px 12px', 
+                          <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            width: '100%',
+                            padding: '40px 8px 12px',
                             background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-                            color: 'white', 
-                            fontSize: '14px', 
-                            textAlign: 'center', 
-                            lineHeight: 1.2, 
-                            display: 'flex', 
+                            color: 'white',
+                            fontSize: '14px',
+                            textAlign: 'center',
+                            lineHeight: 1.2,
+                            display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'flex-end'
                           }}>
-                            <div style={{ 
-                              whiteSpace: 'nowrap', 
-                              overflow: 'hidden', 
+                            <div style={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               textShadow: '0 1px 3px rgba(0,0,0,0.8)',
                               fontWeight: 700
@@ -185,19 +270,80 @@ export async function GET(
 
 
 
-          {/* Footer - Always at bottom */}
-          <div style={{ 
+          {/* Footer - Always at bottom (Hidden on timeline, visible on full view) */}
+          <div style={{
             position: 'absolute',
-            bottom: '40px',
+            bottom: 0,
             left: 0,
-            width: '100%',
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            textAlign: 'center' 
+            width: '720px',
+            height: '160px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)',
+            backgroundColor: themeBg
           }}>
-            <div style={{ fontSize: '48px', fontWeight: 900, margin: 0, padding: 0, lineHeight: 1 }}>9コマ</div>
-            <div style={{ fontSize: '20px', opacity: 0.6, margin: '4px 0', fontWeight: 700 }}>https://9coma.com</div>
+            {/* Background Band: Other 8 Manga */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'row',
+              opacity: isDark ? 0.7 : 0.6,
+            }}>
+              {/* index 4 以外を表示 */}
+              {imageUrls.map((url, i) => i !== 4 && url).filter(u => u).map((url, i) => (
+                <img key={i} src={url as string} style={{ width: '90px', height: '160px', objectFit: 'cover' }} alt="" />
+              ))}
+            </div>
+
+            {/* Theme Overlay */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              background: `linear-gradient(to top, ${themeBg} 0%, rgba(255,255,255,0) 50%, ${themeBg} 100%)`,
+              opacity: 0.5
+            }} />
+
+            {/* Phase 51: Text color overlay for contrast */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              backgroundColor: textColor,
+              opacity: 0.4
+            }} />
+
+            <div style={{
+              fontSize: '36px',
+              fontWeight: 900,
+              margin: 0,
+              padding: 0,
+              lineHeight: 1,
+              zIndex: 10,
+              color: themeBg,
+            }}>9コマ │ 私を構成する9つのマンガ</div>
+            <div style={{
+              fontSize: '18px',
+              opacity: 0.8,
+              margin: '6px 0 0 0',
+              fontWeight: 700,
+              zIndex: 10,
+              color: themeBg,
+              letterSpacing: '0.05em'
+            }}>https://9coma.com</div>
           </div>
         </div>
       ),
