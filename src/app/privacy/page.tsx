@@ -65,12 +65,19 @@ export default function PrivacyPolicy() {
 
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-          アクセス解析ツールについて
+          アクセス解析ツールおよび広告配信について
         </h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-          当サイトでは、Googleによるアクセス解析ツール「Google Analytics (GA4)」を使用しています。このGoogle Analyticsはデータの収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。<br />
-          この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。
-        </p>
+        <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+          <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>Google アナリティクス</p>
+          <p style={{ marginBottom: '1rem' }}>
+            当サイトでは、Googleによるアクセス解析ツール「Google Analytics (GA4)」を使用しています。この分析ツールはデータの収集のためにCookieを使用していますが、データは匿名で収集されており、個人を特定するものではありません。
+          </p>
+          <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>Google アドセンス</p>
+          <p>
+            当サイトでは、第三者配信事業者であるGoogleによる広告サービス「Google AdSense」を利用しています。広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報「Cookie」を使用することがあります。<br />
+            詳細およびパーソナライズ広告を無効にする方法については、Googleの<a href="https://adssettings.google.com/authenticated" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>広告設定</a>をご確認ください。
+          </p>
+        </div>
       </section>
 
       <div style={{ textAlign: 'center', marginTop: '4rem' }}>
