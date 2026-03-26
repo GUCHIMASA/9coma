@@ -141,7 +141,7 @@ export default async function AuthorPage({ params }: Props) {
                       楽天
                     </a>
                     <a
-                      href={`https://www.amazon.co.jp/s?k=${manga.isbn}&tag=guchimasa03-22`} // ISBN検索+アソシエイトタグ
+                      href={`https://www.amazon.co.jp/s?k=${manga.isbn}&tag=${process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_ID || '9coma06-22'}`} // ISBN検索+アソシエイトタグ
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
