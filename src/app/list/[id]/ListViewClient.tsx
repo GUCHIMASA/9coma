@@ -316,8 +316,8 @@ export default function ListViewClient({ data }: ListViewClientProps) {
           {data.slots.map((manga, idx) => {
             if (!manga) return null;
 
-            // Amazon トラッキング ID を設定
-            const AMAZON_ASSOCIATE_ID = '9coma-22';
+            // Amazon トラッキング ID を環境変数から取得
+            const AMAZON_ASSOCIATE_ID = process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_ID || '9coma06-22';
             const displayTitle = manga.title;
             const linkKeyword = manga.title;
             const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(linkKeyword)}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
