@@ -10,65 +10,69 @@ export const getListById = cache(async (id: string) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { doc, getDoc, setDoc } = await import('firebase/firestore');
+      const { doc, getDoc, setDoc, collection, query, where, documentId, getDocs } = await import('firebase/firestore');
       const snap = await getDoc(doc(db, 'lists', id));
       if (snap.exists()) {
         const rawData = snap.data();
         const data = rawData as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number };
 
+        // 1. ハイドレーションが必要な ISBN を抽出
+        const isbnsToFetch = new Set<string>();
+        data.slots.forEach(slot => {
+          if (!slot) return;
+          const isIsbnString = typeof slot === 'string' && slot.length > 0;
+          const slotAsObj = slot as unknown as Record<string, unknown>;
+          
+          // 完全なデータ（title, imageUrl）を持っているか判定
+          const hasCompleteData = typeof slot === 'object' && slotAsObj.title && slotAsObj.imageUrl;
 
-        
-        // データの補完 (ISBNのみの場合、または画像URLがない場合にキャッシュから情報を取得)
-        console.log(`[Hydration] Starting hydration for list ${id}. Author: ${data.authorName}`);
-        
+          if (isIsbnString || !hasCompleteData) {
+            const isbn = isIsbnString ? (slot as string) : (slotAsObj.isbn as string);
+            if (isbn) isbnsToFetch.add(isbn);
+          }
+        });
+
+        // 2. キャッシュから一括取得 (Batch Read)
+        const cacheMap = new Map<string, MangaItem>();
+        if (isbnsToFetch.size > 0) {
+          console.log(`[BatchRead] Fetching ${isbnsToFetch.size} manga items from cache for list ${id}`);
+          const q = query(collection(db, 'manga_cache'), where(documentId(), 'in', Array.from(isbnsToFetch)));
+          const cacheSnaps = await getDocs(q);
+          cacheSnaps.forEach(s => cacheMap.set(s.id, s.data() as MangaItem));
+        }
+
+        // 3. スロットの補完
         const hydratedSlots = await Promise.all(
-          data.slots.map(async (slot, idx) => {
+          data.slots.map(async (slot) => {
+            if (!slot) return null;
             const isIsbnString = typeof slot === 'string' && slot.length > 0;
-            // オブジェクトかつ画像URLが実質的にない、またはシリーズ名が欠落している、かつISBNがある場合を判定
-            const isObject = slot !== null && typeof slot === 'object';
             const slotAsObj = slot as unknown as Record<string, unknown>;
-            const isMissingImageUrl = isObject && (!slotAsObj.imageUrl || slotAsObj.imageUrl === '') && ('isbn' in slotAsObj);
-            const isMissingSeriesName = isObject && (slotAsObj.seriesName === undefined) && ('isbn' in slotAsObj);
+            const isbn = isIsbnString ? (slot as string) : (slotAsObj.isbn as string);
             
-            if (isIsbnString || isMissingImageUrl || isMissingSeriesName) {
-              const isbn = isIsbnString ? (slot as string) : (slotAsObj.isbn as string);
-              console.log(`[Hydration] Slot ${idx}: Needs hydration. ISBN: ${isbn}. Trigger: ${isIsbnString ? 'String' : (isMissingImageUrl ? 'FalsyURL' : 'MissingSeries')}`);
-              
-              // ISBNを使ってキャッシュまたは楽天から情報を復元
-              try {
-                const cacheSnap = await getDoc(doc(db, 'manga_cache', isbn));
-                if (cacheSnap.exists()) {
-                  const cachedManga = cacheSnap.data() as MangaItem;
-                  // シリーズ名がある場合はそのまま返す
-                  if (cachedManga.seriesName && cachedManga.seriesName !== '') {
-                    console.log(`[Hydration] Slot ${idx}: Cache HIT with SeriesName for ISBN ${isbn}`);
-                    return cachedManga;
-                  }
-                  console.log(`[Hydration] Slot ${idx}: Cache HIT but MISSING SeriesName for ISBN ${isbn}. Re-fetching...`);
-                }
-                
-                console.log(`[Hydration] Slot ${idx}: Fetching from Rakuten API to heal data. ISBN: ${isbn}`);
-                // キャッシュにない、またはシリーズ名が欠落している場合は楽天APIから取得
-                const appId = process.env.RAKUTEN_APPLICATION_ID;
-                if (appId && appId !== 'your_rakuten_app_id_here') {
-                  // seriesName を確実に取得するため BooksBook を使用
+            // すでにデータが揃っている場合はそのまま返す
+            if (typeof slot === 'object' && slotAsObj.title && slotAsObj.imageUrl) {
+              return slot as MangaItem;
+            }
+
+            if (cacheMap.has(isbn)) {
+              const cached = cacheMap.get(isbn)!;
+              if (cached.seriesName) return cached;
+            }
+
+            // キャッシュにない、または不完全な場合はフォールバック
+            if (isIsbnString || (typeof slot === 'object' && (!slotAsObj.imageUrl || slotAsObj.seriesName === undefined))) {
+              console.log(`[Hydration] Fallback for ISBN: ${isbn}`);
+              const appId = process.env.RAKUTEN_APPLICATION_ID;
+              if (appId && appId !== 'your_rakuten_app_id_here') {
+                try {
                   const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
                   url.searchParams.set('applicationId', appId);
                   url.searchParams.set('isbn', isbn);
                   url.searchParams.set('formatVersion', '2');
-                  
                   const accessKey = process.env.RAKUTEN_ACCESS_KEY;
-                  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
-                  const headers: Record<string, string> = {
-                    'Referer': baseUrl,
-                    'Origin': baseUrl,
-                  };
-                  if (accessKey) {
-                    headers['Authorization'] = `Bearer ${accessKey}`;
-                  }
-
                   const res = await fetch(url.toString(), {
-                    headers,
+                    headers: accessKey ? { 'Authorization': `Bearer ${accessKey}` } : {},
+                    next: { revalidate: 86400 }
                   });
                   const resData = await res.json();
                   if (resData.Items && resData.Items.length > 0) {
@@ -81,28 +85,19 @@ export const getListById = cache(async (id: string) => {
                       imageUrl: item.largeImageUrl,
                       affiliateUrl: item.affiliateUrl || item.itemUrl,
                     };
-                    console.log(`[Hydration] Slot ${idx}: Successfully healed seriesName for ISBN ${isbn}. Updating cache...`);
                     await setDoc(doc(db, 'manga_cache', isbn), { ...manga, updatedAt: Date.now() }, { merge: true });
                     return manga;
-                  } else {
-                    if (resData.errors || resData.error) {
-                      console.warn(`[Hydration] Slot ${idx}: Rakuten API Error:`, resData.errors || resData.error);
-                    } else {
-                      console.warn(`[Hydration] Slot ${idx}: Rakuten API returned no results for ISBN ${isbn} during healing`);
-                    }
                   }
+                } catch (e) {
+                  console.error(`[Hydration] Rakuten API error for ${isbn}:`, e);
                 }
-              } catch (e) {
-                console.error(`[Hydration] Slot ${idx}: Error during healing for ISBN ${isbn}:`, e);
               }
-              // 全て失敗した場合は（あったものを活かすか、ISBNだけのオブジェクトを返す）
-              return typeof slot === 'object' ? slot : { isbn: isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
+              return typeof slot === 'object' ? (slot as unknown as MangaItem) : { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
             }
-            return slot as MangaItem | null;
+            return slot as MangaItem;
           })
         );
         return { ...data, slots: hydratedSlots, id } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number; id: string };
-
       }
     } catch (e) {
       console.error('Firestore error in getListById:', e);
@@ -118,7 +113,6 @@ export const getListById = cache(async (id: string) => {
     slots: Array(9).fill(null),
     createdAt: Date.now()
   } as { slots: (MangaItem | null)[]; authorName: string; theme?: string; colorThemeId?: string; createdAt: number; id: string };
-
 });
 
 // 最新のリストを取得する
@@ -128,7 +122,7 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, orderBy, limit, getDocs, doc, getDoc } = await import('firebase/firestore');
+      const { collection, query, orderBy, limit, getDocs, where, documentId } = await import('firebase/firestore');
       
       const q = query(
         collection(db, 'lists'),
@@ -137,25 +131,64 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
       );
       
       const snaps = await getDocs(q);
-      const results = await Promise.all(
-        snaps.docs.map(async (snap) => {
-          const id = snap.id;
-          const data = snap.data() as { slots: (MangaItem | string | null)[]; authorName: string; theme?: string; createdAt: number };
+      const listDocs = snaps.docs.map(snap => ({ id: snap.id, ...snap.data() } as { id: string; slots: (MangaItem | string | null)[]; authorName: string; theme?: string; createdAt: number }));
+      
+      // 1. 全リストからハイドレーションが必要な ISBN を一括抽出
+      const isbnsToFetch = new Set<string>();
+      listDocs.forEach(list => {
+        list.slots.forEach(slot => {
+          if (typeof slot === 'string' && slot.length > 0) {
+            isbnsToFetch.add(slot);
+          } else if (slot && typeof slot === 'object') {
+            const s = slot as MangaItem;
+            // title, imageUrl, author のいずれかが欠けている場合にハイドレーション対象とする
+            if (!s.title || !s.imageUrl || !s.author) {
+              if (s.isbn) isbnsToFetch.add(s.isbn);
+            }
+          }
+        });
+      });
+
+      // 2. キャッシュから一括取得 (30件制限を考慮してチャンク化)
+      const cacheMap = new Map<string, MangaItem>();
+      if (isbnsToFetch.size > 0) {
+        const isbnList = Array.from(isbnsToFetch);
+        const chunks = [];
+        for (let i = 0; i < isbnList.length; i += 30) {
+          chunks.push(isbnList.slice(i, i + 30));
+        }
+
+        console.log(`[BatchRead] Fetching ${isbnsToFetch.size} manga items in ${chunks.length} chunks for getRecentLists`);
+        
+        await Promise.all(
+          chunks.map(async (chunk) => {
+            const cacheQuery = query(collection(db, 'manga_cache'), where(documentId(), 'in', chunk));
+            const cacheSnaps = await getDocs(cacheQuery);
+            cacheSnaps.forEach(s => cacheMap.set(s.id, s.data() as MangaItem));
+          })
+        );
+      }
+
+      // 3. 各リストのハイドレーションを適用
+      const results = listDocs.map(list => {
+        const hydratedSlots = list.slots.map(slot => {
+          if (!slot) return null;
+          const isIsbnString = typeof slot === 'string';
+          const isbn = isIsbnString ? (slot as string) : (slot as MangaItem).isbn;
           
-          const hydratedSlots = await Promise.all(
-            data.slots.map(async (slot) => {
-              if (typeof slot === 'string' && slot.length > 0) {
-                const cacheSnap = await getDoc(doc(db, 'manga_cache', slot));
-                if (cacheSnap.exists()) return cacheSnap.data() as MangaItem;
-                return { isbn: slot, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
-              }
-              return slot as MangaItem | null;
-            })
-          );
+          if (cacheMap.has(isbn)) {
+            const cached = cacheMap.get(isbn)!;
+            if (cached.seriesName) return cached;
+          }
           
-          return { ...data, slots: hydratedSlots, id };
-        })
-      );
+          if (isIsbnString) {
+            return { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
+          }
+          return slot as MangaItem;
+        });
+        
+        return { ...list, slots: hydratedSlots };
+      });
       
       return results;
     } catch (e) {
@@ -167,6 +200,7 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
   }
   return [];
 });
+
 // 特定の著者の作品一覧を取得する
 export const getMangaByAuthor = cache(async (authorName: string) => {
   console.log(`[Firestore] Fetching manga by author: ${authorName}`);

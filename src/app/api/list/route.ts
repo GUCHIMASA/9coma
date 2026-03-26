@@ -49,7 +49,7 @@ export async function POST(request: Request) {
                     authors.map(a => a.replace(/[\s\u3000]/g, ''))
                 ));
                 
-                // リスト自体の保存
+                // リスト自体の保存 (Phase 50: slots に MangaItem オブジェクトを直接埋め込む)
                 await setDoc(doc(db, 'lists', id), { 
                     slots, 
                     authorName, 
