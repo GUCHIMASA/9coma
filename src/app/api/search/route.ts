@@ -63,7 +63,19 @@ export async function GET(request: Request) {
         }
 
         if (data.Items && Array.isArray(data.Items)) {
-            const items: MangaItem[] = data.Items.map((item: any) => ({
+            interface RakutenBookItem {
+                isbn: string;
+                title: string;
+                author: string;
+                publisherName: string;
+                largeImageUrl: string;
+                itemUrl: string;
+                affiliateUrl?: string;
+                salesDate: string;
+                seriesName: string;
+            }
+
+            const items: MangaItem[] = data.Items.map((item: RakutenBookItem) => ({
                 isbn: item.isbn,
                 title: item.title,
                 author: item.author,
