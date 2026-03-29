@@ -2,14 +2,6 @@ import { NextResponse } from 'next/server';
 import { getListById } from '@/lib/list';
 import type { MangaItem } from '@/types';
 
-// モックストレージ（Firebase未設定時用）
-const mockStore: Record<string, { slots: (MangaItem | null)[]; authorName: string; theme?: string; userId?: string; createdAt: number }> = {};
-
-function generateId(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-
 // リスト保存
 export async function POST(request: Request) {
     try {
@@ -22,79 +14,69 @@ export async function POST(request: Request) {
             deviceId?: string;
         };
 
-
         if (!slots || !Array.isArray(slots) || slots.length !== 9) {
             return NextResponse.json({ error: '9枠のデータが必要です' }, { status: 400 });
         }
 
-        const id = generateId();
         const createdAt = Date.now();
-
-        // Firebaseが設定されている場合はFirestoreに保存
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-        if (projectId && projectId !== 'your_project_id') {
-            try {
-                const { db } = await import('@/lib/firebase');
-                const { doc, setDoc, getDoc } = await import('firebase/firestore');
-                
-                // 著者一覧の抽出
-                const authors = Array.from(new Set(
-                    slots
-                        .filter(s => s !== null && typeof s === 'object' && s.author)
-                        .map(s => s!.author)
-                ));
 
-                // 著者スラッグ（スペース除去済み）の抽出
-                const authorSlugs = Array.from(new Set(
-                    authors.map(a => a.replace(/[\s\u3000]/g, ''))
-                ));
-                
-                // リスト自体の保存 (Phase 50: slots に MangaItem オブジェクトを直接埋め込む)
-                await setDoc(doc(db, 'lists', id), { 
-                    slots, 
-                    authorName, 
-                    authors,
-                    author_slugs: authorSlugs,
-                    ...(theme ? { theme } : {}), 
-                    ...(colorThemeId ? { colorThemeId } : {}),
-                    ...(deviceId ? { userId: deviceId } : {}),
-                    createdAt 
-                });
-
-
-                // マンガ情報のキャッシュ保存 (救済・高速化用)
-                try {
-                    await Promise.all(
-                        slots.filter(s => s !== null).map(async (m) => {
-                            const cacheRef = doc(db, 'manga_cache', m!.isbn);
-                            const cacheSnap = await getDoc(cacheRef);
-                            // 既にキャッシュが存在する場合は書き込まない
-                            if (!cacheSnap.exists()) {
-                                await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
-                            }
-                        })
-                    );
-                } catch (ce) {
-                    console.error('Manga cache save error in list POST:', ce);
-                }
-
-                return NextResponse.json({ id, isMock: false });
-            } catch (e) {
-                console.error('Firestore error:', e);
-            }
+        if (!projectId || projectId === 'your_project_id') {
+            return NextResponse.json({ error: '保存できません（データベース未設定）' }, { status: 500 });
         }
 
-        // モックストレージに保存
-        mockStore[id] = { 
-            slots, 
-            authorName, 
-            ...(theme ? { theme } : {}), 
-            ...(colorThemeId ? { colorThemeId } : {}),
-            ...(deviceId ? { userId: deviceId } : {}),
-            createdAt 
-        };
+        try {
+            const { db } = await import('@/lib/firebase');
+            const { doc, setDoc, getDoc, collection } = await import('firebase/firestore');
+            
+            // IDの自動生成 (Firestoreの機能を利用)
+            const listRef = doc(collection(db, 'lists'));
+            const id = listRef.id;
 
-        return NextResponse.json({ id, isMock: true });
+            // 著者一覧の抽出
+            const authors = Array.from(new Set(
+                slots
+                    .filter(s => s !== null && typeof s === 'object' && s.author)
+                    .map(s => s!.author)
+            ));
+
+            // 著者スラッグの抽出
+            const authorSlugs = Array.from(new Set(
+                authors.map(a => a.replace(/[\s\u3000]/g, ''))
+            ));
+            
+            // リストの保存
+            await setDoc(listRef, { 
+                slots, 
+                authorName: authorName || '名無し', 
+                authors,
+                author_slugs: authorSlugs,
+                ...(theme ? { theme } : {}), 
+                ...(colorThemeId ? { colorThemeId } : {}),
+                ...(deviceId ? { userId: deviceId } : {}),
+                createdAt 
+            });
+
+            // マンガ情報のキャッシュ保存
+            try {
+                await Promise.allSettled(
+                    slots.filter(s => s !== null).map(async (m) => {
+                        const cacheRef = doc(db, 'manga_cache', m!.isbn);
+                        const cacheSnap = await getDoc(cacheRef);
+                        if (!cacheSnap.exists()) {
+                            await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+                        }
+                    })
+                );
+            } catch (ce) {
+                console.error('Manga cache save error:', ce);
+            }
+
+            return NextResponse.json({ id });
+        } catch (e) {
+            console.error('Firestore save error:', e);
+            return NextResponse.json({ error: '保存に失敗しました' }, { status: 500 });
+        }
     } catch {
         return NextResponse.json({ error: 'サーバーエラー' }, { status: 500 });
     }
@@ -109,20 +91,15 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'IDが必要です' }, { status: 400 });
     }
 
-    // getListById ユーティリティを使用して取得（ハイドレーションと内部キャッシュの恩恵を受ける）
     try {
+        // getListById を使用して取得。失敗時はモックに逃げずにエラーを返す。
         const data = await getListById(id);
-        if (data && data.authorName !== '名無し') {
-            return NextResponse.json({ ...data, isMock: false });
+        if (data) {
+            return NextResponse.json({ ...data, id });
         }
+        return NextResponse.json({ error: 'リストが見つかりません' }, { status: 404 });
     } catch (e) {
         console.error('Error in API GET /api/list:', e);
+        return NextResponse.json({ error: 'データの取得に失敗しました' }, { status: 500 });
     }
-
-    // モックストレージから取得
-    const data = mockStore[id];
-    if (!data) {
-        return NextResponse.json({ error: 'リストが見つかりません' }, { status: 404 });
-    }
-    return NextResponse.json({ ...data, id, isMock: true });
 }

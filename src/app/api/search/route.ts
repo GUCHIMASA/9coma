@@ -1,204 +1,97 @@
 import { NextResponse } from 'next/server';
 import type { MangaItem } from '@/types';
 
-// モック漫画データ（APIキー取得後に楽天APIへ差し替え）
-const MOCK_MANGA: Record<string, Record<string, string>[]> = {
-    'default': [
-        {
-            isbn: '9784088820934',
-            title: 'ONE PIECE 1',
-            seriesName: 'ONE PIECE',
-            author: '尾田 栄一郎',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/0934/9784088820934.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/1234567/',
-        },
-        {
-            isbn: '9784088742717',
-            title: 'NARUTO -ナルト- 1',
-            seriesName: 'NARUTO-ナルト-',
-            author: '岸本 斉史',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/2717/9784088742717.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/2345678/',
-        },
-        {
-            isbn: '9784088717616',
-            title: 'DRAGON BALL 1',
-            seriesName: 'DRAGON BALL',
-            author: '鳥山 明',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/7616/9784088717616.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/3456789/',
-        },
-        {
-            isbn: '9784063288995',
-            title: '進撃の巨人 1',
-            seriesName: '進撃の巨人',
-            author: '諫山 創',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/8995/9784063288995.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/4567890/',
-        },
-        {
-            isbn: '9784819170000',
-            title: '鬼滅の刃 1',
-            seriesName: '鬼滅の刃',
-            author: '吾峠 呼世晴',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/0000/9784819170000.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/5678901/',
-        },
-        {
-            isbn: '9784088775401',
-            title: '呪術廻戦 1',
-            seriesName: '呪術廻戦',
-            author: '芥見 下々',
-            imageUrl: 'https://thumbnail.image.rakuten.co.jp/@0_mall/book/cabinet/5401/9784088775401.jpg',
-            affiliateUrl: 'https://books.rakuten.co.jp/rb/6789012/',
-        },
-    ],
-};
-
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword') || '';
     const title = searchParams.get('title') || '';
     const author = searchParams.get('author') || '';
     const isbn = searchParams.get('isbn') || '';
+    const page = searchParams.get('page') || '1';
+    const sort = searchParams.get('sort') || 'standard';
 
-    // 楽天APIキー
     const appId = process.env.RAKUTEN_APPLICATION_ID;
-    const affiliateId = process.env.NEXT_PUBLIC_RAKUTEN_AFFILIATE_ID;
     const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+    const affiliateId = process.env.NEXT_PUBLIC_RAKUTEN_AFFILIATE_ID;
 
-    if (appId && appId !== 'your_rakuten_app_id_here') {
-        try {
-            // パラメータ対応が確実な BooksBook エンドポイントに統一
-            const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
-            url.searchParams.set('applicationId', appId);
-            url.searchParams.set('affiliateId', affiliateId || '');
-            if (accessKey) url.searchParams.set('accessKey', accessKey);
-
-            // パラメータをセット
-            if (isbn) {
-                // BooksBook/Search/20170404 の正しいパラメータ名は 'isbn' (isbnjan ではない)
-                url.searchParams.set('isbn', isbn);
-            } else {
-                // 通常検索時は漫画（001001）に限定
-                if (title) url.searchParams.set('title', title);
-                if (author) url.searchParams.set('author', author);
-                if (keyword) url.searchParams.set('keyword', keyword);
-            }
-            
-            // 常にマンガジャンルを指定（ISBN指定時はAPI側で無視されるが、安全のため残す）
-            url.searchParams.set('booksGenreId', '001001');
-
-            if (!title && !author && !keyword && !isbn) {
-                return NextResponse.json({ items: [], isMock: false, error: '検索キーワードを入力してください' }, { status: 400 });
-            }
-
-            url.searchParams.set('hits', '30');
-            url.searchParams.set('formatVersion', '2');
-            url.searchParams.set('outOfStockFlag', '1');
-
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://9coma.com';
-            const headers: Record<string, string> = {
-                'Referer': baseUrl,
-                'Origin': baseUrl,
-            };
-            if (accessKey) {
-                headers['Authorization'] = `Bearer ${accessKey}`;
-            }
-
-            const res = await fetch(url.toString(), {
-                headers,
-                next: { revalidate: 10800 }
-            });
-            const data = await res.json();
-
-            if (!data.errors && !data.error && res.ok && data.Items) {
-                interface RakutenItemDef {
-                    isbn: string;
-                    title: string;
-                    seriesName?: string;
-                    author: string;
-                    largeImageUrl: string;
-                    affiliateUrl?: string;
-                    itemUrl?: string;
-                    booksGenreId?: string;
-                }
-                
-                const items = data.Items.map((item: RakutenItemDef) => ({
-                    isbn: item.isbn,
-                    title: item.title,
-                    seriesName: item.seriesName,
-                    author: item.author,
-                    imageUrl: item.largeImageUrl,
-                    affiliateUrl: item.affiliateUrl || item.itemUrl,
-                    booksGenreId: item.booksGenreId,
-                }));
-
-                // 【監督者承認済み】最終防衛ライン：ISBN検索時に一般書（こころ等）が混入するのを防ぐ
-                // 楽天 API は isbn 指定時に booksGenreId を無視するため、事後フィルタリングを行う。
-                const filteredItems = items.filter((item: { booksGenreId?: string }) => 
-                    item.booksGenreId?.startsWith('001001')
-                );
-
-                console.log(`Search result: ${filteredItems.length} items found (Original: ${items.length})`);
-                
-                // Firestore への保存を再開し、パフォーマンスを向上
-                const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                if (projectId && projectId !== 'your_project_id' && filteredItems.length > 0) {
-                    import('@/lib/firebase').then(async ({ db }) => {
-                        const { doc, setDoc, getDoc } = await import('firebase/firestore');
-
-                        // 並列実行で効率化しつつ、エラーを適切にハンドル
-                        await Promise.allSettled(
-                            filteredItems.map(async (m: MangaItem) => {
-                                try {
-                                    const cacheRef = doc(db, 'manga_cache', m.isbn);
-                                    const cacheSnap = await getDoc(cacheRef);
-                                    // シリーズ名が未取得の場合、またはキャッシュがない場合のみ書き込む
-                                    if (!cacheSnap.exists() || !cacheSnap.data()?.seriesName) {
-                                        await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
-                                    }
-                                } catch (e) {
-                                    console.error(`[SearchCache] Failed to cache ISBN ${m.isbn}:`, e);
-                                }
-                            })
-                        );
-                        console.log(`[SearchCache] Background caching completed for ${filteredItems.length} items`);
-                    }).catch((e) => {
-                        console.error('[SearchCache] Failed to load Firebase/Firestore for background caching:', e);
-                    });
-                }
-
-                return NextResponse.json({ 
-                    items: filteredItems, 
-                    isMock: false,
-                    totalCount: data.count || filteredItems.length
-                });
-            } else {
-                console.warn('Rakuten API Error:', data.errors || data.error);
-            }
-        } catch (error) {
-            console.error('Rakuten API fetch error:', error);
-        }
+    if (!appId || appId === 'your_rakuten_app_id_here') {
+        return NextResponse.json({ items: [], error: 'APIキー未設定' }, { status: 500 });
     }
 
-    // fallback to mock (basic selection)
-    const allItems = MOCK_MANGA['default'];
-    const filtered = allItems.filter((item: Record<string, string>) => {
-        // ISBN が指定されている場合は最優先でフィルタ
-        if (isbn && item.isbn !== isbn) return false;
-        
-        // ISBN 指定がない場合のみ他のあやふやなフィルタを通す
-        if (!isbn) {
-            if (title && !item.title.toLowerCase().includes(title.toLowerCase())) return false;
-            if (author && !item.author.toLowerCase().includes(author.toLowerCase())) return false;
-            if (keyword) {
-                const k = keyword.toLowerCase();
-                if (!item.title.toLowerCase().includes(k) && !item.author.toLowerCase().includes(k)) return false;
-            }
-        }
-        return true;
-    });
+    try {
+        const url = new URL('https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404');
+        url.searchParams.set('format', 'json');
+        url.searchParams.set('applicationId', appId);
+        if (accessKey) url.searchParams.set('accessKey', accessKey);
+        if (affiliateId) url.searchParams.set('affiliateId', affiliateId);
 
-    return NextResponse.json({ items: filtered, isMock: true });
+        if (isbn) {
+            url.searchParams.set('isbn', isbn.replace(/-/g, ''));
+        } else {
+            if (keyword) url.searchParams.set('keyword', keyword);
+            if (title) url.searchParams.set('title', title);
+            if (author) url.searchParams.set('author', author);
+            url.searchParams.set('page', page);
+            url.searchParams.set('sort', sort);
+            url.searchParams.set('hits', '30');
+        }
+        
+        url.searchParams.set('booksGenreId', '001001'); // 漫画ジャンル
+        url.searchParams.set('formatVersion', '2');
+
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+            'Referer': 'https://9coma.com',
+            'Origin': 'https://9coma.com'
+        };
+
+        const response = await fetch(url.toString(), { 
+            headers,
+            next: { revalidate: 3600 } 
+        });
+        const data = await response.json();
+
+        if (data.error || data.errors || !data.Items) {
+            const rawError = data.error_description || data.error || data.errors;
+            console.error('[SearchAPI] Rakuten API error:', rawError);
+            return NextResponse.json({ 
+                items: [], 
+                error: 'APIエラー',
+                rawError: rawError,
+                details: typeof rawError === 'string' ? rawError : JSON.stringify(rawError)
+            }, { status: 500 });
+        }
+
+        if (data.Items && Array.isArray(data.Items)) {
+            const items: MangaItem[] = data.Items.map((item: any) => ({
+                isbn: item.isbn,
+                title: item.title,
+                author: item.author,
+                publisher: item.publisherName,
+                imageUrl: item.largeImageUrl ? item.largeImageUrl.replace('?_ex=200x200', '?_ex=400x400') : '',
+                itemUrl: item.itemUrl,
+                affiliateUrl: item.affiliateUrl || item.itemUrl,
+                releaseDate: item.salesDate,
+                seriesName: item.seriesName
+            }));
+
+            const filteredItems = items.filter(item => {
+                const t = item.title.toLowerCase();
+                return !t.includes('セット') && !t.includes('中古');
+            });
+
+            return NextResponse.json({ 
+                items: filteredItems, 
+                totalCount: data.count || filteredItems.length,
+                page: parseInt(page),
+                hits: 30
+            });
+        }
+
+        return NextResponse.json({ items: [], count: 0 });
+
+    } catch (error) {
+        console.error('[SearchAPI] Fetch error:', error);
+        return NextResponse.json({ items: [], error: '取得エラー' }, { status: 500 });
+    }
 }

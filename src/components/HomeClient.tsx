@@ -34,6 +34,14 @@ export default function HomeClient() {
   const [isScanMode, setIsScanMode] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanHint, setScanHint] = useState<string | null>(null);
+  
+  // 無限スクロール関連
+  const [searchPage, setSearchPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [searchSort, setSearchSort] = useState('standard'); // ソート順 (standard, +releaseDate)
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+  const lastSearchParams = React.useRef({ k: '', t: '', a: '', isbn: '', s: 'standard' });
 
   // 初回マウント時のクローン＆ドラフト復元処理
   useEffect(() => {
@@ -140,32 +148,70 @@ export default function HomeClient() {
 
 
   // 検索処理
-  const handleSearch = useCallback(async (k: string, t: string, a: string, isbn: string = '') => {
+  const handleSearch = useCallback(async (k: string, t: string, a: string, isbn: string = '', page: number = 1, sort: string = 'standard') => {
     if (!k.trim() && !t.trim() && !a.trim() && !isbn.trim()) {
       setSearchResults([]);
+      setHasMore(false);
       return;
     }
-    setIsSearching(true);
+
+    if (page === 1) {
+      setIsSearching(true);
+      setSearchPage(1);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
       const params = new URLSearchParams();
-      // ISBN が指定されている場合は、最高精度を期すため他条件を無視する
       if (isbn.trim()) {
         params.set('isbn', isbn.trim());
       } else {
         if (k.trim()) params.set('keyword', k.trim());
         if (t.trim()) params.set('title', t.trim());
         if (a.trim()) params.set('author', a.trim());
+        params.set('sort', sort);
       }
+      params.set('page', page.toString());
 
       const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
-      setSearchResults(data.items || []);
+      
+      const newItems = data.items || [];
+      if (page === 1) {
+        setSearchResults(newItems);
+        lastSearchParams.current = { k, t, a, isbn, s: sort };
+      } else {
+        setSearchResults(prev => [...prev, ...newItems]);
+      }
+
+      // 次のページがあるか判定（ヒット件数が hits=30 未満なら次はない）
+      // または API から明示的に isLastPage のようなフラグが来る場合はそれを使う
+      const pageSize = data.hits || 30;
+      if (newItems.length > 0) {
+        setSearchPage(page);
+      }
+      setHasMore(newItems.length >= pageSize);
+
     } catch (error) {
       console.error('Search failed:', error);
     } finally {
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
   }, []);
+
+  // 追加読み込み
+  const loadMore = useCallback(() => {
+    // すでに読み込み中、またはこれ以上のデータがない場合は何もしない
+    if (isLoadingMore || isSearching || !hasMore) return;
+    
+    const { k, t, a, isbn, s } = lastSearchParams.current;
+    if (!k && !t && !a && !isbn) return;
+
+    // ページ番号をインクリメントして検索を実行
+    handleSearch(k, t, a, isbn, searchPage + 1, s);
+  }, [isLoadingMore, isSearching, hasMore, searchPage, handleSearch]);
 
   // スキャナーの制御
   useEffect(() => {
@@ -269,27 +315,50 @@ export default function HomeClient() {
 
   // デバウンス的な検索
   useEffect(() => {
+    // すべての入力が空になった場合は、検索結果をクリアして「おすすめ」が表示される状態にする
+    if (!keyword.trim() && !searchTitle.trim() && !searchAuthor.trim() && !searchIsbn.trim()) {
+      setSearchResults([]);
+      setHasMore(false);
+      return;
+    }
+
     const timer = setTimeout(() => {
-      handleSearch(keyword, searchTitle, searchAuthor, searchIsbn);
+      handleSearch(keyword, searchTitle, searchAuthor, searchIsbn, 1, searchSort);
     }, 500);
     return () => clearTimeout(timer);
-  }, [keyword, searchTitle, searchAuthor, searchIsbn, handleSearch]);
+  }, [keyword, searchTitle, searchAuthor, searchIsbn, searchSort, handleSearch]); // searchSort を追加
+
+  // 無限スクロールの監視
+  useEffect(() => {
+    // 検索中やこれ以上のデータがない場合は監視を開始しない
+    if (!hasMore || isLoadingMore || isSearching) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+      }
+    }, { 
+      root: null,
+      rootMargin: '300px', // 検知を少し早める
+      threshold: 0 
+    });
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [hasMore, isLoadingMore, isSearching, loadMore]); // isSearching を追加して監視を確実に再開
 
   // モーダルが開いたときにテーマ別おすすめを取得
   useEffect(() => {
     if (selectedSlotIndex === null) return;
-    if (!theme) {
-      setThemeRecommendations([]);
-      setLastFetchedTheme(null);
-      return;
-    }
-
-    // テーマが変更された場合は即座にクリア
-    if (theme !== lastFetchedTheme) {
-      setThemeRecommendations([]);
-    }
-
-    if (isLoadingRecommendations || (themeRecommendations.length > 0 && theme === lastFetchedTheme)) {
+    
+    // 現在のテーマがすでに取得済みならスキップ
+    if (themeRecommendations.length > 0 && theme === lastFetchedTheme) {
       return;
     }
 
@@ -297,7 +366,8 @@ export default function HomeClient() {
     const fetchRecommendations = async () => {
       setIsLoadingRecommendations(true);
       try {
-        const res = await fetch(`/api/popular?theme=${encodeURIComponent(theme)}`);
+        const themeParam = theme ? `theme=${encodeURIComponent(theme)}` : '';
+        const res = await fetch(`/api/popular?${themeParam}`);
         const data = await res.json();
         if (!cancelled) {
           setThemeRecommendations(data.items || []);
@@ -315,7 +385,7 @@ export default function HomeClient() {
     };
     fetchRecommendations();
     return () => { cancelled = true; };
-  }, [selectedSlotIndex, theme, lastFetchedTheme, isLoadingRecommendations, themeRecommendations.length]); // 依存配列を最小限に整理
+  }, [selectedSlotIndex, theme, lastFetchedTheme, themeRecommendations.length]); 
 
   const selectManga = (manga: MangaItem) => {
     if (selectedSlotIndex === null) return;
@@ -720,69 +790,87 @@ export default function HomeClient() {
                 </div>
                 <button onClick={() => setSelectedSlotIndex(null)} style={{ background: 'var(--color-surface-2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', color: 'var(--color-text-secondary)', transition: 'var(--transition-fast)' }}>✕</button>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* 1行目: 作品名 */}
                 <input
                   type="text"
                   autoFocus
                   placeholder="作品名で探す..."
                   value={searchTitle}
                   onChange={(e) => setSearchTitle(e.target.value)}
-                  style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                  style={{ width: '100%', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.7rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
                 />
-                <button
-                  onClick={() => setIsScanMode(!isScanMode)}
-                  title="バーコードスキャン"
-                  style={{
-                    background: isScanMode ? 'var(--color-primary)' : 'var(--color-surface-2)',
-                    color: isScanMode ? 'white' : 'var(--color-text)',
-                    border: '2px solid var(--color-border)',
-                    borderRadius: 'var(--radius-md)',
-                    width: '48px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'var(--transition-fast)',
-                    flexShrink: 0
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                    <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                    <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                    <rect x="7" y="7" width="1.5" height="10" fill="currentColor" stroke="none" />
-                    <rect x="10.5" y="7" width="3" height="10" fill="currentColor" stroke="none" />
-                    <rect x="15.5" y="7" width="1" height="10" fill="currentColor" stroke="none" />
-                    <line x1="6" y1="12" x2="18" y2="12" stroke="var(--color-primary)" strokeWidth="1.5" opacity="0.8" />
-                  </svg>
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  type="text"
-                  placeholder="ISBN (13桁) で探す..."
-                  value={searchIsbn}
-                  onChange={(e) => setSearchIsbn(e.target.value)}
-                  style={{ flex: 1, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input
-                  type="text"
-                  placeholder="著者名で探す..."
-                  value={searchAuthor}
-                  onChange={(e) => setSearchAuthor(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
-                />
-                <input
-                  type="text"
-                  placeholder="その他キーワード..."
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
-                />
+
+                {/* 2行目: 著者名 ＋ ソート */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="著者名で探す..."
+                    value={searchAuthor}
+                    onChange={(e) => setSearchAuthor(e.target.value)}
+                    style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.7rem 1rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '16px' }}
+                  />
+                  <div style={{ flexShrink: 0, display: 'flex', background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '2px', width: '160px' }}>
+                    <button 
+                      onClick={() => setSearchSort('standard')}
+                      style={{ flex: 1, padding: '0.5rem', border: 'none', borderRadius: 'calc(var(--radius-md) - 4px)', background: searchSort === 'standard' ? 'var(--color-primary)' : 'transparent', color: searchSort === 'standard' ? 'var(--color-primary-text)' : 'var(--color-text)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease', whiteSpace: 'nowrap' }}
+                    >
+                      新着
+                    </button>
+                    <button 
+                      onClick={() => setSearchSort('+releaseDate')}
+                      style={{ flex: 1, padding: '0.5rem', border: 'none', borderRadius: 'calc(var(--radius-md) - 4px)', background: searchSort === '+releaseDate' ? 'var(--color-primary)' : 'transparent', color: searchSort === '+releaseDate' ? 'var(--color-primary-text)' : 'var(--color-text)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease', whiteSpace: 'nowrap' }}
+                    >
+                      古い
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3行目: バーコード ＋ ISBN ＋ キーワード */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setIsScanMode(!isScanMode)}
+                    title="バーコードスキャン"
+                    style={{
+                      background: isScanMode ? 'var(--color-primary)' : 'var(--color-surface-2)',
+                      color: isScanMode ? 'white' : 'var(--color-text)',
+                      border: '2px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)',
+                      width: '44px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'var(--transition-fast)',
+                      flexShrink: 0
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                      <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                      <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                      <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                      <rect x="7" y="7" width="1.5" height="10" fill="currentColor" stroke="none" />
+                      <rect x="10.5" y="7" width="3" height="10" fill="currentColor" stroke="none" />
+                      <rect x="15.5" y="7" width="1" height="10" fill="currentColor" stroke="none" />
+                    </svg>
+                  </button>
+                  <input
+                    type="text"
+                    placeholder="ISBN"
+                    value={searchIsbn}
+                    onChange={(e) => setSearchIsbn(e.target.value)}
+                    style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.7rem 0.8rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '14px' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="キーワード"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    style={{ flex: 1, minWidth: 0, background: 'var(--color-surface-2)', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.7rem 0.8rem', color: 'var(--color-text)', fontWeight: 600, fontSize: '14px' }}
+                  />
+                </div>
               </div>
             </div>
             {isScanMode && (
@@ -855,7 +943,6 @@ export default function HomeClient() {
                         boxShadow: '0 0 0 4000px rgba(0,0,0,0.4)',
                         position: 'relative'
                       }}>
-                        {/* Corners */}
                         <div style={{ position: 'absolute', top: '-2px', left: '-2px', width: '15px', height: '15px', borderTop: '4px solid #fff', borderLeft: '4px solid #fff', borderTopLeftRadius: '6px' }}></div>
                         <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '15px', height: '15px', borderTop: '4px solid #fff', borderRight: '4px solid #fff', borderTopRightRadius: '6px' }}></div>
                         <div style={{ position: 'absolute', bottom: '-2px', left: '-2px', width: '15px', height: '15px', borderBottom: '4px solid #fff', borderLeft: '4px solid #fff', borderBottomLeftRadius: '6px' }}></div>
@@ -897,31 +984,52 @@ export default function HomeClient() {
 
             <div style={{ overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', flexGrow: 1, alignContent: 'start' }}>
               {isSearching ? (
-                Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
+                // 初回検索中のスケルトン
+                Array(6).fill(0).map((_, i) => <div key={`skeleton-search-${i}`} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
               ) : searchResults.length > 0 ? (
-                searchResults.map((manga) => (
-                  <div key={manga.isbn} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
-                    <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
-                    <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
+                // 検索結果の表示
+                <>
+                  {searchResults.map((manga, i) => (
+                    <div key={`search-res-${manga.isbn}-${i}`} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
+                      <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
+                      <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
+                    </div>
+                  ))}
+                  <div ref={sentinelRef} style={{ gridColumn: '1 / -1', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    {isLoadingMore && (
+                      <>
+                        <div className="spinner-small" style={{ width: '24px', height: '24px', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>しばらくお待ちください・・</span>
+                      </>
+                    )}
                   </div>
-                ))
-              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && (isLoadingRecommendations || !lastFetchedTheme || theme !== lastFetchedTheme) ? (
-                Array(6).fill(0).map((_, i) => <div key={i} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
-              ) : !(keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && themeRecommendations.length > 0 ? (
+                </>
+              ) : (keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) ? (
+                // 検索語があるが見つからなかった場合
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
+              ) : isLoadingRecommendations ? (
+                // おすすめ取得中のスケルトン
+                Array(6).fill(0).map((_, i) => <div key={`skeleton-rec-${i}`} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
+              ) : themeRecommendations.length > 0 ? (
+                // おすすめ・トレンドの表示
                 <>
                   <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0' }}>
-                    📚 {theme} で多くの人が選んでいる作品：
+                    📚 {theme || '最近のトレンド'} で多くの人が選んでいる作品：
                   </p>
-                  {themeRecommendations.map((manga) => (
-                    <div key={manga.isbn} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
+                  {themeRecommendations.map((manga, i) => (
+                    <div key={`rec-${manga.isbn}-${i}`} className="manga-result-card" onClick={() => selectManga(manga)} style={{ cursor: 'pointer', transition: 'var(--transition-fast)', display: 'flex', flexDirection: 'column' }}>
                       <img src={manga.imageUrl} alt={manga.title} style={{ borderRadius: 'var(--radius-sm)', width: '100%', aspectRatio: '1 / 1.4', objectFit: 'cover', marginBottom: '0.4rem', border: '1px solid var(--color-border)' }} />
                       <p style={{ fontSize: '0.75rem', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3' }}>{manga.title}</p>
                     </div>
                   ))}
                 </>
-              ) : (keyword.trim() || searchTitle.trim() || searchAuthor.trim() || searchIsbn.trim()) && (
-                <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>見つかりませんでした</p>
+              ) : (
+                // データがない場合の表示
+                <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
+                  おすすめ作品が見つかりませんでした。
+                </p>
               )}
+              
               <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
                 <PromotionUnit slotId="modal-bottom" format="fluid" />
               </div>

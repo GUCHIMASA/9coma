@@ -6,11 +6,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const theme = searchParams.get('theme');
 
-    // テーマ未指定の場合は空配列を返す
-    if (!theme) {
-        return NextResponse.json({ items: [] });
-    }
-
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!projectId || projectId === 'your_project_id') {
         // Firebase未設定時は空配列
@@ -21,15 +16,29 @@ export async function GET(request: Request) {
         const { db } = await import('@/lib/firebase');
         const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
 
-        // listsコレクションからthemeが一致するドキュメントを取得（複合インデックス不要）
-        const q = query(
-            collection(db, 'lists'),
-            where('theme', '==', theme),
-            limit(20)
-        );
-        const snapshot = await getDocs(q);
+        let q;
+        if (theme) {
+            // テーマが指定されている場合
+            q = query(
+                collection(db, 'lists'),
+                where('theme', '==', theme),
+                limit(20)
+            );
+        } else {
+            // テーマ未指定：まずは単純に取得（orderBy によるインデックスエラー回避のため）
+            q = query(
+                collection(db, 'lists'),
+                limit(50)
+            );
+        }
+        
+        const snapshot = await getDocs(q).catch(err => {
+            console.error('[PopularAPI] Firestore query error:', err);
+            return { empty: true, docs: [] };
+        });
 
         if (snapshot.empty) {
+            console.log('[PopularAPI] No lists found for theme:', theme || 'global-trend');
             return NextResponse.json({ items: [] });
         }
 

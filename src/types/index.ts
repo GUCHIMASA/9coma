@@ -4,8 +4,11 @@ export interface MangaItem {
   title: string;
   seriesName?: string;
   author: string;
+  publisher?: string;
   imageUrl: string;
+  itemUrl: string;
   affiliateUrl: string;
+  releaseDate?: string;
   salesPage?: string;
 }
 
