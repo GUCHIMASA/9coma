@@ -38,6 +38,7 @@ export async function GET(request: Request) {
         
         url.searchParams.set('booksGenreId', '001001'); // 漫画ジャンル
         url.searchParams.set('formatVersion', '2');
+        url.searchParams.set('outOfStockFlag', '1'); // 在庫なし・絶版も含める
 
         const headers: Record<string, string> = {
             'Accept': 'application/json',
