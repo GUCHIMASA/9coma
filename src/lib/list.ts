@@ -83,6 +83,7 @@ export const getListById = cache(async (id: string) => {
                       seriesName: item.seriesName || '',
                       author: item.author,
                       imageUrl: item.largeImageUrl,
+                      itemUrl: item.itemUrl,
                       affiliateUrl: item.affiliateUrl || item.itemUrl,
                     };
                     await setDoc(doc(db, 'manga_cache', isbn), { ...manga, updatedAt: Date.now() }, { merge: true });
@@ -92,7 +93,7 @@ export const getListById = cache(async (id: string) => {
                   console.error(`[Hydration] Rakuten API error for ${isbn}:`, e);
                 }
               }
-              return typeof slot === 'object' ? (slot as unknown as MangaItem) : { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
+              return typeof slot === 'object' ? (slot as unknown as MangaItem) : { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', itemUrl: '', affiliateUrl: '' };
             }
             return slot as MangaItem;
           })
@@ -182,7 +183,7 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
           }
           
           if (isIsbnString) {
-            return { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', affiliateUrl: '' };
+            return { isbn, title: '不明なマンガ', seriesName: '', author: '', imageUrl: '', itemUrl: '', affiliateUrl: '' };
           }
           return slot as MangaItem;
         });
