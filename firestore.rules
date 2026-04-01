@@ -7,5 +7,11 @@ service cloud.firestore {
     match /manga_cache/{isbn} {
       allow read, write: if true;
     }
+    match /yt_lists/{listId} {
+      allow read, write: if true;
+    }
+    match /9tube_lists/{listId} {
+      allow read, write: if true;
+    }
   }
 }

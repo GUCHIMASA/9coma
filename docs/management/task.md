@@ -332,3 +332,43 @@
 - [x] `api/popular` (GET) のテーマ未指定時トレンド集計対応
 - [x] `HomeClient.tsx` の無限スクロール (Intersection Observer) 実装
 - [x] 動作確認（ビルド成功・無限スクロール・レコメンド動作確認完了）
+
+## Phase 53: YouTube版の実装 (Phase YT-1: 基盤UIと解析ロジック)
+- [x] Next.js Route Groups `(manga)` を用いた既存ディレクトリの隔離 (完了済み)
+- [x] 仕様定義書 (`specification.md`) および 作業ワーカー用プロンプト (`worker_prompt_phase_YT1.md`) の作成 (完了済み)
+- [x] 【別AI作業】 16:9ベースの新規UIコンポーネント（`YtGrid.tsx`, `YtGridSlot.tsx`）のモック開発
+- [x] 【別AI作業】 サーバーサイドでのURLスクレイピング（oEmbed または og:image 抽出）機能の実装
+- [x] 【別AI作業】 新規検索モーダル (`YtSearchModal.tsx`) とグリッドの結合
+- [x] 【監督チェック】 16:9の比率維持およびUI要素（罫線撤廃などフラットデザイン）の校正完了
+
+## Phase 54: YouTube版の実装 (Phase YT-2: データ保存とシェアページ)
+- [x] 作業ワーカー用プロンプト (`worker_prompt_phase_YT2.md`) の作成
+- [x] 【別AI作業】 `src/app/api/yt/list/route.ts` の作成 (`yt_lists` コレクションへの保存)
+- [x] 【別AI作業】 `src/app/yt/page.tsx` への「シェア（保存）」ボタンと投稿処理の追加
+- [x] 【別AI作業】 `src/app/yt/list/[id]/page.tsx` （閲覧専用個別ページ）の作成
+- [x] 【監督チェック】 セキュリティ監視・Firestoreデータ二重読み取りロジック（サーバー負荷）の修正完了
+
+## Phase 55: YouTube版の実装 (Phase YT-3: SNS OGPとシェア機能)
+- [x] 作業ワーカー用プロンプト (`worker_prompt_phase_YT3.md`) の作成
+- [x] 【別AI作業】 Satori を用いた動画・チャンネル対応OGP（16:9）動的生成処理 `opengraph-image.tsx` の作成
+- [x] 【監督チェック】 OGP画像のブラウザ確認およびレイアウト調整（Satori制約回避案の監査）
+- [x] 【別AI作業】 個別ページへの「X(Twitter)連携シェア」および「URLコピー」ボタンの設置
+- [x] 【バリデーション緩和】 空欄投稿の許可（1つ以上でシェア可能）へのロジック修正
+
+## Phase 56: YouTube版の実装 (Phase YT-4: OGP & Share-Image 精度向上)
+- [ ] OGPレイアウトの最終調整 (1200x630 / X・Twitter最適化)
+- [ ] 縦長シェア画像 `share-image` の新規実装 (1200x1500 / 高解像度保存用)
+- [ ] Satoriでの「16:9動画」と「1:1チャンネル」の混在レイアウトの美装化
+- [ ] 低解像度サムネイル使用による OGP 生成速度の最適化
+
+## Phase 57: YouTube版の実装 (Phase YT-5: 配色・テーマロジックの継承)
+- [ ] 漫画版の `COLOR_THEMES` ロジックを YouTube版に移植
+- [ ] YouTube版作成画面への「配色選択」および「テーマ（タグ）設定」UIの追加
+- [ ] 保存データ構造への `colorThemeId` の統合
+- [ ] OGP / Share-Image への配色テーマ反映
+
+## Phase 58: YouTube版の実装 (Phase YT-6: 相互リンクとプラットフォーム統合)
+- [ ] 漫画版詳細ページから YouTube版への誘導リンク設置
+- [ ] YouTube版詳細ページから 漫画版への誘導リンク設置
+- [ ] トップページ（Landing Page）での YouTube版リストの露出・表示対応
+- [ ] YouTube版専用の「作り方」説明要素の追加

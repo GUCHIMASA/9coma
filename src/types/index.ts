@@ -12,6 +12,16 @@ export interface MangaItem {
   salesPage?: string;
 }
 
+// YouTubeスロットデータの型定義
+export interface YouTubeSlot {
+  id: string; // 動画ID または チャンネルID
+  title: string;
+  thumbnailUrl: string;
+  channelTitle: string;
+  type: 'video' | 'channel';
+  publishedAt?: string;
+}
+
 // 9コマリストの型定義
 export interface ComicList {
   id: string;
@@ -20,6 +30,19 @@ export interface ComicList {
   slots: (MangaItem | null)[];
   colorThemeId?: string;
   createdAt: number;
+}
+
+// YouTube版リストの型定義
+export interface YouTubeList {
+  id: string;
+  authorName: string;
+  theme?: string;
+  themeId: string;
+  slots: (YouTubeSlot | null)[];
+  colorThemeId: string;
+  deviceId: string;
+  createdAt: any; // Firestore serverTimestamp
+  type: 'youtube';
 }
 
 // 楽天APIレスポンスの型
