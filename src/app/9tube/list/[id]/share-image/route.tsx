@@ -43,7 +43,7 @@ export async function GET(
       try {
         const result = await getBase64Image(slot.imageUrl);
         return result.success ? result.dataUrl : null;
-      } catch (e) {
+      } catch {
         return null;
       }
     })
@@ -179,7 +179,7 @@ export async function GET(
                           position: 'relative',
                           width: `${itemWidth}px`,
                           height: `${itemWidth}px`,
-                          objectFit: 'contain' as any,
+                          objectFit: 'contain',
                           zIndex: 1,
                         }}
                         alt=""

@@ -37,7 +37,15 @@ export async function GET(req: Request) {
     );
     const data = await res.json();
 
-    const items = data.items?.map((item: any) => ({
+    const items = data.items?.map((item: { 
+      id: { videoId?: string; channelId?: string; kind: string };
+      snippet: { 
+        title: string; 
+        thumbnails: { high?: { url: string }; default?: { url: string } };
+        channelTitle: string;
+        publishedAt: string;
+      };
+    }) => ({
       id: item.id.videoId || item.id.channelId,
       title: item.snippet.title,
       thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
@@ -47,7 +55,7 @@ export async function GET(req: Request) {
     })) || [];
 
     return NextResponse.json({ items });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
   }
 }

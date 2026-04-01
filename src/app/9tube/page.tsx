@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES, COLOR_THEMES_ORDER } from '@/lib/colors';

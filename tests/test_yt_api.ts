@@ -1,4 +1,4 @@
-import { YouTubeSlot } from '../../types/youtube';
+import { YouTubeSlot } from '../src/types/youtube';
 
 async function testApi() {
   const payload = {

@@ -50,7 +50,7 @@ export default async function Image({ params }: { params: { id: string } }) {
       try {
         const result = await getBase64Image(slot.imageUrl);
         return result.success ? result.dataUrl : null;
-      } catch (e) {
+      } catch {
         return null;
       }
     })
@@ -121,7 +121,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover' as any,
+                          objectFit: 'cover',
                           zIndex: 1,
                         }}
                         alt=""

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, getDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, serverTimestamp, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 
 // GET: リストの取得
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json(lists);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in GET /api/9tube/list:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const { slots, authorName, theme, colorThemeId, themeId, deviceId } = data;
 
     // バリデーション: 少なくとも1つのスロットが埋まっていること
-    const filledSlots = slots.filter((s: any) => s !== null);
+    const filledSlots = slots.filter((s: unknown) => s !== null);
     if (filledSlots.length === 0) {
       return NextResponse.json({ error: 'At least one slot must be filled' }, { status: 400 });
     }
@@ -68,12 +68,12 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ id: customId });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error adding document to 9tube_lists: ', error);
     return NextResponse.json({ 
       error: 'Internal Server Error', 
-      details: error.message || String(error),
-      code: error.code || 'unknown'
+      details: (error as Error).message || String(error),
+      code: (error as { code?: string }).code || 'unknown'
     }, { status: 500 });
   }
 }

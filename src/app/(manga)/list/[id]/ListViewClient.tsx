@@ -260,7 +260,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
             textDecoration: 'none',
           }}
         >
-          <span>次は "YouTube版"で作ってみる ➔</span>
+          <span>次は &quot;YouTube版&quot;で作ってみる ➔</span>
         </a>
 
         <div style={{ display: 'flex', gap: '12px' }}>

@@ -8,7 +8,7 @@ interface YtShareButtonsProps {
   theme?: string;
 }
 
-export default function YtShareButtons({ id, authorName, theme }: YtShareButtonsProps) {
+export default function YtShareButtons({ authorName, theme }: YtShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState('');
 

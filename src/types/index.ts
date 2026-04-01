@@ -41,7 +41,7 @@ export interface YouTubeList {
   slots: (YouTubeSlot | null)[];
   colorThemeId: string;
   deviceId: string;
-  createdAt: any; // Firestore serverTimestamp
+  createdAt: number | { seconds: number; nanoseconds: number }; // Firestore serverTimestamp
   type: 'youtube';
 }
 

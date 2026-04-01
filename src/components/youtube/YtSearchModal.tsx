@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { YouTubeSlot } from '@/types/youtube';
 import { getYoutubeMetadata } from '@/app/9tube/actions';
 import YtGridSlot from './YtGridSlot';
@@ -21,20 +22,7 @@ export default function YtSearchModal({
   const [preview, setPreview] = useState<YouTubeSlot | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // URLが入力されたら自動的にプレビュー取得を試みる
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (url.startsWith('http')) {
-        handleFetch();
-      } else {
-        setPreview(null);
-        setError(null);
-      }
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [url]);
-
-  const handleFetch = async () => {
+  const handleFetch = useCallback(async () => {
     if (!url) return;
     setLoading(true);
     setError(null);
@@ -46,13 +34,26 @@ export default function YtSearchModal({
         setError('URLから情報を取得できませんでした。');
         setPreview(null);
       }
-    } catch (e) {
+    } catch {
       setError('エラーが発生しました。');
       setPreview(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [url]);
+
+  // URLが入力されたら自動的にプレビュー取得を試みる
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (url.startsWith('http')) {
+        handleFetch();
+      } else {
+        setPreview(null);
+        setError(null);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [url, handleFetch]);
 
   return (
     <div style={{
