@@ -6,6 +6,8 @@ import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES, COLOR_THEMES_ORDER } from '@/lib/colors';
 import YtGrid from '@/components/youtube/YtGrid';
 import YtSearchModal from '@/components/youtube/YtSearchModal';
+import YtListCard from '@/components/youtube/YtListCard';
+import type { YouTubeListItem } from '@/types/youtube';
 
 // 9TUBE テーマ定義
 const THEMES = [
@@ -32,6 +34,7 @@ export default function YouTubePage() {
   const [isSharing, setIsSharing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [deviceId, setDeviceId] = useState('');
+  const [recentLists, setRecentLists] = useState<YouTubeListItem[]>([]);
 
   // ドラッグ＆ドロップ用
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -60,6 +63,20 @@ export default function YouTubePage() {
     }
     setDeviceId(dId);
     setIsLoaded(true);
+
+    // 新着リストの取得
+    const fetchRecent = async () => {
+      try {
+        const res = await fetch('/api/9tube/list');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setRecentLists(data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch recent 9tube lists:', e);
+      }
+    };
+    fetchRecent();
   }, []);
 
   // 下書き保存
@@ -73,9 +90,22 @@ export default function YouTubePage() {
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const selected = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
+      const isDark = selected.text === '#FFFFFF';
+
       document.body.style.backgroundColor = selected.bg;
       document.body.style.color = selected.text;
       document.body.style.transition = 'background-color 0.3s ease';
+
+      // 共通の動的 CSS 変数をセット（視認性確保の要）
+      document.documentElement.style.setProperty('--color-bg', selected.bg);
+      document.documentElement.style.setProperty('--color-text', selected.text);
+      document.documentElement.style.setProperty('--color-text-secondary', isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)');
+      document.documentElement.style.setProperty('--color-border', isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)');
+      document.documentElement.style.setProperty('--color-surface-2', isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff');
+      
+      // スクロールバーの同期
+      document.documentElement.style.setProperty('--scrollbar-thumb', isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)');
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)');
     }
   }, [colorThemeId]);
 
@@ -166,77 +196,64 @@ export default function YouTubePage() {
     }
   };
 
+  const handleClear = () => {
+    if (window.confirm('これまで選んだ動画をすべてクリアして最初から作り直しますか？')) {
+      setSlots(Array(9).fill(null));
+      setAuthorName('');
+      setThemeId('default');
+      localStorage.removeItem('draft_9tube');
+      setSelectedSlotIndex(null);
+    }
+  };
+
   const filledCount = slots.filter(s => s !== null).length;
   const progressPct = (filledCount / 9) * 100;
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem 5rem', maxWidth: '600px', margin: '0 auto' }}>
-      <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-0.05em' }}>9TUBE</h1>
-        <p style={{ opacity: 0.8, fontWeight: 600 }}>あなたを構成する9つのYouTube</p>
+    <div className="container animate-fade-in" style={{ paddingBottom: '4rem' }}>
+      <header className="google-anno-skip" style={{ textAlign: 'center', margin: '3rem 0 1rem 0' }}>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+          私を構成する9つのYouTube
+        </h1>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
+          あなたの人生に期待を与えた動画は？
+        </p>
       </header>
 
-      {/* 設定セクション */}
-      <div style={{
-        background: 'rgba(255,255,255,0.05)',
-        padding: '1.5rem',
-        borderRadius: '20px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        marginBottom: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem'
-      }}>
-        {/* 名前入力 */}
-        <div>
-          <label style={{ display: 'block', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', opacity: 0.7 }}>作成者名</label>
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="あなたの名前"
-            style={{
-              width: '100%',
-              padding: '0.8rem 1rem',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.05)',
-              border: '2px solid rgba(255,255,255,0.1)',
-              color: 'inherit',
-              fontSize: '1rem',
-              fontWeight: 600,
-              outline: 'none',
-              transition: 'all 0.2s'
-            }}
-          />
-        </div>
+      <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <p style={{ textAlign: 'center', fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '1.2rem' }}>
+          💡 コマをタップしてYouTube動画のURLをペースト
+        </p>
 
-        {/* テーマ選択 */}
-        <div>
-          <label style={{ display: 'block', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', opacity: 0.7 }}>リストのテーマ</label>
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label htmlFor="themeSelect" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>テーマ</label>
           <select
+            id="themeSelect"
             value={themeId}
             onChange={(e) => setThemeId(e.target.value)}
             style={{
-              width: '100%',
-              padding: '0.8rem 1rem',
+              flex: 1,
+              padding: '0.6rem 1rem',
               borderRadius: '12px',
-              background: 'rgba(255,255,255,0.05)',
-              border: '2px solid rgba(255,255,255,0.1)',
-              color: 'inherit',
-              fontSize: '1rem',
+              background: 'var(--color-surface-2)',
+              border: '2px solid var(--color-border)',
+              color: 'var(--color-text)',
+              fontSize: '16px',
               fontWeight: 600,
+              cursor: 'pointer',
+              appearance: 'none',
               outline: 'none',
-              cursor: 'pointer'
+              transition: 'all 0.2s'
             }}
           >
             {THEMES.map(t => <option key={t.id} value={t.id} style={{ color: '#000' }}>{t.label}</option>)}
           </select>
         </div>
 
-        {/* カラーピッカー */}
-        <div>
-          <label style={{ display: 'block', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', opacity: 0.7 }}>背景色</label>
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+        {/* カラー選択 UI */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <label style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '6px', whiteSpace: 'nowrap' }}>背景色</label>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', flex: 1, overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {COLOR_THEMES_ORDER.map(id => {
               const c = COLOR_THEMES[id];
               const isSelected = colorThemeId === id;
@@ -244,81 +261,129 @@ export default function YouTubePage() {
                 <button
                   key={id}
                   onClick={() => setColorThemeId(id)}
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '12px',
-                    flexShrink: 0,
-                    backgroundColor: c.bg,
-                    border: isSelected ? '3px solid #ff0000' : '2px solid rgba(255,255,255,0.1)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-                    boxShadow: 'none'
-                  }}
                   title={c.name}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                    backgroundColor: c.bg,
+                    border: isSelected ? `3px solid #FF0000` : `2px solid var(--color-border)`,
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'all 0.2s ease',
+                    transform: isSelected ? 'scale(1.1)' : 'scale(1)'
+                  }}
                 />
               );
             })}
           </div>
         </div>
-      </div>
 
-      {/* プログレス */}
-      <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 800 }}>
-          <span>{filledCount === 0 ? '動画を追加してください' : filledCount === 9 ? '完成！' : 'このまま保存も可能です'}</span>
-          <span style={{ color: filledCount === 9 ? '#ff0000' : 'inherit' }}>{filledCount}/9</span>
-        </div>
-        <div style={{ height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden' }}>
-          <div style={{ width: `${progressPct}%`, height: '100%', background: '#FF0000', transition: 'width 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67)' }} />
-        </div>
-      </div>
+        {(() => {
+          const isDone = filledCount === 9;
+          return (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: isDone ? '#FF0000' : 'var(--color-text-secondary)' }}>
+                  {isDone ? '🎉 完成！シェアしよう！' : `あと ${9 - filledCount} つで完成！`}
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-text)' }}>
+                  {filledCount} / 9
+                </span>
+              </div>
+              <div style={{ height: '10px', background: 'var(--color-border)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progressPct}%`,
+                  background: isDone ? 'linear-gradient(90deg, #FF0000, #FF8C00)' : 'linear-gradient(90deg, #FFD600, #FF8C00)',
+                  borderRadius: '99px',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: '8px' }}>
+                ▼ ドラッグで場所を入れ替えられます。
+              </p>
+            </div>
+          );
+        })()}
 
-      {/* グリッド本体 */}
-      <div style={{
-        background: 'rgba(0,0,0,0.05)',
-        padding: '12px',
-        borderRadius: '20px',
-        marginBottom: '2.5rem',
-        boxShadow: 'none',
-        filter: 'none'
-      }}>
-        <YtGrid
-          slots={slots}
-          onSlotClick={handleSelectSlot}
-          onSlotRemove={handleRemoveSlot}
-          draggedIndex={draggedIndex}
-          dragOverIndex={dragOverIndex}
-          onDragStart={onDragStart}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDragEnd={onDragEnd}
-          onDrop={onDrop}
-        />
-      </div>
-
-      <button
-        onClick={handleShare}
-        disabled={filledCount === 0 || isSharing}
-        style={{
-          width: '100%',
-          padding: '1.2rem',
+        <div style={{
+          background: 'rgba(0,0,0,0.1)',
+          padding: '12px',
           borderRadius: '20px',
-          background: filledCount > 0 ? '#FF0000' : '#444',
-          color: '#fff',
-          fontSize: '1.25rem',
-          fontWeight: 900,
-          border: 'none',
-          cursor: filledCount > 0 ? 'pointer' : 'not-allowed',
-          boxShadow: 'none',
-          filter: 'none',
-          transition: 'all 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67)',
-          transform: isSharing ? 'scale(0.98)' : 'scale(1)'
-        }}
-      >
-        {isSharing ? 'リストを作成中...' : '保存してシェア画像を作成'}
-      </button>
+          marginBottom: '2.5rem',
+          border: '2px solid var(--color-border)'
+        }}>
+          <YtGrid
+            slots={slots}
+            onSlotClick={handleSelectSlot}
+            onSlotRemove={handleRemoveSlot}
+            draggedIndex={draggedIndex}
+            dragOverIndex={dragOverIndex}
+            onDragStart={onDragStart}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDragEnd={onDragEnd}
+            onDrop={onDrop}
+          />
+        </div>
+      </section>
+
+      {/* アクションエリア */}
+      <section style={{ maxWidth: '400px', margin: '3rem auto 0', padding: '0 1rem' }}>
+        <input
+          type="text"
+          placeholder="あなたの名前（空欄可）"
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+          style={{
+            width: '100%',
+            background: 'var(--color-surface)',
+            border: '2px solid var(--color-border)',
+            borderRadius: '12px',
+            padding: '0.8rem 1rem',
+            color: 'var(--color-text)',
+            fontWeight: 600,
+            fontSize: '16px',
+            marginBottom: '1.2rem'
+          }}
+        />
+        <button
+          onClick={handleShare}
+          disabled={filledCount === 0 || isSharing}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            borderRadius: '12px',
+            background: filledCount > 0 ? 'linear-gradient(135deg, #FF0000 0%, #FF2E00 100%)' : '#444',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            border: 'none',
+            cursor: filledCount > 0 ? 'pointer' : 'not-allowed',
+            boxShadow: filledCount > 0 ? '0 8px 20px rgba(255,0,0,0.2)' : 'none',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isSharing ? '保存中...' : 'ページを作成してシェア'}
+        </button>
+        <button
+          onClick={handleClear}
+          style={{
+            width: '100%',
+            padding: '1rem',
+            marginTop: '1rem',
+            borderRadius: '12px',
+            background: 'transparent',
+            color: 'var(--color-text-secondary)',
+            fontWeight: 700,
+            fontSize: '1rem',
+            border: '2px solid var(--color-border)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          最初から作り直す（クリア）
+        </button>
+      </section>
 
       {/* URL入力モーダル */}
       {selectedSlotIndex !== null && (
@@ -327,6 +392,37 @@ export default function YouTubePage() {
           onClose={() => setSelectedSlotIndex(null)}
           onSelect={handleSetVideo}
         />
+      )}
+
+      {/* 新着の 9TUBE セクション */}
+      {recentLists.length > 0 && (
+        <section style={{ marginTop: '5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3rem' }}>
+          <h2 style={{
+            fontSize: '1.8rem',
+            fontWeight: 900,
+            textAlign: 'center',
+            marginBottom: '2rem',
+            letterSpacing: '-0.02em'
+          }}>
+            新着の 9TUBE 📺
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: '20px',
+            padding: '0 0.5rem'
+          }}>
+            {recentLists.map((list) => (
+              <YtListCard
+                key={list.id}
+                id={list.id}
+                authorName={list.authorName}
+                theme={list.theme}
+                slots={list.slots}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* フッター的な隙間 */}

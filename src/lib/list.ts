@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import type { MangaItem } from '@/types';
+import type { YouTubeSlot } from '@/types/youtube';
 
 // サーバーサイド用ユーティリティ
 // cache() でラップすることで、同一リクエスト内での重複呼び出しをメモ化し、Firestoreへのアクセスを1回に制限します。
@@ -301,6 +302,40 @@ export const getListsByAuthor = cache(async (authorName: string, limitCount: num
       return results;
     } catch (e) {
       console.error('Firestore error in getListsByAuthor:', e);
+    }
+  }
+  return [];
+});
+// 最新のYouTube版リストを取得する
+export const getRecentYtLists = cache(async (limitCount: number = 9) => {
+  console.log(`[Firestore] Physical access triggered for getRecentYtLists (limit: ${limitCount})`);
+  const projectId = process.env.NEXT_PUBLIC_BASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (projectId && projectId !== 'your_project_id') {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
+      
+      const q = query(
+        collection(db, '9tube_lists'),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+      
+      const snaps = await getDocs(q);
+      return snaps.docs.map(snap => ({ 
+        id: snap.id, 
+        ...snap.data() 
+      } as { 
+        id: string; 
+        slots: (YouTubeSlot | null)[]; 
+        authorName: string; 
+        theme?: string; 
+        themeId?: string;
+        colorThemeId?: string;
+        createdAt: number 
+      }));
+    } catch (e) {
+      console.error('Firestore error in getRecentYtLists:', e);
     }
   }
   return [];

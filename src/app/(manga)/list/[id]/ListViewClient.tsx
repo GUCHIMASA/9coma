@@ -238,6 +238,30 @@ export default function ListViewClient({ data }: ListViewClientProps) {
             「縦長 3×3」の画像を生成し、他のアプリへ受け渡します
           </p>
         </div>
+        
+        {/* YouTube版への誘導ボタン */}
+        <a
+          href="/9tube"
+          style={{
+            width: '100%',
+            padding: '1.2rem',
+            borderRadius: 'var(--radius-md)',
+            background: '#FF0000',
+            color: 'white',
+            fontWeight: 900,
+            fontSize: '1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            border: 'none',
+            boxShadow: 'var(--shadow-md)',
+            transition: 'var(--transition-base)',
+            textDecoration: 'none',
+          }}
+        >
+          <span>次は "YouTube版"で作ってみる ➔</span>
+        </a>
 
         <div style={{ display: 'flex', gap: '12px' }}>
           {/* 左側：「URLをコピー」ボタン */}

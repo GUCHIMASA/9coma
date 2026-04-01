@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
 import ScrollToTop from '@/components/ScrollToTop';
+import DynamicPrivacyLink from '@/components/DynamicPrivacyLink';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   ? process.env.NEXT_PUBLIC_BASE_URL
@@ -62,6 +63,28 @@ export default function RootLayout({
       <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div style={{ flex: 1 }}>
           {children}
+          <style dangerouslySetInnerHTML={{ __html: `
+            /* カスタムスクロールバーのグローバル設定 */
+            ::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+              background: var(--scrollbar-thumb, rgba(128, 128, 128, 0.3));
+              border-radius: 99px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+              background: var(--scrollbar-thumb-hover, rgba(128, 128, 128, 0.5));
+            }
+            /* Firefox 用 */
+            * {
+              scrollbar-width: thin;
+              scrollbar-color: var(--scrollbar-thumb, rgba(128, 128, 128, 0.3)) transparent;
+            }
+          `}} />
         </div>
         <ScrollToTop />
         <footer
@@ -79,9 +102,7 @@ export default function RootLayout({
             <a href="/about" style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
               このサイトについて
             </a>
-            <a href="/privacy" style={{ color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
-              プライバシーポリシー
-            </a>
+            <DynamicPrivacyLink />
           </div>
           <p style={{ marginTop: '0.8rem', fontSize: '0.7rem', opacity: 0.8, lineHeight: 1.5 }}>
             Amazon.co.jpアソシエイト、または9coma.comは、Amazon.co.jpを宣伝しリンクすることによって紹介料を獲得できる手段を提供することを目的に設定されたアフィリエイトプログラムである、Amazonアソシエイト・プログラムの参加者です。

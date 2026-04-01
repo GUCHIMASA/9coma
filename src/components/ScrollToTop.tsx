@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -28,10 +30,13 @@ export default function ScrollToTop() {
 
   if (!isVisible) return null;
 
+  // 動的なホームボタンリンクの決定
+  const homeHref = pathname?.startsWith('/9tube') ? '/9tube' : '/';
+
   return (
     <div className="scroll-to-top-container">
       <div className="scroll-to-top-inner">
-        <Link href="/" className="nav-btn" aria-label="トップページへ">
+        <Link href={homeHref} className="nav-btn" aria-label="トップページへ">
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>

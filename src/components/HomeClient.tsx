@@ -143,6 +143,10 @@ export default function HomeClient() {
         document.documentElement.style.setProperty('--gradient-primary', isDark ? 'linear-gradient(135deg, #FFFFFF 0%, #CCCCCC 100%)' : 'linear-gradient(135deg, #1A1A1A 0%, #444444 100%)');
         document.documentElement.style.setProperty('--color-primary-text', isDark ? '#1A1A1A' : '#FFFFFF');
       }
+
+      // スクロールバーの同期
+      document.documentElement.style.setProperty('--scrollbar-thumb', isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)');
+      document.documentElement.style.setProperty('--scrollbar-thumb-hover', isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)');
     }
   }, [bgColorId]);
 

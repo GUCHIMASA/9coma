@@ -59,13 +59,28 @@ export default function YtGridSlot({
   }
 
   // --- B. コンテンツがあるスロット ---
-  const { imageUrl, title, type } = slot;
+  const { imageUrl, title, type, url } = slot;
+
+  // 閲覧モードの場合は <a> タグ、作成モードの場合は <div> タグとして振る舞う
+  const Tag = (isReadOnly && url) ? 'a' : 'div';
+  const tagProps = (isReadOnly && url) ? {
+    href: url,
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    title: `${title} をYouTubeで開く`
+  } : {
+    onClick: onClick
+  };
 
   return (
-    <div 
-      onClick={onClick} 
-      style={baseStyle}
-      className={!isReadOnly ? 'hover:scale-[1.01]' : ''}
+    <Tag 
+      {...tagProps}
+      style={{
+        ...baseStyle,
+        display: 'block',
+        textDecoration: 'none'
+      }}
+      className={isReadOnly ? 'hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,0,0.3)]' : 'hover:scale-[1.01]'}
     >
       {/* 1. 背景 (はみ出し) */}
       <img
@@ -146,6 +161,6 @@ export default function YtGridSlot({
           ×
         </button>
       )}
-    </div>
+    </Tag>
   );
 }

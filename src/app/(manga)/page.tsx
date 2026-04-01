@@ -1,5 +1,6 @@
 import HomeClient from '@/components/HomeClient';
 import RecentLists from '@/components/RecentLists';
+import RecentYtLists from '@/components/RecentYtLists';
 
 export const revalidate = 60; // 1分ごとに再生成 (ISR)
 
@@ -8,6 +9,7 @@ export default function Home() {
     <main>
       <HomeClient />
       <RecentLists />
+      <RecentYtLists />
     </main>
   );
 }
