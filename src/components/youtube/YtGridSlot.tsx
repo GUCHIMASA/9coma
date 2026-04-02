@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { YouTubeSlot } from '@/types/youtube';
 
 interface YtGridSlotProps {
@@ -84,15 +84,20 @@ export default function YtGridSlot({
       className={isReadOnly ? 'hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,0,0.3)]' : 'hover:scale-[1.01]'}
     >
       {/* 1. 背景 (はみ出し) */}
-      <img
-        src={imageUrl}
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '-39%', left: '-39%', width: '178%', height: '178%',
-          zIndex: 0, pointerEvents: 'none', objectFit: 'cover'
-        }}
-      />
+      <div style={{
+        position: 'absolute',
+        top: '-39%', left: '-39%', width: '178%', height: '178%',
+        zIndex: 0, pointerEvents: 'none'
+      }}>
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          unoptimized
+          priority
+          style={{ objectFit: 'cover' }}
+        />
+      </div>
 
       {/* 2. 遮光 */}
       <div style={{
@@ -109,10 +114,12 @@ export default function YtGridSlot({
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 2
       }}>
-        <img
+        <Image
           src={imageUrl}
           alt={title}
-          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          fill
+          unoptimized
+          style={{ objectFit: 'contain' }}
         />
       </div>
 

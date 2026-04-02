@@ -68,12 +68,13 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ id: customId });
-  } catch (error) {
+    } catch (error: unknown) {
     console.error('Error adding document to 9tube_lists: ', error);
+    const err = error as Error & { code?: string };
     return NextResponse.json({ 
       error: 'Internal Server Error', 
-      details: (error as Error).message || String(error),
-      code: (error as { code?: string }).code || 'unknown'
+      details: err.message || String(error),
+      code: err.code || 'unknown'
     }, { status: 500 });
   }
 }

@@ -35,18 +35,20 @@ export async function GET(req: Request) {
     const res = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(q)}&type=video,channel&key=${apiKey}`
     );
-    const data = await res.json();
+    const data = await res.json() as {
+      items?: Array<{
+        id: { videoId?: string; channelId?: string; playlistId?: string; kind: string };
+        snippet: {
+          title: string;
+          thumbnails: { high?: { url: string }; default?: { url: string } };
+          channelTitle: string;
+          publishedAt: string;
+        };
+      }>;
+    };
 
-    const items = data.items?.map((item: { 
-      id: { videoId?: string; channelId?: string; kind: string };
-      snippet: { 
-        title: string; 
-        thumbnails: { high?: { url: string }; default?: { url: string } };
-        channelTitle: string;
-        publishedAt: string;
-      };
-    }) => ({
-      id: item.id.videoId || item.id.channelId,
+    const items = data.items?.map((item) => ({
+      id: item.id.videoId || item.id.channelId || item.id.playlistId,
       title: item.snippet.title,
       thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
       channelTitle: item.snippet.channelTitle,
