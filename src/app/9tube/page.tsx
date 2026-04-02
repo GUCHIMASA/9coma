@@ -204,9 +204,11 @@ export default function YouTubePage() {
         if (historyStr) {
           try {
             history = JSON.parse(historyStr);
-          } catch (e) { }
+          } catch {
+            // ignore
+          }
         }
-        const updatedHistory = [newHistoryItem, ...history.filter((h: any) => h.id !== data.id)].slice(0, 5);
+        const updatedHistory = [newHistoryItem, ...history.filter((h: { id: string }) => h.id !== data.id)].slice(0, 5);
         localStorage.setItem('post_history_9tube', JSON.stringify(updatedHistory));
 
         router.push(`/9tube/list/${data.id}`);
