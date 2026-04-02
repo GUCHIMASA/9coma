@@ -300,7 +300,7 @@ export default async function Image({ params }: { params: { id: string } }) {
             </div>
           </div>
         </div>
-      ) as any,
+      ),
       {
         ...size,
         fonts: fontData ? [
@@ -323,7 +323,7 @@ export default async function Image({ params }: { params: { id: string } }) {
         <div style={{ width: '100%', height: '100%', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>
           9coma | 私を構成する9つのマンガ
         </div>
-      ) as any,
+      ),
       { ...size }
     );
   }
