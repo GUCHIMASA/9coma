@@ -15,8 +15,19 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: { id: string } }) {
-  const data = await getListById(params.id);
-  if (!data) return new Response('Not found', { status: 404 });
+  let data = await getListById(params.id);
+  
+  // 404 を物理的に回避するためのフォールバック
+  if (!data) {
+    console.warn(`[OGP-Manga] Data fetch returned null for ${params.id}. Using fallback.`);
+    data = {
+      id: params.id,
+      authorName: '9コマ',
+      slots: Array(9).fill(null),
+      colorThemeId: '01',
+      createdAt: Date.now()
+    };
+  }
 
   // 配色システムの適用
   const themeId = data.colorThemeId || '01';

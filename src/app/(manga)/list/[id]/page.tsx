@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getListById } from '@/lib/list';
 import { THEME_GRADIENTS } from '@/lib/themes';
 import ListViewClient from './ListViewClient';
+import { BASE_URL } from '@/lib/constants';
 
 export const revalidate = 3600; // 1時間ごとに再生成 (ISR)
 
@@ -25,6 +26,7 @@ export async function generateMetadata(
     console.log(`[Metadata] Successfully retrieved data for ${params.id}. Title: ${metaTitle}`);
 
     return {
+      metadataBase: new URL(BASE_URL),
       title: metaTitle,
       description: metaDesc,
       openGraph: {
@@ -32,8 +34,6 @@ export async function generateMetadata(
         description: metaDesc,
         type: 'article',
         siteName: '9コマ',
-        // Next.jsのファイルベースOGP(opengraph-image.tsx)は自動で入るはずだが、
-        // 念のため明示的に指定することで確実性を高める
         images: [
           {
             url: `/list/${params.id}/opengraph-image`,
