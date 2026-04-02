@@ -41,9 +41,11 @@ export async function GET(
     slots.map(async (slot) => {
       if (!slot?.imageUrl) return null;
       try {
-        const result = await getBase64Image(slot.imageUrl);
+        // 外部 Fetch タイムアウトを 3 秒に設定
+        const result = await getBase64Image(slot.imageUrl, 3000);
         return result.success ? result.dataUrl : null;
-      } catch {
+      } catch (error) {
+        console.error(`[Share-Image] Failed to fetch ${slot.imageUrl}:`, error);
         return null;
       }
     })

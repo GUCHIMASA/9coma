@@ -3,7 +3,6 @@ import './globals.css';
 import Script from 'next/script';
 import ScrollToTop from '@/components/ScrollToTop';
 import DynamicPrivacyLink from '@/components/DynamicPrivacyLink';
-
 import { BASE_URL } from '@/lib/constants';
 
 export const metadata: Metadata = {

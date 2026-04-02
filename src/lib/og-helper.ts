@@ -23,11 +23,15 @@ export async function getFontData() {
 
 /**
  * 外部画像を Fetch して Base64 Data URL に変換する。
- * ブラウザの User-Agent を模倣してブロックを回避する。
+ * タイムアウト（デフォルト3秒）を設定し、外部通信の遅延による停止を防ぐ。
  */
-export async function getBase64Image(url: string) {
+export async function getBase64Image(url: string, timeoutMs: number = 3000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, {
+      signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       },
@@ -45,7 +49,13 @@ export async function getBase64Image(url: string) {
       size: arrayBuffer.byteLength 
     };
   } catch (e) {
-    console.error(`[OGHelper] Failed to fetch image: ${url}`, e);
+    if (e instanceof Error && e.name === 'AbortError') {
+      console.error(`[OGHelper] Fetch timeout (${timeoutMs}ms): ${url}`);
+    } else {
+      console.error(`[OGHelper] Failed to fetch image: ${url}`, e);
+    }
     return { success: false, error: String(e) };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

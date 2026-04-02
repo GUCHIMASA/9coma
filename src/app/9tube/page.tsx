@@ -35,6 +35,7 @@ export default function YouTubePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [deviceId, setDeviceId] = useState('');
   const [recentLists, setRecentLists] = useState<YouTubeListItem[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
 
   // ドラッグ＆ドロップ用
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -66,14 +67,18 @@ export default function YouTubePage() {
 
     // 新着リストの取得
     const fetchRecent = async () => {
+      setIsLoadingRecent(true);
       try {
         const res = await fetch('/api/9tube/list');
+        if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
         if (Array.isArray(data)) {
           setRecentLists(data);
         }
       } catch (e) {
         console.error('Failed to fetch recent 9tube lists:', e);
+      } finally {
+        setIsLoadingRecent(false);
       }
     };
     fetchRecent();
@@ -395,17 +400,41 @@ export default function YouTubePage() {
       )}
 
       {/* 新着の 9TUBE セクション */}
-      {recentLists.length > 0 && (
-        <section style={{ marginTop: '5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3rem' }}>
-          <h2 style={{
-            fontSize: '1.8rem',
-            fontWeight: 900,
-            textAlign: 'center',
-            marginBottom: '2rem',
-            letterSpacing: '-0.02em'
+      <section style={{ marginTop: '5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3rem' }}>
+        <h2 style={{
+          fontSize: '1.8rem',
+          fontWeight: 900,
+          textAlign: 'center',
+          marginBottom: '2rem',
+          letterSpacing: '-0.02em'
+        }}>
+          新着の 9TUBE 📺
+        </h2>
+        
+        {isLoadingRecent ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: '20px',
+            padding: '0 0.5rem'
           }}>
-            新着の 9TUBE 📺
-          </h2>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} style={{ 
+                height: '240px', 
+                backgroundColor: 'rgba(255,255,255,0.05)', 
+                borderRadius: '12px',
+                animation: 'pulse 1.5s infinite ease-in-out'
+              }} />
+            ))}
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes pulse {
+                0% { opacity: 0.5; }
+                50% { opacity: 0.8; }
+                100% { opacity: 0.5; }
+              }
+            `}} />
+          </div>
+        ) : recentLists.length > 0 ? (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
@@ -422,8 +451,10 @@ export default function YouTubePage() {
               />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p style={{ textAlign: 'center', opacity: 0.5 }}>まだリストがありません</p>
+        )}
+      </section>
 
       {/* フッター的な隙間 */}
       <div style={{ height: '4rem' }} />
