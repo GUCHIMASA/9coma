@@ -33,6 +33,10 @@ const getListData = cache(async (id: string) => {
   return null;
 });
 
+import { BASE_URL } from '@/lib/constants';
+
+// ... (後段で getListData, generateMetadata 等が続く)
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const data = await getListData(params.id);
   if (!data) return { title: 'Not Found | 9coma' };
@@ -40,22 +44,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const themeTitle = data.theme ? `${data.theme} - ` : '';
   const authorName = data.authorName || '私';
 
-  // Vercel プレビュー環境等での OGP 絶対パスを保証
-  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : 'http://localhost:3000';
+  const metaTitle = `${themeTitle}${authorName}を構成する9つのYouTube | 9coma`;
+  const metaDesc = `${authorName}が選んだ「私を構成する9つのYouTube」リストをチェック。`;
 
   return {
-    metadataBase: new URL(baseUrl),
-    title: `${themeTitle}${authorName}を構成する9つのYouTube | 9coma`,
-    description: `${authorName}が選んだ「私を構成する9つのYouTube」リストをチェック。`,
+    metadataBase: new URL(BASE_URL),
+    title: metaTitle,
+    description: metaDesc,
     openGraph: {
-      title: `${themeTitle}${authorName}を構成する9つのYouTube`,
-      description: `${authorName}が選んだ「私を構成する9つのYouTube」リストをチェック。`,
+      title: metaTitle,
+      description: metaDesc,
       type: 'website',
+      images: [
+        {
+          url: `/9tube/list/${params.id}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: metaTitle,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDesc,
+      images: [`/9tube/list/${params.id}/opengraph-image`],
     }
   };
 }

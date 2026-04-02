@@ -4,14 +4,10 @@ import Script from 'next/script';
 import ScrollToTop from '@/components/ScrollToTop';
 import DynamicPrivacyLink from '@/components/DynamicPrivacyLink';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-  ? process.env.NEXT_PUBLIC_BASE_URL
-  : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+import { BASE_URL } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),
+  metadataBase: new URL(BASE_URL),
   title: '私を構成する9つのマンガ | 9コマ（9coma / 9koma）',
   description: '9コマ（9koma / 9coma）は、私を構成する9つのマンガを3×3のタイル状のページにして共有できるサービスです。人生のバイブルや最近の推しを整理して、あなただけの「マンガ棚」をSNSでシェアしませんか？',
   openGraph: {
