@@ -8,6 +8,7 @@ import type { MangaItem } from '@/types';
 import { THEME_GRADIENTS } from '@/lib/themes';
 import { COLOR_THEMES, COLOR_THEMES_ORDER } from '@/lib/colors';
 import PromotionUnit from '@/components/PromotionUnit';
+import MyHistory from '@/components/MyHistory';
 
 export default function HomeClient() {
   const router = useRouter();
@@ -628,8 +629,15 @@ export default function HomeClient() {
           );
         })()}
 
+        {/* 作成履歴コンポーネント（ここへ移動） */}
+        <MyHistory
+          storageKey="post_history_9coma"
+          basePath="/list/"
+          title="🕒 最近あなたが作ったマンガリスト"
+        />
+
         <div style={{ 
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '1.5rem'
         }}>
           {slots.map((manga, idx) => (
             <div
@@ -719,37 +727,6 @@ export default function HomeClient() {
             </div>
           ))}
         </div>
-
-        {postHistory.length > 0 && (
-          <div style={{ marginTop: '2rem', padding: '1.2rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', border: '2px dashed var(--color-border)', textAlign: 'center' }}>
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text-secondary)', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <span>🕒 最近あなたが作ったリスト</span>
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {postHistory.map((item) => (
-                <a
-                  key={item.id}
-                  href={`/list/${item.id}`}
-                  style={{
-                    padding: '0.5rem 0.8rem',
-                    background: item.theme ? (THEME_GRADIENTS[item.theme] || 'var(--color-surface-2)') : 'var(--color-surface-2)',
-                    color: item.theme ? '#fff' : 'var(--color-text)',
-                    borderRadius: '99px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'var(--transition-fast)'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
-                >
-                  {item.theme ? `#${item.theme}` : '（テーマなし）'}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
 
       {selectedSlotIndex !== null && (

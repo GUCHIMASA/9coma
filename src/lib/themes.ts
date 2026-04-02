@@ -25,4 +25,15 @@ export const THEME_GRADIENTS: Record<string, string> = {
   '原点にして頂点編': 'linear-gradient(135deg, #232526, #414345)',
   '布教用ガチ推し編': 'linear-gradient(135deg, #ff0080, #ff8c00)',
   '画力に溺れる編': 'linear-gradient(135deg, #667eea, #764ba2)', // 明るすぎた白/グレー系を、上品なパープルブルー系に調整
+  // 9TUBE用
+  '作業用ＢＧＭ特選編': 'linear-gradient(135deg, #ff416c, #ff4b2b)',
+  '憧れのルーティン編': 'linear-gradient(135deg, #f7971e, #ffd200)',
+  '伝説の実況神回編': 'linear-gradient(135deg, #00c6ff, #0072ff)',
+  '至高のＭＶ選抜編': 'linear-gradient(135deg, #8e2de2, #4a00e0)',
+  '爆笑ショート動画編': 'linear-gradient(135deg, #f85032, #e73827)',
+  '至高の講義教養編': 'linear-gradient(135deg, #3a7bd5, #3a6073)',
+  '最先端ＡＩ活用術編': 'linear-gradient(135deg, #0575e6, #021b79)',
+  '究極の没入ASMR編': 'linear-gradient(135deg, #a8c0ff, #3f2b96)',
+  'Vtuber神回選抜編': 'linear-gradient(135deg, #ff00cc, #333399)',
+  '至福の癒やし動物編': 'linear-gradient(135deg, #11998e, #38ef7d)',
 };

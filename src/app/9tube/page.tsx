@@ -6,6 +6,7 @@ import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES, COLOR_THEMES_ORDER } from '@/lib/colors';
 import YtGrid from '@/components/youtube/YtGrid';
 import YtSearchModal from '@/components/youtube/YtSearchModal';
+import MyHistory from '@/components/MyHistory';
 import YtListCard from '@/components/youtube/YtListCard';
 import type { YouTubeListItem } from '@/types/youtube';
 
@@ -107,7 +108,7 @@ export default function YouTubePage() {
       document.documentElement.style.setProperty('--color-text-secondary', isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)');
       document.documentElement.style.setProperty('--color-border', isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)');
       document.documentElement.style.setProperty('--color-surface-2', isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff');
-      
+
       // スクロールバーの同期
       document.documentElement.style.setProperty('--scrollbar-thumb', isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)');
       document.documentElement.style.setProperty('--scrollbar-thumb-hover', isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)');
@@ -191,10 +192,27 @@ export default function YouTubePage() {
       });
       const data = await res.json();
       if (data.id) {
+        // 履歴の保存
+        const themeLabel = THEMES.find(t => t.id === themeId)?.label;
+        const newHistoryItem = {
+          id: data.id,
+          theme: themeLabel === '設定しない（デフォルト）' ? undefined : themeLabel,
+          date: Date.now()
+        };
+        const historyStr = localStorage.getItem('post_history_9tube');
+        let history = [];
+        if (historyStr) {
+          try {
+            history = JSON.parse(historyStr);
+          } catch (e) { }
+        }
+        const updatedHistory = [newHistoryItem, ...history.filter((h: any) => h.id !== data.id)].slice(0, 5);
+        localStorage.setItem('post_history_9tube', JSON.stringify(updatedHistory));
+
         router.push(`/9tube/list/${data.id}`);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Share failed:', error);
       alert('保存に失敗しました');
     } finally {
       setIsSharing(false);
@@ -220,9 +238,7 @@ export default function YouTubePage() {
         <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--color-text)', marginBottom: '0.5rem' }}>
           私を構成する9つのYouTube
         </h1>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>
-          あなたの人生に期待を与えた動画は？
-        </p>
+
       </header>
 
       <section className="grid-section" style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -303,7 +319,15 @@ export default function YouTubePage() {
                   transition: 'width 0.3s ease'
                 }} />
               </div>
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: '8px' }}>
+
+              {/* 作成履歴コンポーネント（ここへ移動） */}
+              <MyHistory
+                storageKey="post_history_9tube"
+                basePath="/9tube/list/"
+                title="🕒 最近あなたが作った YouTube リスト"
+              />
+
+              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', opacity: 0.5, marginTop: '1.2rem' }}>
                 ▼ ドラッグで場所を入れ替えられます。
               </p>
             </div>
@@ -314,7 +338,7 @@ export default function YouTubePage() {
           background: 'rgba(0,0,0,0.1)',
           padding: '12px',
           borderRadius: '20px',
-          marginBottom: '2.5rem',
+          marginBottom: '2rem',
           border: '2px solid var(--color-border)'
         }}>
           <YtGrid
@@ -410,7 +434,7 @@ export default function YouTubePage() {
         }}>
           新着の 9TUBE 📺
         </h2>
-        
+
         {isLoadingRecent ? (
           <div style={{
             display: 'grid',
@@ -419,14 +443,15 @@ export default function YouTubePage() {
             padding: '0 0.5rem'
           }}>
             {[...Array(4)].map((_, i) => (
-              <div key={i} style={{ 
-                height: '240px', 
-                backgroundColor: 'rgba(255,255,255,0.05)', 
+              <div key={i} style={{
+                height: '240px',
+                backgroundColor: 'rgba(255,255,255,0.05)',
                 borderRadius: '12px',
                 animation: 'pulse 1.5s infinite ease-in-out'
               }} />
             ))}
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+              __html: `
               @keyframes pulse {
                 0% { opacity: 0.5; }
                 50% { opacity: 0.8; }
