@@ -119,7 +119,7 @@ export default function YtGridSlot({
           alt={title}
           fill
           unoptimized
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: isReadOnly ? 'cover' : 'contain' }}
         />
       </div>
 

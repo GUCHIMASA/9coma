@@ -8,7 +8,12 @@ import YtGrid from '@/components/youtube/YtGrid';
 import { YouTubeSlot } from '@/types/youtube';
 import YtShareButtons from '@/components/youtube/YtShareButtons';
 import { COLOR_THEMES } from '@/lib/colors';
+import { BASE_URL } from '@/lib/constants';
 
+/**
+ * ISR（Incremental Static Regeneration）の設定
+ * 1時間（3600秒）ごとにバックグラウンドでページを再生成します。
+ */
 export const revalidate = 3600;
 
 interface PageProps {
@@ -18,7 +23,8 @@ interface PageProps {
 }
 
 /**
- * YouTube版 個別閲覧ページ
+ * リストデータの取得（React cache を使用して同一リクエスト内での重複フェッチを防止）
+ * Firebase Firestore の '9tube_lists' コレクションから指定された ID のドキュメントを取得します。
  */
 const getListData = cache(async (id: string) => {
   try {
@@ -33,10 +39,11 @@ const getListData = cache(async (id: string) => {
   return null;
 });
 
-import { BASE_URL } from '@/lib/constants';
-
-// ... (後段で getListData, generateMetadata 等が続く)
-
+/**
+ * SEO / OGP メタデータの生成
+ * 取得したリストの「テーマ」や「作成者名」をタイトルに反映し、
+ * 動的な OGP 画像（opengraph-image.tsx）へのパスを設定します。
+ */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const data = await getListData(params.id);
   if (!data) return { title: 'Not Found | 9coma' };
@@ -73,9 +80,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+/**
+ * YouTube版 個別閲覧ページ メインコンポーネント
+ */
 export default async function YouTubeListPage({ params }: PageProps) {
   const data = await getListData(params.id);
 
+  // データが存在しない場合は自動的に Next.js の 404 ページを表示
   if (!data) {
     notFound();
   }
@@ -87,6 +98,7 @@ export default async function YouTubeListPage({ params }: PageProps) {
     colorThemeId?: string;
   };
 
+  // 選択されたカラーテーマ（背景色・文字色）を定義
   const colorTheme = COLOR_THEMES[colorThemeId || '01'] || COLOR_THEMES['01'];
 
   return (
@@ -100,7 +112,12 @@ export default async function YouTubeListPage({ params }: PageProps) {
         transition: 'background-color 0.3s ease'
       }}
     >
-      <style dangerouslySetInnerHTML={{ __html: `
+      {/* 
+          テーマカラーをページ全体（html, body）に強制適用するための動的スタイル注入。
+          CSS 変数（--color-*）を更新することで、コンポーネント間の色の一貫性を保ちます。
+      */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
         html, body { 
           background-color: ${colorTheme.bg} !important; 
           color: ${colorTheme.text} !important;
@@ -126,8 +143,9 @@ export default async function YouTubeListPage({ params }: PageProps) {
           opacity: 0.7;
         }
       `}} />
-      <header style={{ textAlign: 'center', marginBottom: '3rem' }}>
 
+      {/* ヘッダーセクション：テーマ名と作成者を表示 */}
+      <header style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{
           fontSize: '2rem',
           fontWeight: 900,
@@ -143,12 +161,12 @@ export default async function YouTubeListPage({ params }: PageProps) {
       </header>
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        {/* メインの 3x3 グリッド：閲覧専用（isReadOnly=true）として表示 */}
         <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: '24px',
-          borderRadius: '24px',
-          border: `1px solid ${colorTheme.text}11`,
-          marginBottom: '3rem'
+          padding: '2px', // 「0ではないが極限までタイト」に。画像を引き立てる最低限の余白。
+          marginBottom: '2rem',
+          overflow: 'hidden',
+          borderRadius: '10px',
         }}>
           <YtGrid
             slots={slots}
@@ -156,7 +174,7 @@ export default async function YouTubeListPage({ params }: PageProps) {
           />
         </div>
 
-        {/* 下部アクション */}
+        {/* SNSシェアセクション */}
         <section style={{ textAlign: 'center' }}>
           <p style={{ marginBottom: '1.5rem', fontWeight: 800, color: colorTheme.text, opacity: 0.7 }}>
             ＼ このリストをSNSでシェアしよう！ ／
@@ -168,6 +186,7 @@ export default async function YouTubeListPage({ params }: PageProps) {
             theme={theme}
           />
 
+          {/* コンバージョン促進：新規作成へのリンクボタン */}
           <p style={{ marginBottom: '1.5rem', marginTop: '4rem', fontWeight: 800, color: colorTheme.text, opacity: 0.7 }}>
             ＼ あなたもYouTube版 9コマを作ってみる？ ／
           </p>
@@ -196,6 +215,7 @@ export default async function YouTubeListPage({ params }: PageProps) {
 
           <div style={{ margin: '0.5rem 0' }} />
 
+          {/* 姉妹サービス（マンガ版）へのクロスリンク */}
           <a
             href="/"
             style={{

@@ -35,7 +35,7 @@ export default function YtGrid({
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', // 均等な幅を強制
-      gap: '12px', // マンガ版に合わせる
+      gap: isReadOnly ? '6px' : '12px', // 閲覧モード時は隙間を詰めてインパクトを出す
       width: '100%',
       maxWidth: '100%',
       margin: '0 auto',
