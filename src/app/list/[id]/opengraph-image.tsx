@@ -4,7 +4,7 @@ import { getListById } from '@/lib/list';
 import { COLOR_THEMES } from '@/lib/colors';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 export const alt = '9coma | 私を構成する9つのマンガ';
 export const size = {

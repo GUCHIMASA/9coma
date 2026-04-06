@@ -1,0 +1,9 @@
+name = "9comics"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2024-11-01"
+# Node.js 互換機能を有効化
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# 環境変数は Cloudflare のダッシュボード側で設定推奨ですが、
+# ローカル開発用に必要な変数があればここに追加可能です。

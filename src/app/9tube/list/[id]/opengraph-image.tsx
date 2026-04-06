@@ -6,7 +6,7 @@ import { getFontData, getBase64Image } from '@/lib/og-helper';
 import { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 // --- [画像設定: 基本メタデータ] ---
 export const alt = '9TUBE | 私を構成する9つのYouTube';

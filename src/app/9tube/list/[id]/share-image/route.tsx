@@ -6,7 +6,7 @@ import { getFontData, getBase64Image } from '@/lib/og-helper';
 import { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 async function getListData(id: string) {
   try {
