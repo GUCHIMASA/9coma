@@ -5,6 +5,7 @@ import { THEME_GRADIENTS } from '@/lib/themes';
 import ListViewClient from './ListViewClient';
 import { BASE_URL } from '@/lib/constants';
 
+export const runtime = 'edge';
 export const revalidate = 3600; // 1時間ごとに再生成 (ISR)
 
 export async function generateMetadata(

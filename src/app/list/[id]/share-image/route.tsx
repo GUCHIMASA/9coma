@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
 import { COLOR_THEMES } from '@/lib/colors';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 export async function GET(
   request: Request,

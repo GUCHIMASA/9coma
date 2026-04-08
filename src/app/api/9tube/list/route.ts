@@ -3,6 +3,8 @@ import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, getDoc, serverTimestamp, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 
+export const runtime = 'edge';
+
 // GET: リストの取得
 export async function GET(req: Request) {
   try {

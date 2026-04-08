@@ -5,6 +5,7 @@ import ListCard from '@/components/ListCard';
 import Link from 'next/link';
 import AuthorShareButtons from '@/components/AuthorShareButtons';
 
+export const runtime = 'edge';
 export const revalidate = 3600;
 
 interface Props {

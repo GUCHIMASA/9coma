@@ -5,7 +5,7 @@ import { ComicList } from '@/types';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
 
 // 高速動作とコスト削減のため Edge Runtime を使用
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 export const alt = '9coma | 著者別ページ';
 export const size = {

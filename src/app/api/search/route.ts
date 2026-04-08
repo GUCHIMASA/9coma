@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
 import type { MangaItem } from '@/types';
 
 export async function GET(request: Request) {

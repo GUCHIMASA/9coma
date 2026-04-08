@@ -2,6 +2,7 @@ import { getRecentLists, getListsByAuthor } from '@/lib/list';
 import ListCard from '@/components/ListCard';
 import Link from 'next/link';
 
+export const runtime = 'edge';
 export const revalidate = 3600; // 1時間ごとに再バリデーション（ISR）
 
 export default async function ListsPage({

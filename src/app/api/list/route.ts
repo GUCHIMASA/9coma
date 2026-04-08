@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getListById } from '@/lib/list';
 import type { MangaItem } from '@/types';
 
+export const runtime = 'edge';
+
 // リスト保存
 export async function POST(request: Request) {
     try {

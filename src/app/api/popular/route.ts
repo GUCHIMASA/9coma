@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
 export const revalidate = 3600; // 1時間ごとに再生成 (ISR)
 
 export async function GET(request: Request) {

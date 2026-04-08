@@ -14,6 +14,7 @@ import { BASE_URL } from '@/lib/constants';
  * ISR（Incremental Static Regeneration）の設定
  * 1時間（3600秒）ごとにバックグラウンドでページを再生成します。
  */
+export const runtime = 'edge';
 export const revalidate = 3600;
 
 interface PageProps {
