@@ -119,7 +119,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      {/* 9つのマンガを並べるグリッドレイアウト（背景透過・シャドウ付きコンテナ） */}
+      {/* 9つのマンガを並べるグリッドレイアウト（背景透過 /シャドウ付きコンテナ） */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
         {data.slots.map((manga, idx) => (
           <div

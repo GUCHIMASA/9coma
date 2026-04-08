@@ -11,7 +11,7 @@ interface YtListCardProps {
 
 /**
  * YouTube版専用のリストカードコンポーネント (9TUBE版)
- * 3層レイアウト (拡大背景・遮光・本体) を採用し、正方形のアスペクト比を維持します。
+ * 3層レイアウト (拡大背景 /遮光 /本体) を採用し、正方形のアスペクト比を維持します。
  */
 export default function YtListCard({ id, authorName, theme, slots }: YtListCardProps) {
   return (

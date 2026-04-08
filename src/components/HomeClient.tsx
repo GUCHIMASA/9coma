@@ -555,8 +555,8 @@ export default function HomeClient() {
           >
             <option value="">設定しない（デフォルト）</option>
             <option value="人生のバイブル編">人生のバイブル編</option>
-            <option value="涙腺崩壊・感涙編">涙腺崩壊・感涙編</option>
-            <option value="腹筋崩壊・爆笑編">腹筋崩壊・爆笑編</option>
+            <option value={"涙腺崩壊" + decodeURIComponent('%E3%83%BB') + "感涙編"}>{"涙腺崩壊" + decodeURIComponent('%E3%83%BB') + "感涙編"}</option>
+            <option value={"腹筋崩壊" + decodeURIComponent('%E3%83%BB') + "爆笑編"}>{"腹筋崩壊" + decodeURIComponent('%E3%83%BB') + "爆笑編"}</option>
             <option value="メンタル浄化編">メンタル浄化編</option>
             <option value="あの頃（青春）編">あの頃（青春）編</option>
             <option value="大人で刺さった編">大人で刺さった編</option>
@@ -980,7 +980,7 @@ export default function HomeClient() {
                     {isLoadingMore && (
                       <>
                         <div className="spinner-small" style={{ width: '24px', height: '24px', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>しばらくお待ちください・・</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>しばらくお待ちください...</span>
                       </>
                     )}
                   </div>
@@ -992,7 +992,7 @@ export default function HomeClient() {
                 // おすすめ取得中のスケルトン
                 Array(6).fill(0).map((_, i) => <div key={`skeleton-rec-${i}`} className="skeleton" style={{ aspectRatio: '1 / 1.4' }} />)
               ) : themeRecommendations.length > 0 ? (
-                // おすすめ・トレンドの表示
+                // おすすめ /トレンドの表示
                 <>
                   <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-secondary)', margin: '0 0 0.5rem 0' }}>
                     📚 {theme || '最近のトレンド'} で多くの人が選んでいる作品：

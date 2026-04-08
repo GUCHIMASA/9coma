@@ -100,7 +100,7 @@ export default function RootLayout({
             <DynamicPrivacyLink />
           </div>
           <p style={{ marginTop: '0.8rem', fontSize: '0.7rem', opacity: 0.8, lineHeight: 1.5 }}>
-            Amazon.co.jpアソシエイト、または9coma.comは、Amazon.co.jpを宣伝しリンクすることによって紹介料を獲得できる手段を提供することを目的に設定されたアフィリエイトプログラムである、Amazonアソシエイト・プログラムの参加者です。
+            Amazon.co.jpアソシエイト、または9coma.comは、Amazon.co.jpを宣伝しリンクすることによって紹介料を獲得できる手段を提供することを目的に設定されたアフィリエイトプログラムである、Amazonアソシエイト /プログラムの参加者です。
           </p>
           <p>© {new Date().getFullYear()} 9コマ</p>
         </footer>

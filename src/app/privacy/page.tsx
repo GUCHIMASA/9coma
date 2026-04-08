@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー・免責事項 | 9コマ',
+  title: 'プライバシーポリシー / 免責事項 | 9コマ',
   description: '9コマのプライバシーポリシー、免責事項、および著作権に関する指針',
 };
 
@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
   return (
     <main className="container animate-fade-in" style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto', lineHeight: '1.8' }}>
       <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '3rem', textAlign: 'center' }}>
-        プライバシーポリシー・免責事項
+        プライバシーポリシー / 免責事項
       </h1>
 
       <section style={{ marginBottom: '2.5rem' }}>
@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>本サービスで生成される画像について</p>
           <p>
-            本サービス（9コマ）が生成する画像に含まれる書籍の書影、タイトル、および著者名等の著作権は、各出版社、著者、および権利者に帰属します。本サービスは、楽天ブックスAPIを利用し、書籍のプロモーションおよび紹介を目的としてこれらの情報を表示・合成しています。
+            本サービス（9コマ）が生成する画像に含まれる書籍の書影、タイトル、および著者名等の著作権は、各出版社、著者、および権利者に帰属します。本サービスは、楽天ブックスAPIを利用し、書籍のプロモーションおよび紹介を目的としてこれらの情報を表示、合成しています。
           </p>
         </div>
       </section>
@@ -58,7 +58,7 @@ export default function PrivacyPolicy() {
         </h2>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           当サイトからのリンクやバナーなどで移動したサイトで提供される情報、サービス等について一切の責任を負いません。<br />
-          また当サイトのコンテンツ・情報について、できる限り正確な情報を提供するように努めておりますが、正確性や安全性を保証するものではありません。情報が古くなっていることもございます。<br />
+          また当サイトのコンテンツ情報について、できる限り正確な情報を提供するように努めておりますが、正確性や安全性を保証するものではありません。情報が古くなっていることもございます。<br />
           当サイトに掲載された内容によって生じた損害等の一切の責任を負いかねますのでご了承ください。
         </p>
       </section>

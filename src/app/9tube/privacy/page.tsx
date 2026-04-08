@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー・免責事項 | 9TUBE',
+  title: 'プライバシーポリシー / 免責事項 | 9TUBE',
   description: '9TUBEのプライバシーポリシー、免責事項、および著作権に関する指針',
 };
 
@@ -11,7 +11,7 @@ export default function YouTubePrivacyPolicy() {
   return (
     <main className="container animate-fade-in" style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto', lineHeight: '1.8' }}>
       <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '3rem', textAlign: 'center' }}>
-        プライバシーポリシー・免責事項 (9TUBE版)
+        プライバシーポリシー / 免責事項 (9TUBE版)
       </h1>
 
       <section style={{ marginBottom: '2.5rem' }}>
@@ -21,7 +21,7 @@ export default function YouTubePrivacyPolicy() {
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           <p style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-text)' }}>本サービスで表示される情報について</p>
           <p>
-            本サービス（9TUBE）で表示・利用されるYouTube動画のサムネイル画像、チャンネルアイコン、動画タイトル、およびチャンネル名等の著作権および知的財産権は、Google LLCおよび各動画のコンテンツクリエイター、権利者に帰属します。
+            本サービス（9TUBE）で表示 /利用されるYouTube動画のサムネイル画像、チャンネルアイコン、動画タイトル、およびチャンネル名等の著作権および知的財産権は、Google LLCおよび各動画のコンテンツクリエイター、権利者に帰属します。
           </p>
           <p style={{ marginTop: '0.5rem' }}>
             本サービスは、YouTube Data APIを利用し、YouTubeの利用規約に従って動画の紹介およびお気に入りリストの作成を目的としてこれらの情報を表示しています。本サービスがこれらの権利を所有または主張することはありません。
@@ -61,7 +61,7 @@ export default function YouTubePrivacyPolicy() {
         </h2>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
           当サイトからのリンクやバナーなどで移動したサイトで提供される情報、サービス等について一切の責任を負いません。<br />
-          また当サイトのコンテンツ・情報について、できる限り正確な情報を提供するように努めておりますが、正確性や安全性を保証するものではありません。情報の取得元であるYouTube側での変更により、情報が古くなっていることもございます。<br />
+          また当サイトのコンテンツ情報について、できる限り正確な情報を提供するように努めておりますが、正確性や安全性を保証するものではありません。情報の取得元であるYouTube側での変更により、情報が古くなっていることもございます。<br />
           当サイトに掲載された内容によって生じた損害等の一切の責任を負いかねますのでご了承ください。
         </p>
       </section>

@@ -99,7 +99,7 @@ export default async function YouTubeListPage({ params }: PageProps) {
     colorThemeId?: string;
   };
 
-  // 選択されたカラーテーマ（背景色・文字色）を定義
+  // 選択されたカラーテーマ（背景色 /文字色）を定義
   const colorTheme = COLOR_THEMES[colorThemeId || '01'] || COLOR_THEMES['01'];
 
   return (

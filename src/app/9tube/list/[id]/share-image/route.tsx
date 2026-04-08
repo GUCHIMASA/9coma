@@ -51,7 +51,7 @@ export async function GET(
     })
   );
 
-  // --- [設定エリア: サイズ・余白] ---
+  // --- [設定エリア: サイズ /余白] ---
   const width = 1200;  // 画像の横幅
   const height = 1500; // 画像の縦幅
   const padding = 30;  // 画面全体の外周余白

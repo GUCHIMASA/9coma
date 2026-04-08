@@ -91,7 +91,7 @@ export default async function AuthorPage({ params }: Props) {
       {/* 作品一覧セクション */}
       <section style={{ marginBottom: '5rem' }}>
         <h2 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '2rem', borderLeft: '8px solid var(--color-primary)', paddingLeft: '1rem' }}>
-          著書・関連作品
+          著書 /関連作品
         </h2>
         {uniqueManga.length > 0 ? (
           <div
