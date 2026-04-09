@@ -374,3 +374,20 @@
 - [x] 9TUBE 専用のガイド的ヘッダーおよびUIの洗練 (3/16完了)
 - [x] 動的 CSS 変数によるテーマ同期と閲覧モードの最適化 (3/16完了)
 - [x] 本番デプロイ準備完了
+
+## Phase 59: Cloudflare Pages へのインフラ移転 (コスト削減プロジェクト)
+- [x] Cloudflare Pages プロジェクトの作成とリポジトリ連携 (4/8完了)
+- [x] `nodejs_compat` 設定と `wrangler.toml` の整備 (4/8完了)
+- [x] ビルド環境の Node.js 20 固定と `.npmrc` による依存関係解決 (4/8完了)
+- [x] 動的ルートおよび API の `edge` Runtime 指定の徹底 (4/8完了)
+
+## Phase 60: Cloudflare ビルドエラー（日本語パース問題）の解消
+- [x] `next-on-pages` が日本語（・）でクラッシュする現象の特定 (4/8完了)
+- [x] ソースコード全域からの「・」排除および URL エンコード化 (4/8完了)
+- [x] ローカル環境での `npx @cloudflare/next-on-pages` ビルド成功確認 (4/8完了)
+
+## Phase 61: YouTube 引用機能の API Data 連携への移行と復旧
+- [x] Cloudflare サーバーによる YouTube スクレイピングブロックの特定 (4/9完了)
+- [x] **[ regression ]** 動画引用機能の喪失（oEmbed 廃止による不具合）の発生
+- [x] **[ fix ]** 動画を oEmbed、チャンネルを API Data で取得する「ハイブリッド型」の実装 (4/9完了)
+- [x] **[ deploy ]** Cloudflare 上での動作確認および実機テスト (進行中)
