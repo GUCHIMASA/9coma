@@ -9,60 +9,94 @@ import { YouTubeSlot } from '@/types/youtube';
 export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | null> {
   if (!url) return null;
 
+  // 1. API キーの取得とチェック
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) {
+    console.error('YOUTUBE_API_KEY is not set in environment variables.');
+    return null;
+  }
+
   try {
-    const isChannel = url.includes('/@') || url.includes('/channel/') || url.includes('/c/') || url.includes('/user/');
-    
+    // 2. チャンネルか動画かの判定
+    const isChannel = url.includes('/channel/') || url.includes('/@');
+
     if (isChannel) {
-      // チャンネルの場合: HTMLスクレイピング
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept-Language': 'ja-JP,ja;q=0.9',
-        },
-        next: { revalidate: 3600 } // 1時間キャッシュ
-      });
+      // 3. チャンネル情報の取得
+      let channelId = '';
+      let handle = '';
 
-      if (!response.ok) return null;
-      const html = await response.text();
-
-      // og:title (チャンネル名)
-      const titleMatch = html.match(/<meta property="og:title" content="([^"]+)">/);
-      // og:image (アイコン)
-      const imageMatch = html.match(/<meta property="og:image" content="([^"]+)">/);
-
-      if (titleMatch && imageMatch) {
-        return {
-          type: 'channel',
-          url: url,
-          title: titleMatch[1].replace(' - YouTube', ''),
-          imageUrl: imageMatch[1],
-        };
+      // ID抽出: /channel/UC*** (24文字)
+      const idMatch = url.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+      if (idMatch) {
+        channelId = idMatch[1];
+      } else {
+        // ハンドル抽出: /@handle
+        const handleMatch = url.match(/\/@([a-zA-Z0-9._-]+)/);
+        if (handleMatch) handle = handleMatch[1];
       }
+
+      let apiUrl = '';
+      if (channelId) {
+        apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelId}&key=${apiKey}`;
+      } else if (handle) {
+        // forHandle パラメータを使用 (@ は不要)
+        apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${handle}&key=${apiKey}`;
+      } else {
+        return null;
+      }
+
+      const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
+      if (!response.ok) {
+        console.error('YouTube API Channel Response Error:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      if (!data.items || data.items.length === 0) return null;
+
+      const channel = data.items[0];
+      return {
+        type: 'channel',
+        url: url,
+        title: channel.snippet.title,
+        imageUrl: channel.snippet.thumbnails.high?.url || channel.snippet.thumbnails.default?.url,
+      };
     } else {
-      // 動画の場合: oEmbed API を利用
-      const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-      const response = await fetch(oEmbedUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // 動画IDの抽出 (サムネイルURLやURLから)
-        let videoId = '';
-        const vMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
-        if (vMatch) videoId = vMatch[1];
+      // 4. 動画情報の取得
+      let videoId = '';
+      // 各種動画URL形式に対応 (v=***, /v/ID, /embed/ID, /shorts/ID, youtu.be/ID)
+      const vMatch = url.match(/(?:v=|v\/|embed\/|shorts\/|youtu\.be\/|\/)([0-9A-Za-z_-]{11})/);
+      if (vMatch) videoId = vMatch[1];
 
-        return {
-          type: 'video',
-          url: url,
-          title: data.title,
-          imageUrl: data.thumbnail_url,
-          channelName: data.author_name,
-          videoId: videoId,
-        };
+      if (!videoId) return null;
+
+      const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
+      const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
+      
+      if (!response.ok) {
+        console.error('YouTube API Video Response Error:', response.status);
+        return null;
       }
+
+      const data = await response.json();
+      if (!data.items || data.items.length === 0) return null;
+
+      const video = data.items[0];
+      const thumbnails = video.snippet.thumbnails;
+      // maxres優先、なければhigh, medium
+      const imageUrl = thumbnails.maxres?.url || thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url;
+
+      return {
+        type: 'video',
+        url: url,
+        title: video.snippet.title,
+        imageUrl: imageUrl,
+        channelName: video.snippet.channelTitle,
+        videoId: videoId,
+      };
     }
   } catch (error) {
-    console.error('Error fetching YouTube metadata:', error);
+    console.error('Error in getYoutubeMetadata:', error);
   }
 
   return null;
