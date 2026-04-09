@@ -1,13 +1,19 @@
-'use server';
+import { NextRequest, NextResponse } from 'next/server';
 
-import { YouTubeSlot } from '@/types/youtube';
+export const runtime = 'edge';
 
 /**
- * YouTubeのURLからメタデータを取得する Server Action
- * @param url ユーザーが入力したURL
+ * YouTube の URL からメタデータを取得する API Route
+ * Server Action (POST) で発生する本番環境での 405 エラーを回避するため、
+ * GET リクエストによる API 方式へ移行。
  */
-export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | null> {
-  if (!url) return null;
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const url = searchParams.get('url');
+
+  if (!url) {
+    return NextResponse.json({ error: 'Missing URL parameter' }, { status: 400 });
+  }
 
   const apiKey = process.env.YOUTUBE_API_KEY;
 
@@ -24,20 +30,20 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
         const oeRes = await fetch(oEmbedUrl, { next: { revalidate: 3600 } });
         
         if (oeRes.ok) {
-          const data = await oeRes.json();
+          const data: any = await oeRes.json();
           // videoId を抽出 (正規表現)
           const vMatch = url.match(/(?:v=|v\/|embed\/|shorts\/|youtu\.be\/|\/)([0-9A-Za-z_-]{11})/);
           const videoId = vMatch ? vMatch[1] : undefined;
 
           if (data.title && data.thumbnail_url) {
-            return {
+            return NextResponse.json({
               type: 'video',
               url: url,
               title: data.title,
               imageUrl: data.thumbnail_url,
               channelName: data.author_name,
               videoId: videoId,
-            };
+            });
           }
         }
       } catch (e) {
@@ -54,20 +60,20 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
           const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
           
           if (response.ok) {
-            const data = await response.json();
+            const data: any = await response.json();
             if (data.items && data.items.length > 0) {
               const video = data.items[0];
               const thumbnails = video.snippet.thumbnails;
               const imageUrl = thumbnails.maxres?.url || thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url;
 
-              return {
+              return NextResponse.json({
                 type: 'video',
                 url: url,
                 title: video.snippet.title,
                 imageUrl: imageUrl,
                 channelName: video.snippet.channelTitle,
                 videoId: videoId,
-              };
+              });
             }
           }
         }
@@ -78,7 +84,7 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
       // チャンネル取得には API キーが必須
       if (!apiKey) {
         console.error('YOUTUBE_API_KEY is not set for channel search.');
-        return null;
+        return NextResponse.json({ error: 'YouTube API Key not configured' }, { status: 500 });
       }
 
       let channelId = '';
@@ -101,12 +107,11 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
       } else if (handle) {
         apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${handle}&key=${apiKey}`;
       } else {
-        console.error('Could not extract channelId or handle from URL:', url);
-        return null;
+        return NextResponse.json({ error: 'Invalid Channel URL format' }, { status: 400 });
       }
 
       const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
-      let data = await response.json();
+      let data: any = await response.json();
 
       if (!response.ok) {
         console.error('YouTube Channels API Error:', response.status, data);
@@ -119,7 +124,7 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
         const sRes = await fetch(searchUrl, { next: { revalidate: 3600 } });
         
         if (sRes.ok) {
-          const sData = await sRes.ok ? await sRes.json() : null;
+          const sData: any = await sRes.json();
           if (sData && sData.items && sData.items.length > 0) {
             const foundChannelId = sData.items[0].id.channelId;
             console.log(`[YouTubeAPI] Search API found channelId: ${foundChannelId}`);
@@ -143,19 +148,21 @@ export async function getYoutubeMetadata(url: string): Promise<YouTubeSlot | nul
 
       if (data.items && data.items.length > 0) {
         const channel = data.items[0];
-        return {
+        return NextResponse.json({
           type: 'channel',
           url: url,
           title: channel.snippet.title,
           imageUrl: channel.snippet.thumbnails.high?.url || channel.snippet.thumbnails.default?.url,
-        };
+        });
       } else {
         console.error('Final attempt failed to fetch channel metadata for:', url);
+        return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
       }
     }
   } catch (error) {
-    console.error('Error in getYoutubeMetadata:', error);
+    console.error('Error in YouTube Metadata API Route:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 
-  return null;
+  return NextResponse.json({ error: 'Video/Channel not found' }, { status: 404 });
 }

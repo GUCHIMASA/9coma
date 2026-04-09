@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { YouTubeSlot } from '@/types/youtube';
-import { getYoutubeMetadata } from '@/app/9tube/actions';
 import YtGridSlot from './YtGridSlot';
 
 interface YtSearchModalProps {
@@ -27,14 +26,23 @@ export default function YtSearchModal({
     setLoading(true);
     setError(null);
     try {
-      const data = await getYoutubeMetadata(url);
-      if (data) {
+      // Server Action (POST) から API Route (GET) へ移行
+      const response = await fetch(`/api/9tube/metadata?url=${encodeURIComponent(url)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch metadata');
+      }
+
+      const data = await response.json();
+      
+      if (data && !data.error) {
         setPreview(data);
       } else {
         setError('URLから情報を取得できませんでした。');
         setPreview(null);
       }
-    } catch {
+    } catch (e) {
+      console.error('Fetch error:', e);
       setError('エラーが発生しました。');
       setPreview(null);
     } finally {
