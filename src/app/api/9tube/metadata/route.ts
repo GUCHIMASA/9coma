@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         const oeRes = await fetch(oEmbedUrl, { next: { revalidate: 3600 } });
         
         if (oeRes.ok) {
-          const data: any = await oeRes.json();
+          const data = (await oeRes.json()) as { title?: string; thumbnail_url?: string; author_name?: string };
           // videoId を抽出 (正規表現)
           const vMatch = url.match(/(?:v=|v\/|embed\/|shorts\/|youtu\.be\/|\/)([0-9A-Za-z_-]{11})/);
           const videoId = vMatch ? vMatch[1] : undefined;
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
           const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
           
           if (response.ok) {
-            const data: any = await response.json();
+            const data = (await response.json()) as { items?: any[] };
             if (data.items && data.items.length > 0) {
               const video = data.items[0];
               const thumbnails = video.snippet.thumbnails;
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       }
 
       const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
-      let data: any = await response.json();
+      let data = (await response.json()) as { items?: any[] };
 
       if (!response.ok) {
         console.error('YouTube Channels API Error:', response.status, data);
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         const sRes = await fetch(searchUrl, { next: { revalidate: 3600 } });
         
         if (sRes.ok) {
-          const sData: any = await sRes.json();
+          const sData = (await sRes.json()) as { items?: any[] };
           if (sData && sData.items && sData.items.length > 0) {
             const foundChannelId = sData.items[0].id.channelId;
             console.log(`[YouTubeAPI] Search API found channelId: ${foundChannelId}`);
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
             const retryUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${foundChannelId}&key=${apiKey}`;
             const rRes = await fetch(retryUrl, { next: { revalidate: 3600 } });
             if (rRes.ok) {
-              data = await rRes.json();
+              data = (await rRes.json()) as { items?: any[] };
             } else {
               console.error('YouTube Channels API Retry Error:', rRes.status);
             }
