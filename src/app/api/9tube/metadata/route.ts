@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
+// YouTube API レスポンスの型定義
+interface YouTubeApiItem {
+  id: string | { channelId?: string; videoId?: string };
+  snippet: {
+    title: string;
+    channelTitle: string;
+    thumbnails: {
+      default?: { url: string };
+      medium?: { url: string };
+      high?: { url: string };
+      maxres?: { url: string };
+    };
+  };
+}
+
+interface YouTubeApiResponse {
+  items?: YouTubeApiItem[];
+}
+
 /**
  * YouTube の URL からメタデータを取得する API Route
  * Server Action (POST) で発生する本番環境での 405 エラーを回避するため、
@@ -60,7 +79,7 @@ export async function GET(request: NextRequest) {
           const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
           
           if (response.ok) {
-            const data = (await response.json()) as { items?: any[] };
+            const data = (await response.json()) as YouTubeApiResponse;
             if (data.items && data.items.length > 0) {
               const video = data.items[0];
               const thumbnails = video.snippet.thumbnails;
@@ -111,7 +130,8 @@ export async function GET(request: NextRequest) {
       }
 
       const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
-      let data = (await response.json()) as { items?: any[] };
+      const responseData = (await response.json()) as YouTubeApiResponse;
+      let data: YouTubeApiResponse = responseData;
 
       if (!response.ok) {
         console.error('YouTube Channels API Error:', response.status, data);
@@ -124,16 +144,17 @@ export async function GET(request: NextRequest) {
         const sRes = await fetch(searchUrl, { next: { revalidate: 3600 } });
         
         if (sRes.ok) {
-          const sData = (await sRes.json()) as { items?: any[] };
+          const sData = (await sRes.json()) as YouTubeApiResponse;
           if (sData && sData.items && sData.items.length > 0) {
-            const foundChannelId = sData.items[0].id.channelId;
+            const item = sData.items[0];
+            const foundChannelId = typeof item.id === 'string' ? item.id : item.id.channelId;
             console.log(`[YouTubeAPI] Search API found channelId: ${foundChannelId}`);
             
             // IDで再度詳細を取得
             const retryUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${foundChannelId}&key=${apiKey}`;
             const rRes = await fetch(retryUrl, { next: { revalidate: 3600 } });
             if (rRes.ok) {
-              data = (await rRes.json()) as { items?: any[] };
+              data = (await rRes.json()) as YouTubeApiResponse;
             } else {
               console.error('YouTube Channels API Retry Error:', rRes.status);
             }
