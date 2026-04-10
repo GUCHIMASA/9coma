@@ -44,6 +44,15 @@ export async function GET(req: Request) {
 
 // POST: リストの保存
 export async function POST(req: Request) {
+  // --- 診断ログ (原因特定後に削除) ---
+  console.log('[DEBUG-ENV] Firestore Config Status:');
+  console.log(' - API_KEY:', process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'YES' : 'MISSING');
+  console.log(' - PROJECT_ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'YES' : 'MISSING');
+  console.log(' - AUTH_DOMAIN:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? 'YES' : 'MISSING');
+  console.log(' - APP_ID:', process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? 'YES' : 'MISSING');
+  console.log(' - YOUTUBE_KEY:', process.env.YOUTUBE_API_KEY ? 'YES' : 'MISSING');
+  // --------------------------------
+
   try {
     const data = await req.json();
     const { slots, authorName, theme, colorThemeId, themeId, deviceId } = data;
