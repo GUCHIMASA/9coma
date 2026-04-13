@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import YtGrid from '@/components/youtube/YtGrid';
-import { YouTubeSlot } from '@/types/youtube';
+import type { YouTubeSlot } from '@/types/youtube';
 import YtShareButtons from '@/components/youtube/YtShareButtons';
 import { COLOR_THEMES } from '@/lib/colors';
 import { BASE_URL } from '@/lib/constants';
