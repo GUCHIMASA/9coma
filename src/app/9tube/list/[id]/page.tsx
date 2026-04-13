@@ -6,6 +6,7 @@ import type { YouTubeSlot } from '@/types/youtube';
 import YtShareButtons from '@/components/youtube/YtShareButtons';
 import { COLOR_THEMES } from '@/lib/colors';
 import { BASE_URL } from '@/lib/constants';
+import { get9TubeListById } from '@/lib/ytlist';
 
 /**
  * ISR（Incremental Static Regeneration）の設定
@@ -21,33 +22,12 @@ interface PageProps {
 }
 
 /**
- * リストデータの取得
- * Firebase Firestore の '9tube_lists' コレクションから指定された ID のドキュメントを取得します。
- * Edge Runtime でのクラッシュ回避のため、動的インポートを使用します。
- * ※ React cache() は動的インポートと競合してクラッシュを招く可能性があるため除去。
- */
-async function getListData(id: string) {
-  try {
-    const { db } = await import('@/lib/firebase');
-    const { doc, getDoc } = await import('firebase/firestore');
-    const docRef = doc(db, '9tube_lists', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
-    }
-  } catch (error) {
-    console.error('Error fetching YouTube list:', error);
-  }
-  return null;
-}
-
-/**
  * SEO / OGP メタデータの生成
  * 取得したリストの「テーマ」や「作成者名」をタイトルに反映し、
  * 動的な OGP 画像（opengraph-image.tsx）へのパスを設定します。
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const data = await getListData(params.id);
+  const data = await get9TubeListById(params.id);
   if (!data) return { title: 'Not Found | 9coma' };
 
   const themeTitle = data.theme ? `${data.theme} - ` : '';
@@ -86,19 +66,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * YouTube版 個別閲覧ページ メインコンポーネント
  */
 export default async function YouTubeListPage({ params }: PageProps) {
-  const data = await getListData(params.id);
+  const data = await get9TubeListById(params.id);
 
   // データが存在しない場合は自動的に Next.js の 404 ページを表示
   if (!data) {
     notFound();
   }
 
-  const { slots, authorName, theme, colorThemeId } = data as {
-    slots: (YouTubeSlot | null)[];
-    authorName: string;
-    theme?: string;
-    colorThemeId?: string;
-  };
+  const { slots, authorName, theme, colorThemeId } = data;
 
   // 選択されたカラーテーマ（背景色 /文字色）を定義
   const colorTheme = COLOR_THEMES[colorThemeId || '01'] || COLOR_THEMES['01'];
