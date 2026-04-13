@@ -2,8 +2,6 @@ import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import YtGrid from '@/components/youtube/YtGrid';
 import { YouTubeSlot } from '@/types/youtube';
 import YtShareButtons from '@/components/youtube/YtShareButtons';
@@ -26,9 +24,12 @@ interface PageProps {
 /**
  * リストデータの取得（React cache を使用して同一リクエスト内での重複フェッチを防止）
  * Firebase Firestore の '9tube_lists' コレクションから指定された ID のドキュメントを取得します。
+ * Edge Runtime でのクラッシュ回避のため、動的インポートを使用します。
  */
 const getListData = cache(async (id: string) => {
   try {
+    const { db } = await import('@/lib/firebase');
+    const { doc, getDoc } = await import('firebase/firestore');
     const docRef = doc(db, '9tube_lists', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
