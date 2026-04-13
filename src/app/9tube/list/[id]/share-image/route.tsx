@@ -1,15 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
-import { YouTubeSlot } from '@/types/youtube';
+import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
 export const runtime = 'edge';
 
 async function getListData(id: string) {
   try {
+    const { db } = await import('@/lib/firebase');
+    const { doc, getDoc } = await import('firebase/firestore');
     const docRef = doc(db, '9tube_lists', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
