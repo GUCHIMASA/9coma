@@ -1,7 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { cache } from 'react';
 import YtGrid from '@/components/youtube/YtGrid';
 import type { YouTubeSlot } from '@/types/youtube';
 import YtShareButtons from '@/components/youtube/YtShareButtons';
@@ -22,11 +21,12 @@ interface PageProps {
 }
 
 /**
- * リストデータの取得（React cache を使用して同一リクエスト内での重複フェッチを防止）
+ * リストデータの取得
  * Firebase Firestore の '9tube_lists' コレクションから指定された ID のドキュメントを取得します。
  * Edge Runtime でのクラッシュ回避のため、動的インポートを使用します。
+ * ※ React cache() は動的インポートと競合してクラッシュを招く可能性があるため除去。
  */
-const getListData = cache(async (id: string) => {
+async function getListData(id: string) {
   try {
     const { db } = await import('@/lib/firebase');
     const { doc, getDoc } = await import('firebase/firestore');
@@ -39,7 +39,7 @@ const getListData = cache(async (id: string) => {
     console.error('Error fetching YouTube list:', error);
   }
   return null;
-});
+}
 
 /**
  * SEO / OGP メタデータの生成
