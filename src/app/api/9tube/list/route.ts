@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { YouTubeSlot } from '@/types/youtube';
 
 export const runtime = 'edge';
 
