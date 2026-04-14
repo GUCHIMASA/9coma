@@ -15,6 +15,11 @@ export interface YouTubeListData {
  * Edge Runtime クラッシュ回避のため動的インポートを使用。
  */
 export async function get9TubeListById(id: string): Promise<YouTubeListData | null> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (!projectId || projectId === 'your_project_id') {
+    console.error('[get9TubeListById] Firebase project ID is not configured.');
+    return null;
+  }
   try {
     const { db } = await import('@/lib/firebase');
     const { doc, getDoc } = await import('firebase/firestore');
