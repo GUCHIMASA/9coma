@@ -177,42 +177,47 @@ export default function YouTubePage() {
 
     setIsSharing(true);
     try {
-      const selectedTheme = THEMES.find(t => t.id === themeId);
-      const res = await fetch('/api/9tube/list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slots,
-          authorName: authorName || '私',
-          theme: selectedTheme?.id === 'default' ? '' : selectedTheme?.label,
-          themeId,
-          colorThemeId,
-          deviceId
-        }),
-      });
-      const data = await res.json();
-      if (data.id) {
-        // 履歴の保存
-        const themeLabel = THEMES.find(t => t.id === themeId)?.label;
-        const newHistoryItem = {
-          id: data.id,
-          theme: themeLabel === '設定しない（デフォルト）' ? undefined : themeLabel,
-          date: Date.now()
-        };
-        const historyStr = localStorage.getItem('post_history_9tube');
-        let history = [];
-        if (historyStr) {
-          try {
-            history = JSON.parse(historyStr);
-          } catch {
-            // ignore
-          }
-        }
-        const updatedHistory = [newHistoryItem, ...history.filter((h: { id: string }) => h.id !== data.id)].slice(0, 5);
-        localStorage.setItem('post_history_9tube', JSON.stringify(updatedHistory));
+      const { db } = await import('@/lib/firebase');
+      const { collection, doc, setDoc } = await import('firebase/firestore');
 
-        router.push(`/9tube/list/${data.id}`);
+      const selectedTheme = THEMES.find(t => t.id === themeId);
+      const listRef = doc(collection(db, '9tube_lists'));
+      const id = listRef.id;
+
+      // データクレンジング: Edge Runtime (Cloudflare) での 1101 クラッシュ回避ロジックを継承
+      const docData = JSON.parse(JSON.stringify({
+        slots,
+        authorName: authorName || '私',
+        theme: selectedTheme?.id === 'default' ? '' : selectedTheme?.label,
+        themeId,
+        colorThemeId,
+        deviceId: deviceId || 'unknown',
+        createdAt: Date.now(),
+        type: 'youtube'
+      }));
+
+      await setDoc(listRef, docData);
+
+      // 履歴の保存
+      const themeLabel = THEMES.find(t => t.id === themeId)?.label;
+      const newHistoryItem = {
+        id: id,
+        theme: themeLabel === '設定しない（デフォルト）' ? undefined : themeLabel,
+        date: Date.now()
+      };
+      const historyStr = localStorage.getItem('post_history_9tube');
+      let history = [];
+      if (historyStr) {
+        try {
+          history = JSON.parse(historyStr);
+        } catch {
+          // ignore
+        }
       }
+      const updatedHistory = [newHistoryItem, ...history.filter((h: { id: string }) => h.id !== id)].slice(0, 5);
+      localStorage.setItem('post_history_9tube', JSON.stringify(updatedHistory));
+
+      router.push(`/9tube/list/${id}`);
     } catch (error) {
       console.error('Share failed:', error);
       alert('保存に失敗しました');

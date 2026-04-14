@@ -483,35 +483,69 @@ export default function HomeClient() {
 
     setIsSharing(true);
     try {
-      const res = await fetch('/api/list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slots,
-          authorName: authorName || '私',
-          theme: theme || undefined,
-          colorThemeId: bgColorId,
-          deviceId
-        }),
-      });
+      const { db } = await import('@/lib/firebase');
+      const { collection, doc, setDoc, getDoc } = await import('firebase/firestore');
 
-      const data = await res.json();
-      if (data.id) {
-        localStorage.setItem('last_post_9coma', JSON.stringify({
-          id: data.id,
-          content: currentPostContent
-        }));
+      const listRef = doc(collection(db, 'lists'));
+      const id = listRef.id;
 
-        const newHistoryItem = { id: data.id, theme: theme || undefined, date: Date.now() };
-        const updatedHistory = [newHistoryItem, ...postHistory.filter(h => h.id !== data.id)].slice(0, 5);
-        setPostHistory(updatedHistory);
-        localStorage.setItem('post_history_9coma', JSON.stringify(updatedHistory));
+      // 著者一覧の抽出
+      const authors = Array.from(new Set(
+        slots
+          .filter(s => s !== null && typeof s === 'object' && s.author)
+          .map(s => s!.author)
+      ));
 
-        router.push(`/list/${data.id}`);
+      // 著者スラッグの抽出（空白除去）
+      const authorSlugs = Array.from(new Set(
+        authors.map(a => a.replace(/[\s\u3000]/g, ''))
+      ));
+
+      // リストデータの保存 (undefinedは安全に排除)
+      const listData = JSON.parse(JSON.stringify({
+        slots,
+        authorName: authorName || '名無し',
+        authors,
+        author_slugs: authorSlugs,
+        theme: theme || '',
+        colorThemeId: bgColorId || '01',
+        userId: deviceId || 'unknown',
+        createdAt: Date.now()
+      }));
+
+      await setDoc(listRef, listData);
+
+      // マンガ情報のキャッシュ保存
+      try {
+        await Promise.allSettled(
+          slots.filter(s => s !== null).map(async (m) => {
+            if (!m) return;
+            const cacheRef = doc(db, 'manga_cache', m.isbn);
+            const cacheSnap = await getDoc(cacheRef);
+            if (!cacheSnap.exists()) {
+              await setDoc(cacheRef, { ...m, updatedAt: Date.now() }, { merge: true });
+            }
+          })
+        );
+      } catch (ce) {
+        console.error('Manga cache save error:', ce);
       }
+
+      localStorage.setItem('last_post_9coma', JSON.stringify({
+        id: id,
+        content: currentPostContent
+      }));
+
+      const newHistoryItem = { id: id, theme: theme || undefined, date: Date.now() };
+      const updatedHistory = [newHistoryItem, ...postHistory.filter(h => h.id !== id)].slice(0, 5);
+      setPostHistory(updatedHistory);
+      localStorage.setItem('post_history_9coma', JSON.stringify(updatedHistory));
+
+      router.push(`/list/${id}`);
+
     } catch (error) {
       console.error('Share failed:', error);
-      alert('保存に失敗しました');
+      alert('保存に失敗しました。');
     } finally {
       setIsSharing(false);
     }
