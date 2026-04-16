@@ -401,4 +401,10 @@
 ## Phase 63: Firestore Lite SDK の導入による Edge 読み取りクラッシュの解決
 - [x] サーバー/Edge起因の通信遮断問題を回避するため、標準の `firebase/firestore` を廃止する
 - [x] 全てのファイルで `firebase/firestore/lite` に一括置換する（機能的UI/UXの変更なし）
-- [ ] デプロイ後、Cloudflare 環境での両プラットフォームの読み出し（ページ表示）正常化を確認
+- [x] デプロイ後、Cloudflare 環境での両プラットフォームの読み出し（ページ表示）正常化を確認
+
+## Phase 64: 画像生成機能（OGP/シェア画像）の不具合修正
+- [ ] `src/lib/og-helper.ts` の `getFontData` に動的ベースURL特定ロジックを追加
+- [ ] マンガ版・9TUBE版の全画像生成ルート（計4箇所）を動的ベースURL対応に書き換え
+- [ ] Cloudflare プレビュー環境での画像生成正常化を実機確認
+

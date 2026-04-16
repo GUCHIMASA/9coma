@@ -5,25 +5,47 @@ let cachedFontData: ArrayBuffer | null = null;
 
 /**
  * フォントデータを取得し、メモリキャッシュして返却する。
- * Edge 環境では public 配下や外部 URL から fetch して取得します。
+ * 画像生成に使用するフォントデータを取得する。
+ * Edge Runtime 上で実行されるため、絶対パスでの fetch が必要。
+ * 
+ * @param requestUrl 現在のリクエストURL。オリジンの特定に使用。
+ * @returns フォントデータの ArrayBuffer
  */
-export async function getFontData() {
+export async function getFontData(requestUrl?: string): Promise<ArrayBuffer> {
   if (cachedFontData) return cachedFontData;
 
-  // 1. 環境に応じてベースURLを取得（Vercel/Local/Cloudflare対応）
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-  
-  // 2. ブラウザ経由でもアクセス可能な公開パスからフォントを取得
+  // ベースURLの特定
+  let baseUrl = '';
+
+  if (requestUrl) {
+    try {
+      const url = new URL(requestUrl);
+      baseUrl = url.origin;
+    } catch (e) {
+      console.warn('[og-helper] Failed to parse requestUrl:', e);
+    }
+  }
+
+  // フォールバック: 環境変数
+  if (!baseUrl) {
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  }
+
+  // 末尾の記号( / )を正規化
+  baseUrl = baseUrl.replace(/\/$/, '');
+
+  // 修正済みの正しいフォントパス (public/fonts 配下に配置したもの)
   const fontUrl = `${baseUrl}/fonts/NotoSansJP-Black.otf`;
   
   try {
-    const response = await fetch(fontUrl);
-    if (!response.ok) throw new Error(`Font fetch failed: ${response.status}`);
-    cachedFontData = await response.arrayBuffer();
+    const res = await fetch(fontUrl);
+    if (!res.ok) {
+      throw new Error(`Font fetch failed: ${fontUrl} (${res.status})`);
+    }
+    cachedFontData = await res.arrayBuffer();
     return cachedFontData;
   } catch (error) {
-    console.error('[OGHelper] Failed to fetch font:', error);
+    console.error('[og-helper] Error fetching font:', error);
     throw error;
   }
 }

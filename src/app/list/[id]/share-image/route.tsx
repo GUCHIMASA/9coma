@@ -19,8 +19,8 @@ export async function GET(
     const data = await getListById(id);
     if (!data) return new Response('Not found', { status: 404 });
 
-    // フォントデータの取得
-    const fontData = await getFontData();
+    // フォントデータの取得 (リクエストURLからベースURLを自動特定)
+    const fontData = await getFontData(request.url);
 
     if (isDebug) {
       return NextResponse.json({

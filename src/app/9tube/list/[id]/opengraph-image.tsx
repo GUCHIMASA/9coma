@@ -41,7 +41,9 @@ export default async function Image({ params }: { params: { id: string } }) {
   const colorThemeId = data.colorThemeId || '01';
   const colorTheme = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
 
-  const fontData = await getFontData();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const currentUrl = `${baseUrl}/9tube/list/${params.id}/opengraph-image`;
+  const fontData = await getFontData(currentUrl);
 
   // 全ての画像を Data URL 化 (並列処理で高速化)
   const imageUrls = await Promise.all(

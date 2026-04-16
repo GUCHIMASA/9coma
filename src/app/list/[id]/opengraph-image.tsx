@@ -25,7 +25,9 @@ export default async function Image({ params }: { params: { id: string } }) {
   const isDark = themeId === '02' || themeId === '03' || themeId === '05' || themeId === '07' || themeId === '09' || themeId === '11';
 
   // フォントとデータの取得
-  const fontData = await getFontData();
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const currentUrl = `${baseUrl}/list/${params.id}/opengraph-image`;
+  const fontData = await getFontData(currentUrl);
 
   // すべてのスロットの画像を Data URL 化（並列実行）
   const imageUrls = await Promise.all(

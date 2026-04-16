@@ -34,7 +34,8 @@ export async function GET(
   const colorThemeId = data.colorThemeId || '01';
   const colorTheme = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
 
-  const fontData = await getFontData();
+  // フォントデータの取得
+  const fontData = await getFontData(request.url);
 
   // 全ての画像を Data URL 化 (並列)
   const imageUrls = await Promise.all(

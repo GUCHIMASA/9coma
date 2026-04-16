@@ -14,8 +14,10 @@ export const size = {
 };
 
 export default async function Image({ params }: { params: { authorName: string } }) {
-  // フォントとデータの取得
-  const fontData = await getFontData();
+  // フォントとデータの取得 (ビルド時の環境変数またはリクエストURLから特定)
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const currentUrl = `${baseUrl}/author/${params.authorName}/opengraph-image`;
+  const fontData = await getFontData(currentUrl);
 
   try {
     const authorName = decodeURIComponent(params.authorName);
