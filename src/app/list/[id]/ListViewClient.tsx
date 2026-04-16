@@ -21,6 +21,12 @@ export default function ListViewClient({ data }: ListViewClientProps) {
   const params = useParams();
   const id = params.id as string;
   const [isSharing, setIsSharing] = useState(false);
+  
+  // プレビューモーダル用の状態
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [shareFile, setShareFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const copyUrl = () => {
     if (typeof window === 'undefined') return;
@@ -36,45 +42,70 @@ export default function ListViewClient({ data }: ListViewClientProps) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
   };
 
+  // 1. 画像生成（fetch）のみを行い、プレビューを表示する
   const handleImageShare = async () => {
     if (isSharing) return;
     setIsSharing(true);
+    setError(null);
+    setShowPreview(true); // モーダルを先に開いてローディング状態を見せる
+
     try {
       const response = await fetch(`/list/${id}/share-image`);
       if (!response.ok) throw new Error('Failed to generate image');
 
       const blob = await response.blob();
       const file = new File([blob], '9coma-share.png', { type: 'image/png' });
+      const url = URL.createObjectURL(blob);
 
-      // Check if navigator.share is available and supports files
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        const themeText = data.theme ? `：${data.theme}` : '';
-        const shareUrl = window.location.href;
-        const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n${shareUrl}\n#9コマ #9coma #9koma #My9manga #私を構成する9つのマンガ`;
+      setPreviewUrl(url);
+      setShareFile(file);
+    } catch (err) {
+      console.error('Generation failed:', err);
+      setError('画像の生成に失敗しました。');
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
+  // 2. モーダル内のボタンから navigator.share を実行（Safariの制限を回避）
+  const executeShare = async () => {
+    if (!shareFile) return;
+
+    try {
+      const themeText = data.theme ? `：${data.theme}` : '';
+      const shareUrl = window.location.href;
+      const shareText = `${data.authorName}を構成する9つのマンガ${themeText}\n${shareUrl}\n#9コマ #9coma #9koma #My9manga #私を構成する9つのマンガ`;
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
         await navigator.share({
-          files: [file],
+          files: [shareFile],
           title: '9コマ - 私を構成する9つのマンガ',
           text: shareText,
           url: shareUrl,
         });
       } else {
-        // Fallback for PC or unsupported browsers: Download or Open
-        const url = URL.createObjectURL(blob);
+        // フォールバック: ダウンロード
         const a = document.createElement('a');
-        a.href = url;
+        a.href = previewUrl!;
         a.download = `9coma-${id}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
       }
-    } catch (error) {
-      console.error('Share failed:', error);
-      alert('画像の共有に失敗しました。');
-    } finally {
-      setIsSharing(false);
+    } catch (err) {
+      console.error('Share failed:', err);
+      // ユーザーキャンセル時は特に何もしない
     }
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setShareFile(null);
+    setError(null);
   };
 
   const bgColorId = data.colorThemeId || '01';
@@ -449,6 +480,163 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
       {/* 詳細ページ最下部広告 */}
       <PromotionUnit slotId="list-bottom" maxHeight="280px" />
+
+      {/* プレビューモーダル */}
+      {showPreview && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            {/* 閉じるボタン */}
+            <button
+              onClick={closePreview}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '18px',
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                color: 'white',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ padding: '24px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'white' }}>シェア画像のプレビュー</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.6)' }}>この内容でSNSへ共有します</p>
+              </div>
+
+              {/* コンテンツエリア */}
+              <div style={{ 
+                width: '100%', 
+                minHeight: '300px', 
+                backgroundColor: 'rgba(0, 0, 0, 0.2)', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                {isSharing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                    <div className="spinner" style={{
+                      width: '40px',
+                      height: '40px',
+                      border: '4px solid rgba(255, 255, 255, 0.1)',
+                      borderTop: '4px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <p style={{ color: 'white', fontSize: '0.9rem', fontWeight: 600 }}>9comaが画像を作成しています...</p>
+                  </div>
+                ) : error ? (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <p style={{ color: '#ff4b4b', fontWeight: 600 }}>{error}</p>
+                    <button onClick={handleImageShare} style={{ 
+                      marginTop: '12px', 
+                      padding: '8px 16px', 
+                      borderRadius: '8px', 
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white',
+                      border: 'none'
+                    }}>再試行</button>
+                  </div>
+                ) : previewUrl ? (
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <img 
+                      src={previewUrl} 
+                      alt="Share Preview" 
+                      style={{ width: '100%', height: 'auto', borderRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}
+                    />
+                    <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', margin: 0 }}>
+                      ※iOSで共有が反応しない場合は、画像を長押しして保存してください
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* アクションボタン */}
+              {!isSharing && previewUrl && (
+                <button
+                  onClick={executeShare}
+                  style={{
+                    width: '100%',
+                    marginTop: '24px',
+                    padding: '1.2rem',
+                    borderRadius: '16px',
+                    backgroundColor: '#0066FF',
+                    color: 'white',
+                    fontWeight: 900,
+                    fontSize: '1.1rem',
+                    border: 'none',
+                    boxShadow: '0 10px 20px rgba(0, 102, 255, 0.3)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px'
+                  }}
+                >
+                  🚀 SNSで共有する
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <style jsx>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleUp {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
