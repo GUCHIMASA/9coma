@@ -45,3 +45,9 @@ next-env.d.ts
 *.psd
 *.ai
 build.log
+
+# Temporary / Scratch scripts
+/scratch/
+/scratch.js
+/test_firebase_write.ts
+/test_save.ts
