@@ -109,7 +109,7 @@ export const getListById = cache(async (id: string) => {
   // モック
   return {
     id,
-    authorName: '名無し',
+    authorName: '私',
     theme: undefined,
     colorThemeId: '01',
     slots: Array(9).fill(null),

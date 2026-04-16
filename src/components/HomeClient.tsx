@@ -504,7 +504,7 @@ export default function HomeClient() {
       // リストデータの保存 (undefinedは安全に排除)
       const listData = JSON.parse(JSON.stringify({
         slots,
-        authorName: authorName || '名無し',
+        authorName: authorName || '私',
         authors,
         author_slugs: authorSlugs,
         theme: theme || '',

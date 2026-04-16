@@ -404,7 +404,7 @@
 - [x] デプロイ後、Cloudflare 環境での両プラットフォームの読み出し（ページ表示）正常化を確認
 
 ## Phase 64: 画像生成機能（OGP/シェア画像）の不具合修正
-- [ ] `src/lib/og-helper.ts` の `getFontData` に動的ベースURL特定ロジックを追加
-- [ ] マンガ版・9TUBE版の全画像生成ルート（計4箇所）を動的ベースURL対応に書き換え
-- [ ] Cloudflare プレビュー環境での画像生成正常化を実機確認
+- [x] `src/lib/og-helper.ts` の `getFontData` に動的ベースURL特定ロジックを追加
+- [x] マンガ版・9TUBE版の全画像生成ルート（計4箇所）を動的ベースURL対応に書き換え
+- [x] Cloudflare プレビュー環境での画像生成正常化を実機確認
 
