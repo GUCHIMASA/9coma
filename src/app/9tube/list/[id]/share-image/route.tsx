@@ -9,7 +9,7 @@ export const runtime = 'edge';
 async function getListData(id: string) {
   try {
     const { db } = await import('@/lib/firebase');
-    const { doc, getDoc } = await import('firebase/firestore');
+    const { doc, getDoc } = await import('firebase/firestore/lite');
     const docRef = doc(db, '9tube_lists', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {

@@ -11,7 +11,7 @@ export const getListById = cache(async (id: string) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { doc, getDoc, setDoc, collection, query, where, documentId, getDocs } = await import('firebase/firestore');
+      const { doc, getDoc, setDoc, collection, query, where, documentId, getDocs } = await import('firebase/firestore/lite');
       const snap = await getDoc(doc(db, 'lists', id));
       if (snap.exists()) {
         const rawData = snap.data();
@@ -124,7 +124,7 @@ export const getRecentLists = cache(async (limitCount: number = 6) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, orderBy, limit, getDocs, where, documentId } = await import('firebase/firestore');
+      const { collection, query, orderBy, limit, getDocs, where, documentId } = await import('firebase/firestore/lite');
       
       const q = query(
         collection(db, 'lists'),
@@ -210,7 +210,7 @@ export const getMangaByAuthor = cache(async (authorName: string) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore/lite');
       
       const q = query(
         collection(db, 'manga_cache'),
@@ -235,7 +235,7 @@ export const getSelectionCountByAuthor = cache(async (authorName: string) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore/lite');
       
       // 著者スラッグ（スペースなし）を生成
       const authorSlug = authorName.replace(/[\s\u3000]/g, '');
@@ -280,7 +280,7 @@ export const getListsByAuthor = cache(async (authorName: string, limitCount: num
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
+      const { collection, query, where, limit, getDocs } = await import('firebase/firestore/lite');
       
       // 著者スラッグ（スペースなし）を生成
       const authorSlug = authorName.replace(/[\s\u3000]/g, '');
@@ -313,7 +313,7 @@ export const getRecentYtLists = cache(async (limitCount: number = 9) => {
   if (projectId && projectId !== 'your_project_id') {
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
+      const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore/lite');
       
       const q = query(
         collection(db, '9tube_lists'),

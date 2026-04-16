@@ -484,7 +484,7 @@ export default function HomeClient() {
     setIsSharing(true);
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, doc, setDoc, getDoc } = await import('firebase/firestore');
+      const { collection, doc, setDoc, getDoc } = await import('firebase/firestore/lite');
 
       const listRef = doc(collection(db, 'lists'));
       const id = listRef.id;

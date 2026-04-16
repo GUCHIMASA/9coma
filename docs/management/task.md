@@ -390,4 +390,15 @@
 - [x] Cloudflare サーバーによる YouTube スクレイピングブロックの特定 (4/9完了)
 - [x] **[ regression ]** 動画引用機能の喪失（oEmbed 廃止による不具合）の発生
 - [x] **[ fix ]** 動画を oEmbed、チャンネルを API Data で取得する「ハイブリッド型」の実装 (4/9完了)
-- [x] **[ deploy ]** Cloudflare 上での動作確認および実機テスト (進行中)
+- [x] **[ deploy ]** Cloudflare 上での動作確認および実機テスト (完了)
+
+## Phase 62: Firestore 保存アーキテクチャの抜本的改革（Cloudflare 1101解決）
+- [x] 中継API（`/api/list`, `/api/9tube/list`）のPOSTメソッド完全廃止
+- [x] マンガ版 (`HomeClient.tsx`) の直接保存（Client-side `setDoc`）実装と抽出ロジック移植
+- [x] 9TUBE版 (`9tube/page.tsx`) の直接保存（Client-side `setDoc`）実装とクレンジング移植
+- [x] ブラウザ直接通信による Cloudflare エラー（1101）の消滅確認
+
+## Phase 63: Firestore Lite SDK の導入による Edge 読み取りクラッシュの解決
+- [x] サーバー/Edge起因の通信遮断問題を回避するため、標準の `firebase/firestore` を廃止する
+- [x] 全てのファイルで `firebase/firestore/lite` に一括置換する（機能的UI/UXの変更なし）
+- [ ] デプロイ後、Cloudflare 環境での両プラットフォームの読み出し（ページ表示）正常化を確認

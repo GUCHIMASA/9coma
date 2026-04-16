@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     try {
         const { db } = await import('@/lib/firebase');
-        const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
+        const { collection, query, where, limit, getDocs } = await import('firebase/firestore/lite');
 
         let q;
         if (theme) {

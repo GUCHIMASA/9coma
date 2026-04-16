@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
     // Edge Runtime での巨大な Firebase SDK 読み込みによるクラッシュを回避するため「動的インポート」を採用
     const { db } = await import('@/lib/firebase');
-    const { doc, getDoc, collection, query, orderBy, limit, getDocs } = await import('firebase/firestore');
+    const { doc, getDoc, collection, query, orderBy, limit, getDocs } = await import('firebase/firestore/lite');
 
     if (id) {
       // 特定のIDのデータを取得

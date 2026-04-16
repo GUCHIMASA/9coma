@@ -178,7 +178,7 @@ export default function YouTubePage() {
     setIsSharing(true);
     try {
       const { db } = await import('@/lib/firebase');
-      const { collection, doc, setDoc } = await import('firebase/firestore');
+      const { collection, doc, setDoc } = await import('firebase/firestore/lite');
 
       const selectedTheme = THEMES.find(t => t.id === themeId);
       const listRef = doc(collection(db, '9tube_lists'));
