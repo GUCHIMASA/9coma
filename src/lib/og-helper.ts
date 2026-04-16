@@ -71,8 +71,17 @@ export async function getBase64Image(url: string, timeoutMs: number = 3000) {
     const arrayBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
     
-    // 高速 Base64 エンジンへの刷新: Uint8Array.reduce による O(N^2) を廃止し $O(N)$ へ改善
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    // Edge Runtime 環境に完全対応する、高速ネイティブ Base64 エンジン ($O(N)$ チャンク処理)
+    // ※ Node の Buffer 依存で発生する ReferenceError を回避しつつ、Maximum call stack size を防ぐ
+    let binary = '';
+    const bytes = new Uint8Array(arrayBuffer);
+    const len = bytes.byteLength;
+    const chunkSize = 0x8000; // 32KB ごとに処理
+    for (let i = 0; i < len; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64 = btoa(binary);
     
     return { 
       success: true, 
