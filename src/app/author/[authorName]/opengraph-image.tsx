@@ -34,15 +34,20 @@ export default async function Image({ params }: { params: { authorName: string }
       displayLists.push({ id: 'dummy', slots: Array(9).fill(null), authorName: '', createdAt: Date.now() } as ComicList);
     }
 
-    // すべてのリストのすべてのスロットの画像を Data URL 化（並列実行）
+    // すべてのリストのすべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
     const listsWithDataUrls = await Promise.all(
       displayLists.map(async (list) => {
         const slotsWithUrls = await Promise.all(
           (list.slots || Array(9).fill(null)).map(async (slot) => {
             const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
             if (imageUrl) {
-              const result = await getBase64Image(imageUrl);
-              return { ...slot, imageUrl: result.success ? result.dataUrl : null };
+              try {
+                const result = await getBase64Image(imageUrl);
+                return { ...slot, imageUrl: result.success ? result.dataUrl : null };
+              } catch (e) {
+                console.error(`[AuthorOG] Failed to fetch slot: ${imageUrl}`, e);
+                return { ...slot, imageUrl: null };
+              }
             }
             return slot;
           })
@@ -282,6 +287,9 @@ export default async function Image({ params }: { params: { authorName: string }
             weight: 900,
           },
         ],
+        headers: {
+          'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
+        },
       }
     );
   } catch (error) {

@@ -71,10 +71,8 @@ export async function getBase64Image(url: string, timeoutMs: number = 3000) {
     const arrayBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
     
-    // Node.js の Buffer ではなく、Uint8Array + btoa (または互換処理) で Base64化
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    // 高速 Base64 エンジンへの刷新: Uint8Array.reduce による O(N^2) を廃止し $O(N)$ へ改善
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
     
     return { 
       success: true, 

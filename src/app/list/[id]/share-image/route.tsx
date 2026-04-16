@@ -37,14 +37,18 @@ export async function GET(
     const textColor = theme.text;
     const isDark = textColor === '#FFFFFF';
 
-    // すべてのスロットの画像を Data URL 化（並列実行）
+    // すべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
     const imageUrls = await Promise.all(
       data.slots.map(async (manga) => {
-        if (manga?.imageUrl) {
+        if (!manga?.imageUrl) return null;
+        try {
+          // 個別の try-catch で保護し、1枚のエラーが全体を落とさないようにする
           const result = await getBase64Image(manga.imageUrl);
           return result.success ? result.dataUrl! : null;
+        } catch (e) {
+          console.error(`[ShareImage] Failed to fetch slot: ${manga.imageUrl}`, e);
+          return null;
         }
-        return null;
       })
     );
 

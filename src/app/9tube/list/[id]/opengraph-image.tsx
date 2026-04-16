@@ -45,16 +45,19 @@ export default async function Image({ params }: { params: { id: string } }) {
   const currentUrl = `${baseUrl}/9tube/list/${params.id}/opengraph-image`;
   const fontData = await getFontData(currentUrl);
 
-  // 全ての画像を Data URL 化 (並列処理で高速化)
+  // 全ての画像を Data URL 化 (並列処理で高速化・個別にエラー遮断)
   const imageUrls = await Promise.all(
     slots.map(async (slot) => {
       if (!slot?.imageUrl) return null;
       try {
         // 外部 Fetch タイムアウトを 3 秒に設定
         const result = await getBase64Image(slot.imageUrl, 3000);
+        if (!result.success) {
+          console.warn(`[9TUBE-OGP] Image converted but success is false: ${slot.imageUrl}`);
+        }
         return result.success ? result.dataUrl : null;
       } catch (error) {
-        console.error(`[OGP-Image] Failed to fetch ${slot.imageUrl}:`, error);
+        console.error(`[9TUBE-OGP] Failed to fetch/convert image: ${slot.imageUrl}`, error);
         return null;
       }
     })
@@ -210,6 +213,9 @@ export default async function Image({ params }: { params: { id: string } }) {
           weight: 900,
         },
       ],
+      headers: {
+        'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
+      },
     }
   );
 }

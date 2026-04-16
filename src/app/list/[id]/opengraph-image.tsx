@@ -29,14 +29,17 @@ export default async function Image({ params }: { params: { id: string } }) {
   const currentUrl = `${baseUrl}/list/${params.id}/opengraph-image`;
   const fontData = await getFontData(currentUrl);
 
-  // すべてのスロットの画像を Data URL 化（並列実行）
+  // すべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
   const imageUrls = await Promise.all(
     data.slots.map(async (manga) => {
-      if (manga?.imageUrl) {
+      if (!manga?.imageUrl) return null;
+      try {
         const result = await getBase64Image(manga.imageUrl);
         return result.success ? result.dataUrl : null;
+      } catch (e) {
+        console.error(`[OGImage] Failed to fetch slot: ${manga.imageUrl}`, e);
+        return null;
       }
-      return null;
     })
   );
 
