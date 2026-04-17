@@ -9,13 +9,13 @@ export const runtime = 'edge';
 // --- [画像設定: 基本メタデータ] ---
 export const alt = '9TUBE | 私を構成する9つのYouTube';
 export const size = {
-  width: 800,  // 1200 -> 800
-  height: 420, // 630 -> 420
+  width: 1200,
+  height: 630, // OGP標準の1.91:1比率
 };
 const { width, height } = size;
 export const contentType = 'image/png';
 
-// Firestoreからデータを取得する関数 (Edge Runtime 対応: 動的インポート)
+// Firestoreからデータを取得する関数
 async function getListData(id: string) {
   try {
     const { db } = await import('@/lib/firebase');
@@ -45,36 +45,41 @@ export default async function Image({ params }: { params: { id: string } }) {
   const currentUrl = `${baseUrl}/9tube/list/${params.id}/opengraph-image`;
   const fontData = await getFontData(currentUrl);
 
-  // 全ての画像を Data URL 化 (並列処理で高速化・個別にエラー遮断)
+  // 全ての画像を Data URL 化
   const imageUrls = await Promise.all(
     slots.map(async (slot) => {
       if (!slot?.imageUrl) return null;
       try {
-        // 外部 Fetch タイムアウトを 3 秒に設定
         const result = await getBase64Image(slot.imageUrl, 3000);
-        if (!result.success) {
-          console.warn(`[9TUBE-OGP] Image converted but success is false: ${slot.imageUrl}`);
-        }
         return result.success ? result.dataUrl : null;
       } catch (error) {
-        console.error(`[9TUBE-OGP] Failed to fetch/convert image: ${slot.imageUrl}`, error);
+        console.error(`[9TUBE-OGP] Failed to fetch image: ${slot.imageUrl}`, error);
         return null;
       }
     })
   );
 
-  // --- [設定エリア: 余白とサイズ] ---
-  const padding = 16;  // 24 -> 16
-  const gap = 8;       // 12 -> 8
+  // --- [設定エリア: 余白とサイズ] --- (1200x630復元)
+  const padding = 24;
+  const gap = 12;
   const gridWidth = width - padding * 2;
   const gridHeight = height - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
   const itemHeight = Math.floor((gridHeight - gap * 2) / 3);
 
-  // テキスト切り捨て
   const truncate = (str: string, len: number) => {
     return str.length > len ? str.substring(0, len) + '...' : str;
   };
+
+  // フォントガード
+  const fonts = fontData ? [
+    {
+      name: 'Noto Sans JP',
+      data: fontData,
+      style: 'normal' as const,
+      weight: 900 as const,
+    },
+  ] : [];
 
   return new ImageResponse(
     (
@@ -113,7 +118,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -121,7 +126,6 @@ export default async function Image({ params }: { params: { id: string } }) {
                       position: 'relative',
                     }}
                   >
-                    {/* [Layer 1: 画像本体] */}
                     {imageUrl ? (
                       <img
                         src={imageUrl}
@@ -134,17 +138,16 @@ export default async function Image({ params }: { params: { id: string } }) {
                         alt=""
                       />
                     ) : (
-                      <div style={{ display: 'flex', fontSize: '40px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '60px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
-                    {/* [Layer 4: タイトル] */}
                     {slot?.title && (
                       <div style={{
                         position: 'absolute',
                         bottom: 0,
                         left: 0,
                         width: '100%',
-                        padding: '7px 5px',
+                        padding: '10px 8px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -154,7 +157,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '10px', // 15 -> 10
+                          fontSize: '15px',
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -171,7 +174,7 @@ export default async function Image({ params }: { params: { id: string } }) {
           ))}
         </div>
 
-        {/* --- [オーバーレイ情報]: ヘッダーとフッターのエッセンスを凝縮 --- */}
+        {/* --- [オーバーレイ情報] --- */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -185,35 +188,26 @@ export default async function Image({ params }: { params: { id: string } }) {
           padding: '0px',
           pointerEvents: 'none',
         }}>
-          {/* OGP用のコンパクトなブランディングラベル */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             backgroundColor: colorTheme.bg,
             color: colorTheme.text,
-            padding: '3px 16px',
+            padding: '4px 24px',
             borderRadius: '99px',
-            fontSize: '18px', // 28 -> 18
+            fontSize: '28px',
             lineHeight: 1,
-            marginBottom: '8px'
+            marginBottom: '12px'
           }}>
             {truncate(authorName, 15)}を構成する9つのYouTube │ {theme || '9TUBE'}
           </div>
-
         </div>
       </div>
     ),
     {
       width,
       height,
-      fonts: [
-        {
-          name: 'Noto Sans JP',
-          data: fontData,
-          style: 'normal',
-          weight: 900,
-        },
-      ],
+      fonts,
       headers: {
         'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
       },

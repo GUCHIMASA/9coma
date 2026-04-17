@@ -34,40 +34,45 @@ export async function GET(
   const colorThemeId = data.colorThemeId || '01';
   const colorTheme = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
 
-  // フォントデータの取得
+  // フォントデータの取得 (ガード付き)
   const fontData = await getFontData(request.url);
 
-  // 全ての画像を Data URL 化 (並列・個別にエラー遮断)
+  // 全ての画像を Data URL 化
   const imageUrls = await Promise.all(
     slots.map(async (slot) => {
       if (!slot?.imageUrl) return null;
       try {
-        // 外部 Fetch タイムアウトを 3 秒に設定
         const result = await getBase64Image(slot.imageUrl, 3000);
-        if (!result.success) {
-          console.warn(`[9TUBE-Share] Image converted but success is false: ${slot.imageUrl}`);
-        }
         return result.success ? result.dataUrl : null;
       } catch (error) {
-        console.error(`[9TUBE-Share] Failed to fetch/convert image: ${slot.imageUrl}`, error);
+        console.error(`[9TUBE-Share] Failed to fetch image: ${slot.imageUrl}`, error);
         return null;
       }
     })
   );
 
-  // --- [設定エリア: サイズ /余白] ---
-  const width = 800;   // 1200 -> 800
-  const height = 1000;  // 1500 -> 1000
-  const padding = 20;   // 30 -> 20
-  const gap = 14;       // 20 -> 14
+  // --- [設定エリア: サイズ / 余白] --- (1200x1500 高品質復元)
+  const width = 1200;
+  const height = 1500;
+  const padding = 30;
+  const gap = 20;
   const gridWidth = width - padding * 2;
-  const itemWidth = Math.floor((gridWidth - gap * 2) / 3); // 1コマの横幅
-  const itemHeight = itemWidth; // 正方形を維持
+  const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
+  const itemHeight = itemWidth;
 
-  // テキスト切り捨て関数（表示崩れ防止用）
   const truncate = (str: string, len: number) => {
     return str.length > len ? str.substring(0, len) + '...' : str;
   };
+
+  // フォントガード
+  const fonts = fontData ? [
+    {
+      name: 'Noto Sans JP',
+      data: fontData,
+      style: 'normal' as const,
+      weight: 900 as const,
+    },
+  ] : [];
 
   return new ImageResponse(
     (
@@ -75,7 +80,7 @@ export async function GET(
         style={{
           width: `${width}px`,
           height: `${height}px`,
-          backgroundColor: colorTheme.bg, // Firestoreで選択されたテーマの背景色
+          backgroundColor: colorTheme.bg,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -85,48 +90,46 @@ export async function GET(
           position: 'relative',
         }}
       >
-        {/* --- [A. ヘッダー領域]: サービスロゴとテーマ名 --- */}
+        {/* A. ヘッダー領域 */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '20px',
+          marginBottom: '30px',
           width: '100%',
         }}>
-          {/* サービスタイトル "9TUBE" */}
           <div style={{
             display: 'flex',
-            fontSize: '32px', // 48 -> 32
+            fontSize: '48px',
             fontWeight: 900,
             color: colorTheme.text,
             letterSpacing: '-0.05em',
             lineHeight: 1,
-            marginBottom: '4px'
+            marginBottom: '6px'
           }}>{truncate(authorName, 20)} を構成する9つのYouTube</div>
 
-          {/* テーマ名バッジ: ユーザーが入力した「テーマ」を強調 */}
           <div style={{
             display: 'flex',
             backgroundColor: 'rgba(0,0,0,0.85)',
             color: 'white',
-            padding: '7px 32px',
-            borderRadius: '11px',
-            fontSize: '24px', // 40 -> 24
+            padding: '10px 48px',
+            borderRadius: '16px',
+            fontSize: '40px',
             fontWeight: 900,
-            boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
-            border: `1.5px solid ${colorTheme.accent}44`
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            border: `2px solid ${colorTheme.accent}44`
           }}>
             {theme || '私を構成する9つのYouTube'}
           </div>
         </div>
 
-        {/* --- [B. グリッド領域]: 3x3のメインコンテンツ --- */}
+        {/* B. グリッド領域 */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           gap: `${gap}px`,
           width: `${gridWidth}px`,
-          marginBottom: '20px'
+          marginBottom: '30px'
         }}>
           {[0, 1, 2].map(row => (
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
@@ -141,7 +144,7 @@ export async function GET(
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '8px',
+                      borderRadius: '12px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -149,7 +152,6 @@ export async function GET(
                       position: 'relative',
                     }}
                   >
-                    {/* [Layer 1]: 背面の引き伸ばし背景画像 / 178%に拡大して物理的にはみ出させることで隙間を完全に封殺 */}
                     {imageUrl && (
                       <img
                         src={imageUrl}
@@ -165,7 +167,6 @@ export async function GET(
                       />
                     )}
 
-                    {/* [Layer 2]: 背景の明度を下げる遮光レイヤー */}
                     {imageUrl && (
                       <div style={{
                         position: 'absolute',
@@ -173,11 +174,10 @@ export async function GET(
                         left: 0,
                         width: `${itemWidth}px`,
                         height: `${itemHeight}px`,
-                        backgroundColor: 'rgba(0,0,0,0.6)', // 背景の主張を抑える
+                        backgroundColor: 'rgba(0,0,0,0.6)',
                       }} />
                     )}
 
-                    {/* [Layer 3]: 前面の本体画像 / アスペクト比を維持(contain)して全体を表示 */}
                     {imageUrl ? (
                       <img
                         src={imageUrl}
@@ -191,18 +191,16 @@ export async function GET(
                         alt=""
                       />
                     ) : (
-                      // 画像がない場合の番号表示
-                      <div style={{ display: 'flex', fontSize: '60px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '100px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
-                    {/* [Layer 4]: タイトルオーバーレイ / 下からグラデーションを敷いて文字の視認性を確保 */}
                     {slot?.title && (
                       <div style={{
                         position: 'absolute',
                         bottom: 0,
                         left: 0,
                         width: `${itemWidth}px`,
-                        padding: '10px 7px',
+                        padding: '14px 10px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -212,7 +210,7 @@ export async function GET(
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '12px', // 18 -> 12
+                          fontSize: '18px',
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -229,7 +227,7 @@ export async function GET(
           ))}
         </div>
 
-        {/* --- [C. フッター領域]: 作者名とURLのクレジット --- */}
+        {/* C. フッター領域 */}
         <div style={{
           flex: 1,
           width: '100%',
@@ -237,14 +235,11 @@ export async function GET(
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '14px'
+          gap: '20px'
         }}>
-
-
-          {/* サイトURL: 控えめな半透明度で表示 */}
           <div style={{
             display: 'flex',
-            fontSize: '21px', // 32 -> 21
+            fontSize: '32px',
             color: colorTheme.text,
             opacity: 0.5,
             marginTop: 'auto',
@@ -259,14 +254,7 @@ export async function GET(
     {
       width,
       height,
-      fonts: [
-        {
-          name: 'Noto Sans JP',
-          data: fontData,
-          style: 'normal',
-          weight: 900,
-        },
-      ],
+      fonts,
       headers: {
         'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
       },

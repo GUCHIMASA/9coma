@@ -8,8 +8,8 @@ export const runtime = 'edge';
 
 export const alt = '9coma | 私を構成する9つのマンガ';
 export const size = {
-  width: 800,  // 1200 -> 800
-  height: 420, // 630 -> 420
+  width: 1200,
+  height: 630,
 };
 export const contentType = 'image/png';
 
@@ -24,12 +24,12 @@ export default async function Image({ params }: { params: { id: string } }) {
   const textColor = theme.text;
   const isDark = themeId === '02' || themeId === '03' || themeId === '05' || themeId === '07' || themeId === '09' || themeId === '11';
 
-  // フォントとデータの取得
+  // フォントとデータの取得 (ガード付き)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const currentUrl = `${baseUrl}/list/${params.id}/opengraph-image`;
   const fontData = await getFontData(currentUrl);
 
-  // すべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
+  // すべてのスロットの画像を Data URL 化
   const imageUrls = await Promise.all(
     data.slots.map(async (manga) => {
       if (!manga?.imageUrl) return null;
@@ -48,11 +48,21 @@ export default async function Image({ params }: { params: { id: string } }) {
   const centerImageUrl = imageUrls[4];
   const centerSlot = data.slots[4];
 
-  // レイアウト定数 (1200 -> 800 向けに 0.66倍程度に調整)
-  const padding = 20; // 32 -> 20
-  const leftColWidth = 220; // 330 -> 220
-  const horizontalGap = 20; // 32 -> 20
-  const rightGridGap = 12; // 20 -> 12
+  // レイアウト定数 (1200x630復元)
+  const padding = 32;
+  const leftColWidth = 330;
+  const horizontalGap = 32;
+  const rightGridGap = 20;
+
+  // フォントガード
+  const fonts = fontData ? [
+    {
+      name: 'Noto Sans JP',
+      data: fontData,
+      style: 'normal' as const,
+      weight: 900 as const,
+    },
+  ] : [];
 
   return new ImageResponse(
     (
@@ -68,21 +78,23 @@ export default async function Image({ params }: { params: { id: string } }) {
           justifyContent: 'center',
           padding: `${padding}px`,
           gap: `${horizontalGap}px`,
+          fontFamily: 'Noto Sans JP',
+          fontWeight: 900,
         }}
       >
         {/* Left Column (Badge + Slot 5) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: `${leftColWidth}px` }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: `${leftColWidth}px` }}>
           {/* Badge (Header Area) */}
           <div
             style={{
               width: '100%',
-              height: '34px', // 50 -> 34
+              height: '50px',
               backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
               borderRadius: '99px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '13px', // 20 -> 13
+              fontSize: '20px',
               fontWeight: 900,
               color: textColor,
             }}
@@ -94,13 +106,13 @@ export default async function Image({ params }: { params: { id: string } }) {
           <div
             style={{
               width: '100%',
-              height: '310px', // 470 -> 310
+              height: '470px',
               backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               display: 'flex',
-              borderRadius: '6px',
+              borderRadius: '8px',
               overflow: 'hidden',
               position: 'relative',
-              boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
             }}
           >
             {centerImageUrl ? (
@@ -119,7 +131,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                   justifyContent: 'center',
                   color: textColor,
                   opacity: 0.2,
-                  fontSize: '80px', // 120 -> 80
+                  fontSize: '120px',
                   fontWeight: 900,
                 }}
               >
@@ -132,10 +144,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                 bottom: 0,
                 left: 0,
                 width: '100%',
-                padding: '28px 10px 8px', // 40 16 12 -> 28 10 8
+                padding: '40px 16px 12px',
                 background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
                 color: 'white',
-                fontSize: '10px', // 16 -> 10
+                fontSize: '16px',
                 fontWeight: 800,
                 textAlign: 'center',
                 display: 'flex',
@@ -160,14 +172,14 @@ export default async function Image({ params }: { params: { id: string } }) {
                 <div
                   key={idx}
                   style={{
-                    width: '116px', // 175 -> 116
-                    height: '172px', // 260 -> 172
+                    width: '175px',
+                    height: '260px',
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    borderRadius: '3px',
+                    borderRadius: '4px',
                     overflow: 'hidden',
                     position: 'relative',
-                    boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                   }}
                 >
                   {imgUrl ? (
@@ -186,7 +198,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         justifyContent: 'center',
                         color: textColor,
                         opacity: 0.2,
-                        fontSize: '32px', // 48 -> 32
+                        fontSize: '48px',
                         fontWeight: 900,
                       }}
                     >
@@ -199,10 +211,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                       bottom: 0,
                       left: 0,
                       width: '100%',
-                      padding: '20px 6px 6px', // 30 8 8 -> 20 6 6
+                      padding: '30px 8px 8px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
                       color: 'white',
-                      fontSize: '8px', // 11 -> 8
+                      fontSize: '11px',
                       fontWeight: 700,
                       textAlign: 'center',
                       display: 'flex',
@@ -228,14 +240,14 @@ export default async function Image({ params }: { params: { id: string } }) {
                 <div
                   key={actualIdx}
                   style={{
-                    width: '116px', // 175 -> 116
-                    height: '172px', // 260 -> 172
+                    width: '175px',
+                    height: '260px',
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    borderRadius: '3px',
+                    borderRadius: '4px',
                     overflow: 'hidden',
                     position: 'relative',
-                    boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                   }}
                 >
                   {imgUrl ? (
@@ -254,7 +266,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         justifyContent: 'center',
                         color: textColor,
                         opacity: 0.2,
-                        fontSize: '32px', // 48 -> 32
+                        fontSize: '48px',
                         fontWeight: 900,
                       }}
                     >
@@ -267,10 +279,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                       bottom: 0,
                       left: 0,
                       width: '100%',
-                      padding: '20px 6px 6px', // 30 8 8 -> 20 6 6
+                      padding: '30px 8px 8px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
                       color: 'white',
-                      fontSize: '8px', // 11 -> 8
+                      fontSize: '11px',
                       fontWeight: 700,
                       textAlign: 'center',
                       display: 'flex',
@@ -290,16 +302,9 @@ export default async function Image({ params }: { params: { id: string } }) {
       </div>
     ),
     {
-      width: 800,  // size.width
-      height: 420, // size.height
-      fonts: [
-        {
-          name: 'Noto Sans JP',
-          data: fontData,
-          style: 'normal',
-          weight: 900,
-        },
-      ],
+      width: size.width,
+      height: size.height,
+      fonts,
       headers: {
         'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
       },

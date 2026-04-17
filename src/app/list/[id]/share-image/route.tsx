@@ -12,24 +12,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const id = params.id;
-  const { searchParams } = new URL(request.url);
-  const isDebug = searchParams.get('debug') === '1';
 
   try {
     const data = await getListById(id);
     if (!data) return new Response('Not found', { status: 404 });
 
-    // フォントデータの取得 (リクエストURLからベースURLを自動特定)
+    // フォントデータの取得 (UA付与・ガード付き)
     const fontData = await getFontData(request.url);
-
-    if (isDebug) {
-      return NextResponse.json({
-        id,
-        colorThemeId: data.colorThemeId,
-        theme: data.theme,
-        authorName: data.authorName
-      });
-    }
 
     // 配色の取得
     const theme = COLOR_THEMES[data.colorThemeId || '01'] || COLOR_THEMES['01'];
@@ -37,12 +26,11 @@ export async function GET(
     const textColor = theme.text;
     const isDark = textColor === '#FFFFFF';
 
-    // すべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
+    // すべてのスロットの画像を Data URL 化
     const imageUrls = await Promise.all(
       data.slots.map(async (manga) => {
         if (!manga?.imageUrl) return null;
         try {
-          // 個別の try-catch で保護し、1枚のエラーが全体を落とさないようにする
           const result = await getBase64Image(manga.imageUrl);
           return result.success ? result.dataUrl! : null;
         } catch (e) {
@@ -52,13 +40,13 @@ export async function GET(
       })
     );
 
-    // --- [設定エリア: サイズ /余白] ---
-    const width = 800;   // 1200 -> 800 (1MB制限回避)
-    const height = 1000;  // 1500 -> 1000
-    const padding = 14;   // 20 -> 14
-    const gridGap = 8;    // 12 -> 8
-    const headerHeight = 40; // 60 -> 40
-    const headerToGridGap = 7; // 10 -> 7
+    // --- [設定エリア: サイズ / 余白] --- (1200x1500 高品質復元)
+    const width = 1200;
+    const height = 1500;
+    const padding = 20;
+    const gridGap = 12;
+    const headerHeight = 60;
+    const headerToGridGap = 10;
 
     // グリッドエリアの計算
     const innerWidth = width - padding * 2;
@@ -67,8 +55,18 @@ export async function GET(
     const cellWidth = (innerWidth - gridGap * 2) / 3;
     const cellHeight = (innerHeight - gridGap * 2) / 3;
 
-    const boxBorderRadius = '3px';
-    const shadowColor = 'rgba(0,0,0,0.2)';
+    const boxBorderRadius = '4px';
+    const shadowColor = 'rgba(0,0,0,0.25)';
+
+    // フォントガード
+    const fonts = fontData ? [
+      {
+        name: 'Noto Sans JP',
+        data: fontData,
+        style: 'normal' as const,
+        weight: 900 as const,
+      },
+    ] : [];
 
     return new ImageResponse(
       (
@@ -82,6 +80,7 @@ export async function GET(
           padding: `${padding}px`,
           fontFamily: 'Noto Sans JP',
           fontWeight: 900,
+          position: 'relative',
         }}>
           {/* Header Area */}
           <div
@@ -99,14 +98,14 @@ export async function GET(
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px', // 36 -> 24
+                fontSize: '36px',
                 fontWeight: 900,
                 color: textColor,
-                letterSpacing: '0.01em',
+                letterSpacing: '0.02em',
               }}
             >
               {data.authorName && (
-                <span style={{ fontSize: '20px', opacity: 0.8, fontWeight: 700, marginRight: '10px' }}>
+                <span style={{ fontSize: '32px', opacity: 0.8, fontWeight: 700, marginRight: '16px' }}>
                   {data.authorName}を構成する9つのマンガ
                 </span>
               )}
@@ -136,7 +135,7 @@ export async function GET(
                       borderRadius: boxBorderRadius,
                       overflow: 'hidden',
                       position: 'relative',
-                      boxShadow: `0 5px 20px ${shadowColor}`,
+                      boxShadow: `0 8px 30px ${shadowColor}`,
                     }}>
                       {imgUrl ? (
                         <img
@@ -151,9 +150,9 @@ export async function GET(
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '7px',
+                          padding: '10px',
                           textAlign: 'center',
-                          fontSize: '50px', // 80 -> 50
+                          fontSize: '80px',
                           fontWeight: 900,
                           color: textColor,
                           opacity: 0.2
@@ -167,16 +166,16 @@ export async function GET(
                           bottom: 0,
                           left: 0,
                           width: '100%',
-                          padding: '40px 10px 14px', // 60 16 20 -> 40 10 14
+                          padding: '60px 16px 20px',
                           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
                           color: 'white',
-                          fontSize: '13px', // 20 -> 13
+                          fontSize: '20px',
                           fontWeight: 800,
                           textAlign: 'center',
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'flex-end',
-                          textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                         }}>
                           <div style={{
                             whiteSpace: 'nowrap',
@@ -204,10 +203,10 @@ export async function GET(
           }}>
             <div style={{
               display: 'flex',
-              fontSize: '18px',
+              fontSize: '30px',
               fontWeight: 900,
               color: textColor,
-              opacity: 0.3,
+              opacity: 0.4,
               letterSpacing: '0.05em'
             }}>9coma.com</div>
           </div>
@@ -216,14 +215,7 @@ export async function GET(
       {
         width,
         height,
-        fonts: [
-          {
-            name: 'Noto Sans JP',
-            data: fontData,
-            style: 'normal',
-            weight: 900,
-          },
-        ],
+        fonts,
         headers: {
           'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
         },

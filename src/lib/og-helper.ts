@@ -5,13 +5,12 @@ let cachedFontData: ArrayBuffer | null = null;
 
 /**
  * フォントデータを取得し、メモリキャッシュして返却する。
- * 画像生成に使用するフォントデータを取得する。
- * Edge Runtime 上で実行されるため、絶対パスでの fetch が必要。
+ * Cloudflare の UA なし fetch 遮断を回避するため、ブラウザ UA を付与。
  * 
  * @param requestUrl 現在のリクエストURL。オリジンの特定に使用。
- * @returns フォントデータの ArrayBuffer
+ * @returns フォントデータの ArrayBuffer または null
  */
-export async function getFontData(requestUrl?: string): Promise<ArrayBuffer> {
+export async function getFontData(requestUrl?: string): Promise<ArrayBuffer | null> {
   if (cachedFontData) return cachedFontData;
 
   // ベースURLの特定
@@ -34,20 +33,34 @@ export async function getFontData(requestUrl?: string): Promise<ArrayBuffer> {
   // 末尾の記号( / )を正規化
   baseUrl = baseUrl.replace(/\/$/, '');
 
-  // 修正済みの正しいフォントパス (public/fonts 配下に配置したもの)
+  // 修正済みの正しいフォントパス
   const fontUrl = `${baseUrl}/fonts/NotoSansJP-Black.otf`;
   
   try {
-    const res = await fetch(fontUrl);
+    const res = await fetch(fontUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      }
+    });
+
     if (!res.ok) {
-      console.warn(`[og-helper] Font fetch failed: ${fontUrl} (${res.status}). Using fallback font.`);
-      return new ArrayBuffer(0); // 失敗時は空データを返して画像生成自体は継続
+      console.warn(`[og-helper] Font fetch failed: ${fontUrl} (${res.status}).`);
+      return null;
     }
-    cachedFontData = await res.arrayBuffer();
+
+    const buffer = await res.arrayBuffer();
+    
+    // 0バイトチェック (Cloudflare の不完全な遮断対策)
+    if (buffer.byteLength === 0) {
+      console.warn(`[og-helper] Font received is 0 bytes. Cloudflare may have blocked it.`);
+      return null;
+    }
+
+    cachedFontData = buffer;
     return cachedFontData;
   } catch (error) {
     console.error('[og-helper] Error fetching font:', error);
-    return new ArrayBuffer(0); // ネットワークエラー時も継続
+    return null;
   }
 }
 
