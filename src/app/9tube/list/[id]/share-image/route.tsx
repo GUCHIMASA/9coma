@@ -51,11 +51,11 @@ export async function GET(
     })
   );
 
-  // --- [設定エリア: サイズ / 余白] --- (1200x1500 高品質復元)
-  const width = 1200;
-  const height = 1500;
-  const padding = 30;
-  const gap = 20;
+  // --- [設定エリア: サイズ / 余白] --- (400x500 確実に1MBを大幅に切るための縮小)
+  const width = 400;
+  const height = 500;
+  const padding = 7;
+  const gap = 4;
   const gridWidth = width - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
   const itemHeight = itemWidth;
@@ -95,29 +95,29 @@ export async function GET(
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '30px',
+          marginBottom: '7px',
           width: '100%',
         }}>
           <div style={{
             display: 'flex',
-            fontSize: '48px',
+            fontSize: '11px', // 32 / 3
             fontWeight: 900,
             color: colorTheme.text,
             letterSpacing: '-0.05em',
             lineHeight: 1,
-            marginBottom: '6px'
+            marginBottom: '3px'
           }}>{truncate(authorName, 20)} を構成する9つのYouTube</div>
 
           <div style={{
             display: 'flex',
             backgroundColor: 'rgba(0,0,0,0.85)',
             color: 'white',
-            padding: '10px 48px',
-            borderRadius: '16px',
-            fontSize: '40px',
+            padding: '2px 10px',
+            borderRadius: '4px',
+            fontSize: '9px', // 26 / 3
             fontWeight: 900,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-            border: `2px solid ${colorTheme.accent}44`
+            boxShadow: '0 2px 7px rgba(0,0,0,0.2)',
+            border: `1px solid ${colorTheme.accent}44`
           }}>
             {theme || '私を構成する9つのYouTube'}
           </div>
@@ -129,7 +129,7 @@ export async function GET(
           flexDirection: 'column',
           gap: `${gap}px`,
           width: `${gridWidth}px`,
-          marginBottom: '30px'
+          marginBottom: '7px'
         }}>
           {[0, 1, 2].map(row => (
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
@@ -144,7 +144,7 @@ export async function GET(
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '12px',
+                      borderRadius: '8px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -191,7 +191,7 @@ export async function GET(
                         alt=""
                       />
                     ) : (
-                      <div style={{ display: 'flex', fontSize: '100px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '22px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
                     {slot?.title && (
@@ -200,7 +200,7 @@ export async function GET(
                         bottom: 0,
                         left: 0,
                         width: `${itemWidth}px`,
-                        padding: '14px 10px',
+                        padding: '3px 2px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -210,7 +210,7 @@ export async function GET(
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '18px',
+                          fontSize: '4px', // 12 / 3
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -235,11 +235,11 @@ export async function GET(
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '20px'
+          gap: '13px'
         }}>
           <div style={{
             display: 'flex',
-            fontSize: '32px',
+            fontSize: '7px', // 21 / 3
             color: colorTheme.text,
             opacity: 0.5,
             marginTop: 'auto',
