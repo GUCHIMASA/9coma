@@ -279,14 +279,14 @@ export default async function Image({ params }: { params: { authorName: string }
       ),
       {
         ...size,
-        fonts: [
+        fonts: fontData ? [
           {
             name: 'Noto Sans JP',
             data: fontData,
-            style: 'normal',
-            weight: 900,
+            style: 'normal' as const,
+            weight: 900 as const,
           },
-        ],
+        ] : [],
         headers: {
           'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
         },
@@ -298,14 +298,14 @@ export default async function Image({ params }: { params: { authorName: string }
       <div style={{ width: '100%', height: '100%', backgroundColor: '#FFD600', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: 900 }}>9coma.com</div>,
       {
         ...size,
-        fonts: [
+        fonts: fontData ? [
           {
             name: 'Noto Sans JP',
             data: fontData,
-            style: 'normal',
-            weight: 900,
+            style: 'normal' as const,
+            weight: 900 as const,
           },
-        ],
+        ] : [],
       }
     );
   }
