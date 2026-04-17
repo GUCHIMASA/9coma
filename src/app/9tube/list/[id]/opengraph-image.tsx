@@ -9,8 +9,8 @@ export const runtime = 'edge';
 // --- [画像設定: 基本メタデータ] ---
 export const alt = '9TUBE | 私を構成する9つのYouTube';
 export const size = {
-  width: 1200,
-  height: 630, // OGP標準の1.91:1比率
+  width: 800,  // 1200 -> 800
+  height: 420, // 630 -> 420
 };
 const { width, height } = size;
 export const contentType = 'image/png';
@@ -64,8 +64,8 @@ export default async function Image({ params }: { params: { id: string } }) {
   );
 
   // --- [設定エリア: 余白とサイズ] ---
-  const padding = 24;  // 外周余白 (OGPは狭め)
-  const gap = 12;      // コマ同士の隙間
+  const padding = 16;  // 24 -> 16
+  const gap = 8;       // 12 -> 8
   const gridWidth = width - padding * 2;
   const gridHeight = height - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
@@ -113,7 +113,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '8px',
+                      borderRadius: '6px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -134,7 +134,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         alt=""
                       />
                     ) : (
-                      <div style={{ display: 'flex', fontSize: '60px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '40px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
                     {/* [Layer 4: タイトル] */}
@@ -144,7 +144,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         bottom: 0,
                         left: 0,
                         width: '100%',
-                        padding: '10px 8px',
+                        padding: '7px 5px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -154,7 +154,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '15px',
+                          fontSize: '10px', // 15 -> 10
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -191,11 +191,11 @@ export default async function Image({ params }: { params: { id: string } }) {
             alignItems: 'center',
             backgroundColor: colorTheme.bg,
             color: colorTheme.text,
-            padding: '4px 24px',
+            padding: '3px 16px',
             borderRadius: '99px',
-            fontSize: '28px',
+            fontSize: '18px', // 28 -> 18
             lineHeight: 1,
-            marginBottom: '12px'
+            marginBottom: '8px'
           }}>
             {truncate(authorName, 15)}を構成する9つのYouTube │ {theme || '9TUBE'}
           </div>
@@ -204,7 +204,8 @@ export default async function Image({ params }: { params: { id: string } }) {
       </div>
     ),
     {
-      ...size,
+      width,
+      height,
       fonts: [
         {
           name: 'Noto Sans JP',

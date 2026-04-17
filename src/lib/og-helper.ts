@@ -40,19 +40,20 @@ export async function getFontData(requestUrl?: string): Promise<ArrayBuffer> {
   try {
     const res = await fetch(fontUrl);
     if (!res.ok) {
-      throw new Error(`Font fetch failed: ${fontUrl} (${res.status})`);
+      console.warn(`[og-helper] Font fetch failed: ${fontUrl} (${res.status}). Using fallback font.`);
+      return new ArrayBuffer(0); // 失敗時は空データを返して画像生成自体は継続
     }
     cachedFontData = await res.arrayBuffer();
     return cachedFontData;
   } catch (error) {
     console.error('[og-helper] Error fetching font:', error);
-    throw error;
+    return new ArrayBuffer(0); // ネットワークエラー時も継続
   }
 }
 
 /**
  * 外部画像を Fetch して Base64 Data URL に変換する。
- * Node.js の Buffer ではなく、ブラウザ互換の方法で処理します。
+ * Edge Runtime のスタックメモリ制限を回避するため、TextDecoder を使用します。
  */
 export async function getBase64Image(url: string, timeoutMs: number = 3000) {
   const controller = new AbortController();
@@ -71,16 +72,10 @@ export async function getBase64Image(url: string, timeoutMs: number = 3000) {
     const arrayBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
     
-    // Edge Runtime 環境に完全対応する、高速ネイティブ Base64 エンジン ($O(N)$ チャンク処理)
-    // ※ Node の Buffer 依存で発生する ReferenceError を回避しつつ、Maximum call stack size を防ぐ
-    let binary = '';
-    const bytes = new Uint8Array(arrayBuffer);
-    const len = bytes.byteLength;
-    const chunkSize = 0x8000; // 32KB ごとに処理
-    for (let i = 0; i < len; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
-    }
+    // Cloudflare Edge Runtime に完全対応する、高速ネイティブ Base64 エンジン
+    // TextDecoder("latin1") を使用して ArrayBuffer からバイナリ文字列を一括変換し、btoa する
+    const uint8array = new Uint8Array(arrayBuffer);
+    const binary = new TextDecoder("latin1").decode(uint8array);
     const base64 = btoa(binary);
     
     return { 

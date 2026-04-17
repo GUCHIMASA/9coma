@@ -373,12 +373,12 @@ export default function ListViewClient({ data }: ListViewClientProps) {
 
             // Amazon トラッキング ID を環境変数から取得
             const AMAZON_ASSOCIATE_ID = process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_ID || '9coma06-22';
-            const displayTitle = manga.title;
-            const linkKeyword = manga.title;
+            const displayTitle = manga?.title || '作品名不明';
+            const linkKeyword = manga?.title || '';
             const amazonUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(linkKeyword)}&i=stripbooks${AMAZON_ASSOCIATE_ID ? `&tag=${AMAZON_ASSOCIATE_ID}` : ''}`;
 
-            // 楽天ブックス 検索URL
-            const rakutenUrl = manga.affiliateUrl || `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(manga.title)}/`;
+            // 楽天ブックス 検索URL（affiliateUrl があれば優先）
+            const rakutenUrl = manga?.affiliateUrl || `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(manga?.title || '')}/`;
 
             const isLast = idx === data.slots.reduce((last, m, i) => m ? i : last, -1);
 
@@ -408,7 +408,7 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                     <span style={{ color: 'var(--color-primary)', marginRight: '6px' }}>#{idx + 1}</span>
                     {displayTitle}
                   </p>
-                  {manga.author && (
+                  {manga?.author && (
                     <div style={{ marginTop: '2px' }}>
                       <Link
                         href={`/author/${encodeURIComponent(manga.author)}`}
@@ -417,8 +417,6 @@ export default function ListViewClient({ data }: ListViewClientProps) {
                           color: 'var(--color-text-secondary)',
                           textDecoration: 'none',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                        onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                       >
                         {manga.author}
                       </Link>

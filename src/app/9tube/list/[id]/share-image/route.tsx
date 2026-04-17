@@ -56,10 +56,10 @@ export async function GET(
   );
 
   // --- [設定エリア: サイズ /余白] ---
-  const width = 1200;  // 画像の横幅
-  const height = 1500; // 画像の縦幅
-  const padding = 30;  // 画面全体の外周余白
-  const gap = 20;      // グリッド内のコマ同士の隙間
+  const width = 800;   // 1200 -> 800
+  const height = 1000;  // 1500 -> 1000
+  const padding = 20;   // 30 -> 20
+  const gap = 14;       // 20 -> 14
   const gridWidth = width - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3); // 1コマの横幅
   const itemHeight = itemWidth; // 正方形を維持
@@ -90,18 +90,18 @@ export async function GET(
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '30px',
+          marginBottom: '20px',
           width: '100%',
         }}>
           {/* サービスタイトル "9TUBE" */}
           <div style={{
             display: 'flex',
-            fontSize: '48px',
+            fontSize: '32px', // 48 -> 32
             fontWeight: 900,
             color: colorTheme.text,
             letterSpacing: '-0.05em',
             lineHeight: 1,
-            marginBottom: '6px'
+            marginBottom: '4px'
           }}>{truncate(authorName, 20)} を構成する9つのYouTube</div>
 
           {/* テーマ名バッジ: ユーザーが入力した「テーマ」を強調 */}
@@ -109,12 +109,12 @@ export async function GET(
             display: 'flex',
             backgroundColor: 'rgba(0,0,0,0.85)',
             color: 'white',
-            padding: '10px 48px',
-            borderRadius: '16px',
-            fontSize: '40px',
+            padding: '7px 32px',
+            borderRadius: '11px',
+            fontSize: '24px', // 40 -> 24
             fontWeight: 900,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-            border: `2px solid ${colorTheme.accent}44`
+            boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
+            border: `1.5px solid ${colorTheme.accent}44`
           }}>
             {theme || '私を構成する9つのYouTube'}
           </div>
@@ -126,7 +126,7 @@ export async function GET(
           flexDirection: 'column',
           gap: `${gap}px`,
           width: `${gridWidth}px`,
-          marginBottom: '30px'
+          marginBottom: '20px'
         }}>
           {[0, 1, 2].map(row => (
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
@@ -141,7 +141,7 @@ export async function GET(
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '12px',
+                      borderRadius: '8px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -192,7 +192,7 @@ export async function GET(
                       />
                     ) : (
                       // 画像がない場合の番号表示
-                      <div style={{ display: 'flex', fontSize: '100px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '60px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
                     {/* [Layer 4]: タイトルオーバーレイ / 下からグラデーションを敷いて文字の視認性を確保 */}
@@ -202,7 +202,7 @@ export async function GET(
                         bottom: 0,
                         left: 0,
                         width: `${itemWidth}px`,
-                        padding: '14px 10px',
+                        padding: '10px 7px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -212,7 +212,7 @@ export async function GET(
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '18px',
+                          fontSize: '12px', // 18 -> 12
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -237,14 +237,14 @@ export async function GET(
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '20px'
+          gap: '14px'
         }}>
 
 
           {/* サイトURL: 控えめな半透明度で表示 */}
           <div style={{
             display: 'flex',
-            fontSize: '32px',
+            fontSize: '21px', // 32 -> 21
             color: colorTheme.text,
             opacity: 0.5,
             marginTop: 'auto',

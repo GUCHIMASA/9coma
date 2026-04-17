@@ -52,34 +52,38 @@ export async function GET(
       })
     );
 
-    // レイアウト定数 (最小限のマージンで書影を最大化)
-    const padding = 20;
-    const gridGap = 12;
-    const headerHeight = 60;
-    const headerToGridGap = 10;
+    // --- [設定エリア: サイズ /余白] ---
+    const width = 800;   // 1200 -> 800 (1MB制限回避)
+    const height = 1000;  // 1500 -> 1000
+    const padding = 14;   // 20 -> 14
+    const gridGap = 8;    // 12 -> 8
+    const headerHeight = 40; // 60 -> 40
+    const headerToGridGap = 7; // 10 -> 7
 
     // グリッドエリアの計算
-    const innerWidth = 1200 - padding * 2;
-    const innerHeight = 1500 - padding * 2 - headerHeight - headerToGridGap;
+    const innerWidth = width - padding * 2;
+    const innerHeight = height - padding * 2 - headerHeight - headerToGridGap;
     
     const cellWidth = (innerWidth - gridGap * 2) / 3;
     const cellHeight = (innerHeight - gridGap * 2) / 3;
 
-    const boxBorderRadius = '4px';
-    const shadowColor = 'rgba(0,0,0,0.25)';
+    const boxBorderRadius = '3px';
+    const shadowColor = 'rgba(0,0,0,0.2)';
 
     return new ImageResponse(
       (
         <div style={{
-          width: '1200px',
-          height: '1500px',
+          width: `${width}px`,
+          height: `${height}px`,
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: themeBg,
           color: textColor,
           padding: `${padding}px`,
+          fontFamily: 'Noto Sans JP',
+          fontWeight: 900,
         }}>
-          {/* Header Area (No Decoration, minimal space) */}
+          {/* Header Area */}
           <div
             style={{
               width: '100%',
@@ -95,14 +99,14 @@ export async function GET(
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '36px',
+                fontSize: '24px', // 36 -> 24
                 fontWeight: 900,
                 color: textColor,
-                letterSpacing: '0.02em',
+                letterSpacing: '0.01em',
               }}
             >
               {data.authorName && (
-                <span style={{ fontSize: '32px', opacity: 0.8, fontWeight: 700, marginRight: '16px' }}>
+                <span style={{ fontSize: '20px', opacity: 0.8, fontWeight: 700, marginRight: '10px' }}>
                   {data.authorName}を構成する9つのマンガ
                 </span>
               )}
@@ -132,7 +136,7 @@ export async function GET(
                       borderRadius: boxBorderRadius,
                       overflow: 'hidden',
                       position: 'relative',
-                      boxShadow: `0 8px 30px ${shadowColor}`,
+                      boxShadow: `0 5px 20px ${shadowColor}`,
                     }}>
                       {imgUrl ? (
                         <img
@@ -147,9 +151,9 @@ export async function GET(
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '10px',
+                          padding: '7px',
                           textAlign: 'center',
-                          fontSize: '80px',
+                          fontSize: '50px', // 80 -> 50
                           fontWeight: 900,
                           color: textColor,
                           opacity: 0.2
@@ -163,16 +167,16 @@ export async function GET(
                           bottom: 0,
                           left: 0,
                           width: '100%',
-                          padding: '60px 16px 20px',
+                          padding: '40px 10px 14px', // 60 16 20 -> 40 10 14
                           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
                           color: 'white',
-                          fontSize: '20px',
+                          fontSize: '13px', // 20 -> 13
                           fontWeight: 800,
                           textAlign: 'center',
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'flex-end',
-                          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                         }}>
                           <div style={{
                             whiteSpace: 'nowrap',
@@ -189,11 +193,29 @@ export async function GET(
               </div>
             ))}
           </div>
+
+          {/* Footer */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+          }}>
+            <div style={{
+              display: 'flex',
+              fontSize: '18px',
+              fontWeight: 900,
+              color: textColor,
+              opacity: 0.3,
+              letterSpacing: '0.05em'
+            }}>9coma.com</div>
+          </div>
         </div>
       ),
       {
-        width: 1200,
-        height: 1500,
+        width,
+        height,
         fonts: [
           {
             name: 'Noto Sans JP',
