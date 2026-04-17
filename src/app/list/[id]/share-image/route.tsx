@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
-import { NextResponse } from 'next/server';
 import { getFontData, getBase64Image } from '@/lib/og-helper';
 import { COLOR_THEMES } from '@/lib/colors';
 
