@@ -51,11 +51,11 @@ export async function GET(
     })
   );
 
-  // --- [設定エリア: サイズ / 余白] --- (400x500 確実に1MBを大幅に切るための縮小)
-  const width = 400;
-  const height = 500;
-  const padding = 7;
-  const gap = 4;
+  // --- [設定エリア: サイズ / 余白] --- (500x625 段階テスト Step 2)
+  const width = 500;
+  const height = 625;
+  const padding = 9;
+  const gap = 5;
   const gridWidth = width - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
   const itemHeight = itemWidth;
@@ -95,28 +95,28 @@ export async function GET(
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '7px',
+          marginBottom: '9px',
           width: '100%',
         }}>
           <div style={{
             display: 'flex',
-            fontSize: '11px', // 32 / 3
+            fontSize: '14px',
             fontWeight: 900,
             color: colorTheme.text,
             letterSpacing: '-0.05em',
             lineHeight: 1,
-            marginBottom: '3px'
+            marginBottom: '4px'
           }}>{truncate(authorName, 20)} を構成する9つのYouTube</div>
 
           <div style={{
             display: 'flex',
             backgroundColor: 'rgba(0,0,0,0.85)',
             color: 'white',
-            padding: '2px 10px',
-            borderRadius: '4px',
-            fontSize: '9px', // 26 / 3
+            padding: '3px 13px',
+            borderRadius: '5px',
+            fontSize: '11px',
             fontWeight: 900,
-            boxShadow: '0 2px 7px rgba(0,0,0,0.2)',
+            boxShadow: '0 2px 9px rgba(0,0,0,0.2)',
             border: `1px solid ${colorTheme.accent}44`
           }}>
             {theme || '私を構成する9つのYouTube'}
@@ -129,7 +129,7 @@ export async function GET(
           flexDirection: 'column',
           gap: `${gap}px`,
           width: `${gridWidth}px`,
-          marginBottom: '7px'
+          marginBottom: '9px'
         }}>
           {[0, 1, 2].map(row => (
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
@@ -144,7 +144,7 @@ export async function GET(
                       width: `${itemWidth}px`,
                       height: `${itemHeight}px`,
                       backgroundColor: '#000',
-                      borderRadius: '8px',
+                      borderRadius: '6px',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
@@ -191,7 +191,7 @@ export async function GET(
                         alt=""
                       />
                     ) : (
-                      <div style={{ display: 'flex', fontSize: '22px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '28px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
                     {slot?.title && (
@@ -200,7 +200,7 @@ export async function GET(
                         bottom: 0,
                         left: 0,
                         width: `${itemWidth}px`,
-                        padding: '3px 2px',
+                        padding: '4px 3px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -210,7 +210,7 @@ export async function GET(
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '4px', // 12 / 3
+                          fontSize: '5px',
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -235,11 +235,11 @@ export async function GET(
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '13px'
+          gap: '9px'
         }}>
           <div style={{
             display: 'flex',
-            fontSize: '7px', // 21 / 3
+            fontSize: '9px',
             color: colorTheme.text,
             opacity: 0.5,
             marginTop: 'auto',

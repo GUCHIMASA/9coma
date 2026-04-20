@@ -39,18 +39,18 @@ export async function GET(
       })
     );
 
-    // --- [設定エリア: サイズ / 余白] --- (400x500 確実に1MBを大幅に切るための縮小)
-    const width = 400;
-    const height = 500;
-    const padding = 7;   // 20 / 3
-    const gridGap = 4;    // 12 / 3
-    const headerHeight = 20; // 60 / 3
-    const headerToGridGap = 3; // 10 / 3
+    // --- [設定エリア: サイズ / 余白] --- (500x625 段階テスト Step 2)
+    const width = 500;
+    const height = 625;
+    const padding = 9;
+    const gridGap = 5;
+    const headerHeight = 25;
+    const headerToGridGap = 4;
 
     // グリッドエリアの計算
     const innerWidth = width - padding * 2;
     const innerHeight = height - padding * 2 - headerHeight - headerToGridGap;
-    
+
     const cellWidth = (innerWidth - gridGap * 2) / 3;
     const cellHeight = (innerHeight - gridGap * 2) / 3;
 
@@ -97,14 +97,14 @@ export async function GET(
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '12px', // 36 / 3
+                fontSize: '15px',
                 fontWeight: 900,
                 color: textColor,
                 letterSpacing: '0.02em',
               }}
             >
               {data.authorName && (
-                <span style={{ fontSize: '11px', opacity: 0.8, fontWeight: 700, marginRight: '5px' }}>
+                <span style={{ fontSize: '14px', opacity: 0.8, fontWeight: 700, marginRight: '6px' }}>
                   {data.authorName}を構成する9つのマンガ
                 </span>
               )}
@@ -151,7 +151,7 @@ export async function GET(
                           justifyContent: 'center',
                           padding: '3px',
                           textAlign: 'center',
-                          fontSize: '26px', // 80 / 3
+                          fontSize: '32px',
                           fontWeight: 900,
                           color: textColor,
                           opacity: 0.2
@@ -160,30 +160,30 @@ export async function GET(
                         </div>
                       )}
                       {manga?.title && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          width: '100%',
+                          padding: '25px 6px 8px',
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
+                          color: 'white',
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          textAlign: 'center',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'flex-end',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        }}>
                           <div style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            width: '100%',
-                            padding: '20px 5px 6px', // 60/16/20 / 3
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
-                            color: 'white',
-                            fontSize: '7px', // 20 / 3
-                            fontWeight: 800,
-                            textAlign: 'center',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'flex-end',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                           }}>
-                            <div style={{
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}>
-                              {manga.title}
-                            </div>
+                            {manga.title}
                           </div>
+                        </div>
                       )}
                     </div>
                   );
@@ -202,7 +202,7 @@ export async function GET(
           }}>
             <div style={{
               display: 'flex',
-              fontSize: '10px', // 30 / 3
+              fontSize: '12px',
               fontWeight: 900,
               color: textColor,
               opacity: 0.4,
