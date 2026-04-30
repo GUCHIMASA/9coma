@@ -16,16 +16,13 @@ export async function GET(
     const data = await getListById(id);
     if (!data) return new Response('Not found', { status: 404 });
 
-    // フォントデータの取得 (UA付与・ガード付き)
     const fontData = await getFontData(request.url);
 
-    // 配色の取得
     const theme = COLOR_THEMES[data.colorThemeId || '01'] || COLOR_THEMES['01'];
     const themeBg = theme.bg;
     const textColor = theme.text;
     const isDark = textColor === '#FFFFFF';
 
-    // すべてのスロットの画像を Data URL 化
     const imageUrls = await Promise.all(
       data.slots.map(async (manga) => {
         if (!manga?.imageUrl) return null;
@@ -39,25 +36,20 @@ export async function GET(
       })
     );
 
-    // --- [設定エリア: サイズ / 余白] --- (500x625 段階テスト Step 2)
-    const width = 500;
-    const height = 625;
-    const padding = 9;
-    const gridGap = 5;
-    const headerHeight = 25;
-    const headerToGridGap = 4;
+    // --- [設定エリア: サイズ / 余白] --- (600x750 段階テスト Step 3)
+    const width = 600;
+    const height = 750;
+    const padding = 11;
+    const gridGap = 6;
+    const headerHeight = 30;
+    const headerToGridGap = 5;
 
-    // グリッドエリアの計算
     const innerWidth = width - padding * 2;
     const innerHeight = height - padding * 2 - headerHeight - headerToGridGap;
 
     const cellWidth = (innerWidth - gridGap * 2) / 3;
     const cellHeight = (innerHeight - gridGap * 2) / 3;
 
-    const boxBorderRadius = '2px';
-    const shadowColor = 'rgba(0,0,0,0.2)';
-
-    // フォントガード
     const fonts = fontData ? [
       {
         name: 'Noto Sans JP',
@@ -81,30 +73,25 @@ export async function GET(
           fontWeight: 900,
           position: 'relative',
         }}>
-          {/* Header Area */}
-          <div
-            style={{
-              width: '100%',
-              height: `${headerHeight}px`,
+          <div style={{
+            width: '100%',
+            height: `${headerHeight}px`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: `${headerToGridGap}px`,
+          }}>
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: `${headerToGridGap}px`,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '15px',
-                fontWeight: 900,
-                color: textColor,
-                letterSpacing: '0.02em',
-              }}
-            >
+              fontSize: '18px',
+              fontWeight: 900,
+              color: textColor,
+              letterSpacing: '0.02em',
+            }}>
               {data.authorName && (
-                <span style={{ fontSize: '14px', opacity: 0.8, fontWeight: 700, marginRight: '6px' }}>
+                <span style={{ fontSize: '17px', opacity: 0.8, fontWeight: 700, marginRight: '7px' }}>
                   {data.authorName}を構成する9つのマンガ
                 </span>
               )}
@@ -112,75 +99,44 @@ export async function GET(
             </div>
           </div>
 
-          {/* 3x3 Grid Area */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: `${gridGap}px`,
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: `${gridGap}px` }}>
             {[0, 1, 2].map(row => (
               <div key={row} style={{ display: 'flex', gap: `${gridGap}px` }}>
                 {[0, 1, 2].map(col => {
                   const idx = row * 3 + col;
                   const manga = data.slots[idx];
                   const imgUrl = imageUrls[idx];
-
                   return (
                     <div key={idx} style={{
                       width: `${cellWidth}px`,
                       height: `${cellHeight}px`,
                       backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                       display: 'flex',
-                      borderRadius: boxBorderRadius,
+                      borderRadius: '2px',
                       overflow: 'hidden',
                       position: 'relative',
-                      boxShadow: `0 5px 20px ${shadowColor}`,
+                      boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
                     }}>
                       {imgUrl ? (
-                        <img
-                          src={imgUrl}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          alt=""
-                        />
+                        <img src={imgUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                       ) : (
                         <div style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '3px',
-                          textAlign: 'center',
-                          fontSize: '32px',
-                          fontWeight: 900,
-                          color: textColor,
-                          opacity: 0.2
-                        }}>
-                          {idx + 1}
-                        </div>
+                          width: '100%', height: '100%', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          fontSize: '38px', fontWeight: 900, color: textColor, opacity: 0.2,
+                        }}>{idx + 1}</div>
                       )}
                       {manga?.title && (
                         <div style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          width: '100%',
-                          padding: '25px 6px 8px',
+                          position: 'absolute', bottom: 0, left: 0, width: '100%',
+                          padding: '30px 7px 9px',
                           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%)',
-                          color: 'white',
-                          fontSize: '9px',
-                          fontWeight: 800,
-                          textAlign: 'center',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'flex-end',
+                          color: 'white', fontSize: '11px', fontWeight: 800,
+                          textAlign: 'center', display: 'flex',
+                          justifyContent: 'center', alignItems: 'flex-end',
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                         }}>
-                          <div style={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}>
+                          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {manga.title}
                           </div>
                         </div>
@@ -192,32 +148,16 @@ export async function GET(
             ))}
           </div>
 
-          {/* Footer */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}>
-            <div style={{
-              display: 'flex',
-              fontSize: '12px',
-              fontWeight: 900,
-              color: textColor,
-              opacity: 0.4,
-              letterSpacing: '0.05em'
-            }}>9coma.com</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', fontSize: '14px', fontWeight: 900, color: textColor, opacity: 0.4, letterSpacing: '0.05em' }}>
+              9coma.com
+            </div>
           </div>
         </div>
       ),
       {
-        width,
-        height,
-        fonts,
-        headers: {
-          'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
-        },
+        width, height, fonts,
+        headers: { 'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable' },
       }
     );
   } catch (error) {

@@ -12,9 +12,7 @@ async function getListData(id: string) {
     const { doc, getDoc } = await import('firebase/firestore/lite');
     const docRef = doc(db, '9tube_lists', id);
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
-    }
+    if (docSnap.exists()) return docSnap.data();
   } catch (error) {
     console.error('Error fetching YouTube list for Share Image:', error);
   }
@@ -34,10 +32,8 @@ export async function GET(
   const colorThemeId = data.colorThemeId || '01';
   const colorTheme = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
 
-  // フォントデータの取得 (ガード付き)
   const fontData = await getFontData(request.url);
 
-  // 全ての画像を Data URL 化
   const imageUrls = await Promise.all(
     slots.map(async (slot) => {
       if (!slot?.imageUrl) return null;
@@ -51,86 +47,44 @@ export async function GET(
     })
   );
 
-  // --- [設定エリア: サイズ / 余白] --- (500x625 段階テスト Step 2)
-  const width = 500;
-  const height = 625;
-  const padding = 9;
-  const gap = 5;
+  // --- [設定エリア: サイズ / 余白] --- (600x750 段階テスト Step 3)
+  const width = 600;
+  const height = 750;
+  const padding = 11;
+  const gap = 6;
   const gridWidth = width - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
   const itemHeight = itemWidth;
 
-  const truncate = (str: string, len: number) => {
-    return str.length > len ? str.substring(0, len) + '...' : str;
-  };
+  const truncate = (str: string, len: number) =>
+    str.length > len ? str.substring(0, len) + '...' : str;
 
-  // フォントガード
   const fonts = fontData ? [
-    {
-      name: 'Noto Sans JP',
-      data: fontData,
-      style: 'normal' as const,
-      weight: 900 as const,
-    },
+    { name: 'Noto Sans JP', data: fontData, style: 'normal' as const, weight: 900 as const },
   ] : [];
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          backgroundColor: colorTheme.bg,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: `${padding}px`,
-          fontFamily: 'Noto Sans JP',
-          fontWeight: 900,
-          position: 'relative',
-        }}
-      >
-        {/* A. ヘッダー領域 */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          marginBottom: '9px',
-          width: '100%',
-        }}>
+      <div style={{
+        width: `${width}px`, height: `${height}px`,
+        backgroundColor: colorTheme.bg,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: `${padding}px`, fontFamily: 'Noto Sans JP', fontWeight: 900, position: 'relative',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '11px', width: '100%' }}>
+          <div style={{ display: 'flex', fontSize: '17px', fontWeight: 900, color: colorTheme.text, letterSpacing: '-0.05em', lineHeight: 1, marginBottom: '4px' }}>
+            {truncate(authorName, 20)} を構成する9つのYouTube
+          </div>
           <div style={{
-            display: 'flex',
-            fontSize: '14px',
-            fontWeight: 900,
-            color: colorTheme.text,
-            letterSpacing: '-0.05em',
-            lineHeight: 1,
-            marginBottom: '4px'
-          }}>{truncate(authorName, 20)} を構成する9つのYouTube</div>
-
-          <div style={{
-            display: 'flex',
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            color: 'white',
-            padding: '3px 13px',
-            borderRadius: '5px',
-            fontSize: '11px',
-            fontWeight: 900,
-            boxShadow: '0 2px 9px rgba(0,0,0,0.2)',
-            border: `1px solid ${colorTheme.accent}44`
+            display: 'flex', backgroundColor: 'rgba(0,0,0,0.85)', color: 'white',
+            padding: '4px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 900,
+            boxShadow: '0 3px 10px rgba(0,0,0,0.2)', border: `1px solid ${colorTheme.accent}44`,
           }}>
             {theme || '私を構成する9つのYouTube'}
           </div>
         </div>
 
-        {/* B. グリッド領域 */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: `${gap}px`,
-          width: `${gridWidth}px`,
-          marginBottom: '9px'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: `${gap}px`, width: `${gridWidth}px`, marginBottom: '11px' }}>
           {[0, 1, 2].map(row => (
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
               {[0, 1, 2].map(col => {
@@ -138,84 +92,29 @@ export async function GET(
                 const imageUrl = imageUrls[idx];
                 const slot = slots[idx];
                 return (
-                  <div
-                    key={col}
-                    style={{
-                      width: `${itemWidth}px`,
-                      height: `${itemHeight}px`,
-                      backgroundColor: '#000',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                    }}
-                  >
+                  <div key={col} style={{
+                    width: `${itemWidth}px`, height: `${itemHeight}px`,
+                    backgroundColor: '#000', borderRadius: '7px', overflow: 'hidden',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+                  }}>
                     {imageUrl && (
-                      <img
-                        src={imageUrl}
-                        style={{
-                          position: 'absolute',
-                          top: '-39%',
-                          left: '-39%',
-                          width: '178%',
-                          height: '178%',
-                          zIndex: 0,
-                        }}
-                        alt=""
-                      />
+                      <img src={imageUrl} style={{ position: 'absolute', top: '-39%', left: '-39%', width: '178%', height: '178%', zIndex: 0 }} alt="" />
                     )}
-
                     {imageUrl && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: `${itemWidth}px`,
-                        height: `${itemHeight}px`,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                      }} />
+                      <div style={{ position: 'absolute', top: 0, left: 0, width: `${itemWidth}px`, height: `${itemHeight}px`, backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     )}
-
                     {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        style={{
-                          position: 'relative',
-                          width: `${itemWidth}px`,
-                          height: `${itemWidth}px`,
-                          objectFit: 'contain',
-                          zIndex: 1,
-                        }}
-                        alt=""
-                      />
+                      <img src={imageUrl} style={{ position: 'relative', width: `${itemWidth}px`, height: `${itemWidth}px`, objectFit: 'contain', zIndex: 1 }} alt="" />
                     ) : (
                       <div style={{ display: 'flex', fontSize: '28px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}
-
                     {slot?.title && (
                       <div style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        width: `${itemWidth}px`,
-                        padding: '4px 3px',
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 2,
+                        position: 'absolute', bottom: 0, left: 0, width: `${itemWidth}px`,
+                        padding: '6px 5px', background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
                       }}>
-                        <div style={{
-                          display: 'flex',
-                          color: 'white',
-                          fontSize: '5px',
-                          fontWeight: 700,
-                          lineHeight: 1.2,
-                          textAlign: 'center',
-                          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                        }}>
+                        <div style={{ display: 'flex', color: 'white', fontSize: '6px', fontWeight: 700, lineHeight: 1.2, textAlign: 'center', textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                           {truncate(slot.title, 36)}
                         </div>
                       </div>
@@ -227,37 +126,16 @@ export async function GET(
           ))}
         </div>
 
-        {/* C. フッター領域 */}
-        <div style={{
-          flex: 1,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '9px'
-        }}>
-          <div style={{
-            display: 'flex',
-            fontSize: '9px',
-            color: colorTheme.text,
-            opacity: 0.5,
-            marginTop: 'auto',
-            justifyContent: 'center',
-            textAlign: 'center'
-          }}>
+        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', fontSize: '11px', color: colorTheme.text, opacity: 0.5, marginTop: 'auto', justifyContent: 'center', textAlign: 'center' }}>
             https://9coma.com/9tube
           </div>
         </div>
       </div>
     ),
     {
-      width,
-      height,
-      fonts,
-      headers: {
-        'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
-      },
+      width, height, fonts,
+      headers: { 'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable' },
     }
   );
 }
