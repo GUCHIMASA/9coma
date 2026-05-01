@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
-import { getFontData, getBase64Image } from '@/lib/og-helper';
+import { getFontData, getImageData } from '@/lib/og-helper';
 import { COLOR_THEMES } from '@/lib/colors';
 
 export const runtime = 'edge';
@@ -23,18 +24,24 @@ export async function GET(
     const textColor = theme.text;
     const isDark = textColor === '#FFFFFF';
 
-    const imageUrls = await Promise.all(
-      data.slots.map(async (manga) => {
-        if (!manga?.imageUrl) return null;
-        try {
-          const result = await getBase64Image(manga.imageUrl);
-          return result.success ? result.dataUrl! : null;
-        } catch (e) {
-          console.error(`[ShareImage] Failed to fetch slot: ${manga.imageUrl}`, e);
-          return null;
-        }
-      })
-    );
+    const imageDataList: (ArrayBuffer | null)[] = [];
+    // 3枚ずつのチャンクで取得（並列ストール回避）
+    for (let i = 0; i < data.slots.length; i += 3) {
+      const chunk = data.slots.slice(i, i + 3);
+      const chunkResults = await Promise.all(
+        chunk.map(async (manga) => {
+          if (!manga?.imageUrl) return null;
+          try {
+            const result = await getImageData(manga.imageUrl);
+            return result.success ? (result.buffer as ArrayBuffer) : null;
+          } catch (e) {
+            console.error(`[ShareImage] Failed to fetch slot: ${manga.imageUrl}`, e);
+            return null;
+          }
+        })
+      );
+      imageDataList.push(...chunkResults);
+    }
 
     // --- [設定エリア: サイズ / 余白] --- (600x750 段階テスト Step 3)
     const width = 600;
@@ -105,7 +112,7 @@ export async function GET(
                 {[0, 1, 2].map(col => {
                   const idx = row * 3 + col;
                   const manga = data.slots[idx];
-                  const imgUrl = imageUrls[idx];
+                  const imgData = imageDataList[idx];
                   return (
                     <div key={idx} style={{
                       width: `${cellWidth}px`,
@@ -117,8 +124,9 @@ export async function GET(
                       position: 'relative',
                       boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
                     }}>
-                      {imgUrl ? (
-                        <img src={imgUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                      {imgData ? (
+                        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                        <img src={imgData as any} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                       ) : (
                         <div style={{
                           width: '100%', height: '100%', display: 'flex',

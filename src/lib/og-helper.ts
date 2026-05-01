@@ -65,10 +65,10 @@ export async function getFontData(requestUrl?: string): Promise<ArrayBuffer | nu
 }
 
 /**
- * 外部画像を Fetch して Base64 Data URL に変換する。
- * Edge Runtime のスタックメモリ制限を回避するため、TextDecoder を使用します。
+ * 外部画像を Fetch して ArrayBuffer として取得する。
+ * メモリ節約のため、巨大な Base64 文字列への変換を避けます。
  */
-export async function getBase64Image(url: string, timeoutMs: number = 3000) {
+export async function getImageData(url: string, timeoutMs: number = 3000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -83,17 +83,10 @@ export async function getBase64Image(url: string, timeoutMs: number = 3000) {
     if (!response.ok) throw new Error(`Status: ${response.status}`);
     
     const arrayBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-    
-    // Cloudflare Edge Runtime に完全対応する、高速ネイティブ Base64 エンジン
-    // TextDecoder("latin1") を使用して ArrayBuffer からバイナリ文字列を一括変換し、btoa する
-    const uint8array = new Uint8Array(arrayBuffer);
-    const binary = new TextDecoder("latin1").decode(uint8array);
-    const base64 = btoa(binary);
     
     return { 
       success: true, 
-      dataUrl: `data:${contentType};base64,${base64}`, 
+      buffer: arrayBuffer, 
       size: arrayBuffer.byteLength 
     };
   } catch (e) {

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageResponse } from 'next/og';
-import { getFontData, getBase64Image } from '@/lib/og-helper';
+import { getFontData, getImageData } from '@/lib/og-helper';
 import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
@@ -45,19 +46,25 @@ export default async function Image({ params }: { params: { id: string } }) {
   const currentUrl = `${baseUrl}/9tube/list/${params.id}/opengraph-image`;
   const fontData = await getFontData(currentUrl);
 
-  // 全ての画像を Data URL 化
-  const imageUrls = await Promise.all(
-    slots.map(async (slot) => {
-      if (!slot?.imageUrl) return null;
-      try {
-        const result = await getBase64Image(slot.imageUrl, 3000);
-        return result.success ? result.dataUrl : null;
-      } catch (error) {
-        console.error(`[9TUBE-OGP] Failed to fetch image: ${slot.imageUrl}`, error);
-        return null;
-      }
-    })
-  );
+  // 全ての画像を ArrayBuffer 化
+  const imageDataList: (ArrayBuffer | null)[] = [];
+  // 3枚ずつのチャンクで取得（並列ストール回避）
+  for (let i = 0; i < slots.length; i += 3) {
+    const chunk = slots.slice(i, i + 3);
+    const chunkResults = await Promise.all(
+      chunk.map(async (slot) => {
+        if (!slot?.imageUrl) return null;
+        try {
+          const result = await getImageData(slot.imageUrl, 3000);
+          return result.success ? (result.buffer as ArrayBuffer) : null;
+        } catch (error) {
+          console.error(`[9TUBE-OGP] Failed to fetch image: ${slot.imageUrl}`, error);
+          return null;
+        }
+      })
+    );
+    imageDataList.push(...chunkResults);
+  }
 
   // --- [設定エリア: 余白とサイズ] --- (1200x630復元)
   const padding = 24;
@@ -109,7 +116,7 @@ export default async function Image({ params }: { params: { id: string } }) {
             <div key={row} style={{ display: 'flex', gap: `${gap}px`, flex: 1 }}>
               {[0, 1, 2].map(col => {
                 const idx = row * 3 + col;
-                const imageUrl = imageUrls[idx];
+                const imageData = imageDataList[idx];
                 const slot = slots[idx];
                 return (
                   <div
@@ -126,9 +133,9 @@ export default async function Image({ params }: { params: { id: string } }) {
                       position: 'relative',
                     }}
                   >
-                    {imageUrl ? (
+                    {imageData ? (
                       <img
-                        src={imageUrl}
+                        src={imageData as any}
                         style={{
                           width: '100%',
                           height: '100%',

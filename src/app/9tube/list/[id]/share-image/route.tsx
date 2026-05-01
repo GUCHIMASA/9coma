@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageResponse } from 'next/og';
-import { getFontData, getBase64Image } from '@/lib/og-helper';
+import { getFontData, getImageData } from '@/lib/og-helper';
 import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
@@ -34,18 +35,24 @@ export async function GET(
 
   const fontData = await getFontData(request.url);
 
-  const imageUrls = await Promise.all(
-    slots.map(async (slot) => {
-      if (!slot?.imageUrl) return null;
-      try {
-        const result = await getBase64Image(slot.imageUrl, 3000);
-        return result.success ? result.dataUrl : null;
-      } catch (error) {
-        console.error(`[9TUBE-Share] Failed to fetch image: ${slot.imageUrl}`, error);
-        return null;
-      }
-    })
-  );
+  const imageDataList: (ArrayBuffer | null)[] = [];
+  // 3枚ずつのチャンクで取得（並列ストール回避）
+  for (let i = 0; i < slots.length; i += 3) {
+    const chunk = slots.slice(i, i + 3);
+    const chunkResults = await Promise.all(
+      chunk.map(async (slot) => {
+        if (!slot?.imageUrl) return null;
+        try {
+          const result = await getImageData(slot.imageUrl, 3000);
+          return result.success ? (result.buffer as ArrayBuffer) : null;
+        } catch (error) {
+          console.error(`[9TUBE-Share] Failed to fetch image: ${slot.imageUrl}`, error);
+          return null;
+        }
+      })
+    );
+    imageDataList.push(...chunkResults);
+  }
 
   // --- [設定エリア: サイズ / 余白] --- (600x750 段階テスト Step 3)
   const width = 600;
@@ -89,7 +96,7 @@ export async function GET(
             <div key={row} style={{ display: 'flex', gap: `${gap}px` }}>
               {[0, 1, 2].map(col => {
                 const idx = row * 3 + col;
-                const imageUrl = imageUrls[idx];
+                const imageData = imageDataList[idx];
                 const slot = slots[idx];
                 return (
                   <div key={col} style={{
@@ -97,14 +104,16 @@ export async function GET(
                     backgroundColor: '#000', borderRadius: '7px', overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
                   }}>
-                    {imageUrl && (
-                      <img src={imageUrl} style={{ position: 'absolute', top: '-39%', left: '-39%', width: '178%', height: '178%', zIndex: 0 }} alt="" />
+                    {imageData && (
+                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                      <img src={imageData as any} style={{ position: 'absolute', top: '-39%', left: '-39%', width: '178%', height: '178%', zIndex: 0 }} alt="" />
                     )}
-                    {imageUrl && (
+                    {imageData && (
                       <div style={{ position: 'absolute', top: 0, left: 0, width: `${itemWidth}px`, height: `${itemHeight}px`, backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     )}
-                    {imageUrl ? (
-                      <img src={imageUrl} style={{ position: 'relative', width: `${itemWidth}px`, height: `${itemWidth}px`, objectFit: 'contain', zIndex: 1 }} alt="" />
+                    {imageData ? (
+                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                      <img src={imageData as any} style={{ position: 'relative', width: `${itemWidth}px`, height: `${itemWidth}px`, objectFit: 'contain', zIndex: 1 }} alt="" />
                     ) : (
                       <div style={{ display: 'flex', fontSize: '28px', color: 'rgba(255,255,255,0.1)', position: 'relative', zIndex: 1 }}>{idx + 1}</div>
                     )}

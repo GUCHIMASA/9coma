@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageResponse } from 'next/og';
 import { getSelectionCountByAuthor, getListsByAuthor } from '@/lib/list';
 import { ComicList } from '@/types';
-import { getFontData, getBase64Image } from '@/lib/og-helper';
+import { getFontData, getImageData } from '@/lib/og-helper';
 
 // 高速動作とコスト削減のため Edge Runtime を使用
 export const runtime = 'edge';
@@ -34,27 +35,35 @@ export default async function Image({ params }: { params: { authorName: string }
       displayLists.push({ id: 'dummy', slots: Array(9).fill(null), authorName: '', createdAt: Date.now() } as ComicList);
     }
 
-    // すべてのリストのすべてのスロットの画像を Data URL 化（並列実行・個別にエラー遮断）
-    const listsWithDataUrls = await Promise.all(
-      displayLists.map(async (list) => {
-        const slotsWithUrls = await Promise.all(
-          (list.slots || Array(9).fill(null)).map(async (slot) => {
+    // すべてのリストのすべてのスロットの画像を ArrayBuffer 化
+    const listsWithImageData = [];
+    // 1リストずつ順番に処理（外側の直列化）
+    for (const list of displayLists) {
+      const slots = list.slots || Array(9).fill(null);
+      const slotsWithData = [];
+      
+      // スロットは3枚ずつのチャンクで並列取得
+      for (let i = 0; i < slots.length; i += 3) {
+        const chunk = slots.slice(i, i + 3);
+        const chunkResults = await Promise.all(
+          chunk.map(async (slot) => {
             const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
             if (imageUrl) {
               try {
-                const result = await getBase64Image(imageUrl);
-                return { ...slot, imageUrl: result.success ? result.dataUrl : null };
+                const result = await getImageData(imageUrl);
+                return { ...slot, imageBuffer: result.success ? (result.buffer as ArrayBuffer) : null };
               } catch (e) {
                 console.error(`[AuthorOG] Failed to fetch slot: ${imageUrl}`, e);
-                return { ...slot, imageUrl: null };
+                return { ...slot, imageBuffer: null };
               }
             }
             return slot;
           })
         );
-        return { ...list, slots: slotsWithUrls };
-      })
-    );
+        slotsWithData.push(...chunkResults);
+      }
+      listsWithImageData.push({ ...list, slots: slotsWithData });
+    }
 
     return new ImageResponse(
       (
@@ -187,8 +196,8 @@ export default async function Image({ params }: { params: { authorName: string }
             justifyContent: 'center',
             zIndex: 50,
           }}>
-            {listsWithDataUrls.map((list, index: number) => {
-              const reverseIndex = listsWithDataUrls.length - 1 - index;
+            {listsWithImageData.map((list, index: number) => {
+              const reverseIndex = listsWithImageData.length - 1 - index;
               const offsetX = reverseIndex * 100 - 40;
               const offsetY = reverseIndex * -24;
               const rotate = (reverseIndex === 0) ? 0 : (reverseIndex * 4);
@@ -220,7 +229,6 @@ export default async function Image({ params }: { params: { authorName: string }
                     gap: '4px',
                   }}>
                     {slots.slice(0, 9).map((slot, i: number) => {
-                      const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
                       return (
                         <div
                           key={i}
@@ -233,9 +241,9 @@ export default async function Image({ params }: { params: { authorName: string }
                             display: 'flex',
                           }}
                         >
-                          {imageUrl ? (
+                          {slot && (slot as any).imageBuffer ? (
                             <img
-                              src={imageUrl}
+                              src={(slot as any).imageBuffer as any}
                               alt=""
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
