@@ -10,8 +10,8 @@ export const runtime = 'edge';
 // --- [画像設定: 基本メタデータ] ---
 export const alt = '9TUBE | 私を構成する9つのYouTube';
 export const size = {
-  width: 1200,
-  height: 630, // OGP標準の1.91:1比率
+  width: 600,
+  height: 315, // OGP標準の1.91:1比率の半減サイズ（テスト用）
 };
 const { width, height } = size;
 export const contentType = 'image/png';
@@ -53,9 +53,9 @@ export default async function Image({ params }: { params: { id: string } }) {
   const subsetText = Array.from(new Set(allText)).join('');
   const fontData = await getFontData(subsetText);
 
-  // --- [設定エリア: 余白とサイズ] --- (1200x630復元)
-  const padding = 24;
-  const gap = 12;
+  // --- [設定エリア: 余白とサイズ] --- (1200x630 -> 600x315)
+  const padding = 12;
+  const gap = 6;
   const gridWidth = width - padding * 2;
   const gridHeight = height - padding * 2;
   const itemWidth = Math.floor((gridWidth - gap * 2) / 3);
@@ -132,7 +132,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         alt=""
                       />
                     ) : (
-                      <div style={{ display: 'flex', fontSize: '60px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', fontSize: '30px', color: 'rgba(255,255,255,0.1)', zIndex: 1 }}>{idx + 1}</div>
                     )}
 
                     {slot?.title && (
@@ -141,7 +141,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         bottom: 0,
                         left: 0,
                         width: '100%',
-                        padding: '10px 8px',
+                        padding: '5px 4px',
                         background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%)',
                         display: 'flex',
                         alignItems: 'center',
@@ -151,7 +151,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         <div style={{
                           display: 'flex',
                           color: 'white',
-                          fontSize: '15px',
+                          fontSize: '8px',
                           fontWeight: 700,
                           lineHeight: 1.2,
                           textAlign: 'center',
@@ -187,11 +187,11 @@ export default async function Image({ params }: { params: { id: string } }) {
             alignItems: 'center',
             backgroundColor: colorTheme.bg,
             color: colorTheme.text,
-            padding: '4px 24px',
+            padding: '2px 12px',
             borderRadius: '99px',
-            fontSize: '28px',
+            fontSize: '14px',
             lineHeight: 1,
-            marginBottom: '12px'
+            marginBottom: '6px'
           }}>
             {truncate(authorName, 15)}を構成する9つのYouTube │ {theme || '9TUBE'}
           </div>
