@@ -1,98 +1,49 @@
 // Edge Runtime 互換の OGP ヘルパー
-// Node.js 固有の fs, path に依存せず、fetch や URL でフォントと画像を処理します。
-
-let cachedFontData: ArrayBuffer | null = null;
+// Google Fonts API を利用した動的サブセット化により、メモリ消費を最小限に抑えます。
 
 /**
- * フォントデータを取得し、メモリキャッシュして返却する。
- * Cloudflare の UA なし fetch 遮断を回避するため、ブラウザ UA を付与。
+ * Google Fonts API から指定された文字のみを含む軽量フォントデータを取得する。
  * 
- * @param requestUrl 現在のリクエストURL。オリジンの特定に使用。
+ * @param text フォントに含める文字列（サブセット化用）
  * @returns フォントデータの ArrayBuffer または null
  */
-export async function getFontData(requestUrl?: string): Promise<ArrayBuffer | null> {
-  if (cachedFontData) return cachedFontData;
-
-  // ベースURLの特定
-  let baseUrl = '';
-
-  if (requestUrl) {
-    try {
-      const url = new URL(requestUrl);
-      baseUrl = url.origin;
-    } catch (e) {
-      console.warn('[og-helper] Failed to parse requestUrl:', e);
-    }
-  }
-
-  // フォールバック: 環境変数
-  if (!baseUrl) {
-    baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  }
-
-  // 末尾の記号( / )を正規化
-  baseUrl = baseUrl.replace(/\/$/, '');
-
-  // 修正済みの正しいフォントパス
-  const fontUrl = `${baseUrl}/fonts/NotoSansJP-Black.otf`;
+export async function getFontData(text: string = '9coma'): Promise<ArrayBuffer | null> {
+  // Satori が対応している TTF 形式を Google Fonts から取得するため、
+  // WOFF2 をサポートしていない古い Safari の User-Agent を使用します。
+  const UA = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1';
   
   try {
-    const res = await fetch(fontUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      }
-    });
-
-    if (!res.ok) {
-      console.warn(`[og-helper] Font fetch failed: ${fontUrl} (${res.status}).`);
-      return null;
-    }
-
-    const buffer = await res.arrayBuffer();
+    // 1. Google Fonts API から CSS を取得 (サブセット化された TTF の URL を含む)
+    const cssRes = await fetch(
+      `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&text=${encodeURIComponent(text)}`,
+      { headers: { 'User-Agent': UA } }
+    );
     
-    // 0バイトチェック (Cloudflare の不完全な遮断対策)
-    if (buffer.byteLength === 0) {
-      console.warn(`[og-helper] Font received is 0 bytes. Cloudflare may have blocked it.`);
+    if (!cssRes.ok) {
+      console.warn(`[og-helper] Google Fonts CSS fetch failed: ${cssRes.status}`);
       return null;
     }
-
-    cachedFontData = buffer;
-    return cachedFontData;
+    
+    const cssText = await cssRes.text();
+    
+    // 2. CSS からフォント URL を抽出 (src: url(https://...) 形式)
+    const fontUrlMatch = cssText.match(/src: url\((https:\/\/[^)]+)\)/);
+    if (!fontUrlMatch) {
+      console.warn('[og-helper] Failed to extract font URL from CSS');
+      return null;
+    }
+    const fontUrl = fontUrlMatch[1];
+    
+    // 3. 実際のフォントバイナリを取得
+    const fontRes = await fetch(fontUrl);
+    if (!fontRes.ok) {
+      console.warn(`[og-helper] Font file fetch failed: ${fontRes.status}`);
+      return null;
+    }
+    
+    return await fontRes.arrayBuffer();
   } catch (error) {
-    console.error('[og-helper] Error fetching font:', error);
+    console.error('[og-helper] Font subsetting error:', error);
     return null;
-  }
-}
-
-/**
- * 外部画像を Fetch して ArrayBuffer として取得する。
- * メモリ節約のため、巨大な Base64 文字列への変換を避けます。
- */
-export async function getImageData(url: string, timeoutMs: number = 3000) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
-      },
-    });
-    
-    if (!response.ok) throw new Error(`Status: ${response.status}`);
-    
-    const arrayBuffer = await response.arrayBuffer();
-    
-    return { 
-      success: true, 
-      buffer: arrayBuffer, 
-      size: arrayBuffer.byteLength 
-    };
-  } catch (e) {
-    console.error(`[OGHelper] Failed to fetch image: ${url}`, e);
-    return { success: false, error: String(e) };
-  } finally {
-    clearTimeout(timeoutId);
   }
 }

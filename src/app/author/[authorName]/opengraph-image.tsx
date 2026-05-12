@@ -3,7 +3,7 @@
 import { ImageResponse } from 'next/og';
 import { getSelectionCountByAuthor, getListsByAuthor } from '@/lib/list';
 import { ComicList } from '@/types';
-import { getFontData, getImageData } from '@/lib/og-helper';
+import { getFontData } from '@/lib/og-helper';
 
 // 高速動作とコスト削減のため Edge Runtime を使用
 export const runtime = 'edge';
@@ -15,11 +15,6 @@ export const size = {
 };
 
 export default async function Image({ params }: { params: { authorName: string } }) {
-  // フォントとデータの取得 (ビルド時の環境変数またはリクエストURLから特定)
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const currentUrl = `${baseUrl}/author/${params.authorName}/opengraph-image`;
-  const fontData = await getFontData(currentUrl);
-
   try {
     const authorName = decodeURIComponent(params.authorName);
 
@@ -35,35 +30,28 @@ export default async function Image({ params }: { params: { authorName: string }
       displayLists.push({ id: 'dummy', slots: Array(9).fill(null), authorName: '', createdAt: Date.now() } as ComicList);
     }
 
-    // すべてのリストのすべてのスロットの画像を ArrayBuffer 化
-    const listsWithImageData = [];
-    // 1リストずつ順番に処理（外側の直列化）
-    for (const list of displayLists) {
-      const slots = list.slots || Array(9).fill(null);
-      const slotsWithData = [];
-      
-      // スロットは3枚ずつのチャンクで並列取得
-      for (let i = 0; i < slots.length; i += 3) {
-        const chunk = slots.slice(i, i + 3);
-        const chunkResults = await Promise.all(
-          chunk.map(async (slot) => {
-            const imageUrl = (slot && typeof slot === 'object' && slot.imageUrl) ? slot.imageUrl : null;
-            if (imageUrl) {
-              try {
-                const result = await getImageData(imageUrl);
-                return { ...slot, imageBuffer: result.success ? (result.buffer as ArrayBuffer) : null };
-              } catch (e) {
-                console.error(`[AuthorOG] Failed to fetch slot: ${imageUrl}`, e);
-                return { ...slot, imageBuffer: null };
-              }
-            }
-            return slot;
-          })
-        );
-        slotsWithData.push(...chunkResults);
-      }
-      listsWithImageData.push({ ...list, slots: slotsWithData });
-    }
+    // フォントのサブセット化用テキストの収集
+    const allText = [
+      authorName,
+      '先生',
+      'これまで投稿された皆さんの',
+      totalSelectionCount.toString(),
+      'コマを構成しています。',
+      '9コマ (9coma.com)',
+      '#9coma - 私を構成する9つのマンガ',
+      ...displayLists.flatMap(l => (l.slots || []).map(s => (s as any)?.title || ''))
+    ].join('');
+    const subsetText = Array.from(new Set(allText)).join('');
+    const fontData = await getFontData(subsetText);
+
+    const fonts = fontData ? [
+      {
+        name: 'Noto Sans JP',
+        data: fontData,
+        style: 'normal' as const,
+        weight: 900 as const,
+      },
+    ] : [];
 
     return new ImageResponse(
       (
@@ -196,8 +184,8 @@ export default async function Image({ params }: { params: { authorName: string }
             justifyContent: 'center',
             zIndex: 50,
           }}>
-            {listsWithImageData.map((list, index: number) => {
-              const reverseIndex = listsWithImageData.length - 1 - index;
+            {displayLists.map((list, index: number) => {
+              const reverseIndex = displayLists.length - 1 - index;
               const offsetX = reverseIndex * 100 - 40;
               const offsetY = reverseIndex * -24;
               const rotate = (reverseIndex === 0) ? 0 : (reverseIndex * 4);
@@ -229,6 +217,7 @@ export default async function Image({ params }: { params: { authorName: string }
                     gap: '4px',
                   }}>
                     {slots.slice(0, 9).map((slot, i: number) => {
+                      const imageUrl = (slot as any)?.imageUrl;
                       return (
                         <div
                           key={i}
@@ -241,9 +230,9 @@ export default async function Image({ params }: { params: { authorName: string }
                             display: 'flex',
                           }}
                         >
-                          {slot && (slot as any).imageBuffer ? (
+                          {imageUrl ? (
                             <img
-                              src={(slot as any).imageBuffer as any}
+                              src={imageUrl}
                               alt=""
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
@@ -287,14 +276,7 @@ export default async function Image({ params }: { params: { authorName: string }
       ),
       {
         ...size,
-        fonts: fontData ? [
-          {
-            name: 'Noto Sans JP',
-            data: fontData,
-            style: 'normal' as const,
-            weight: 900 as const,
-          },
-        ] : [],
+        fonts,
         headers: {
           'Cache-Control': 'public, s-maxage=31536000, stale-while-revalidate=59, max-age=31536000, immutable',
         },
@@ -306,14 +288,7 @@ export default async function Image({ params }: { params: { authorName: string }
       <div style={{ width: '100%', height: '100%', backgroundColor: '#FFD600', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: 900 }}>9coma.com</div>,
       {
         ...size,
-        fonts: fontData ? [
-          {
-            name: 'Noto Sans JP',
-            data: fontData,
-            style: 'normal' as const,
-            weight: 900 as const,
-          },
-        ] : [],
+        fonts: [],
       }
     );
   }

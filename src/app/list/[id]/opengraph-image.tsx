@@ -3,7 +3,7 @@
 import { ImageResponse } from 'next/og';
 import { getListById } from '@/lib/list';
 import { COLOR_THEMES } from '@/lib/colors';
-import { getFontData, getImageData } from '@/lib/og-helper';
+import { getFontData } from '@/lib/og-helper';
 
 export const runtime = 'edge';
 
@@ -25,34 +25,16 @@ export default async function Image({ params }: { params: { id: string } }) {
   const textColor = theme.text;
   const isDark = themeId === '02' || themeId === '03' || themeId === '05' || themeId === '07' || themeId === '09' || themeId === '11';
 
-  // フォントとデータの取得 (ガード付き)
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const currentUrl = `${baseUrl}/list/${params.id}/opengraph-image`;
-  const fontData = await getFontData(currentUrl);
+  // フォントのサブセット化用テキストの収集
+  const allText = [
+    data.theme,
+    '＃',
+    '私を構成する9つのマンガ',
+    ...data.slots.map(s => s?.title || ''),
+  ].join('');
+  const subsetText = Array.from(new Set(allText)).join('');
+  const fontData = await getFontData(subsetText);
 
-  // すべてのスロットの画像を ArrayBuffer 化
-  const imageDataList: (ArrayBuffer | null)[] = [];
-  // 3枚ずつのチャンクで取得（並列ストール回避）
-  for (let i = 0; i < data.slots.length; i += 3) {
-    const chunk = data.slots.slice(i, i + 3);
-    const chunkResults = await Promise.all(
-      chunk.map(async (manga) => {
-        if (!manga?.imageUrl) return null;
-        try {
-          const result = await getImageData(manga.imageUrl);
-          return result.success ? (result.buffer as ArrayBuffer) : null;
-        } catch (e) {
-          console.error(`[OGImage] Failed to fetch slot: ${manga.imageUrl}`, e);
-          return null;
-        }
-      })
-    );
-    imageDataList.push(...chunkResults);
-  }
-
-  const topRowImageData = imageDataList.slice(0, 4);
-  const bottomRowImageData = imageDataList.slice(5, 9);
-  const centerImageData = imageDataList[4];
   const centerSlot = data.slots[4];
 
   // レイアウト定数 (1200x630復元)
@@ -122,10 +104,9 @@ export default async function Image({ params }: { params: { id: string } }) {
               boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
             }}
           >
-            {centerImageData ? (
-              /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            {centerSlot?.imageUrl ? (
               <img
-                src={centerImageData as any}
+                src={centerSlot.imageUrl}
                 alt={centerSlot?.title || ''}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
@@ -174,8 +155,9 @@ export default async function Image({ params }: { params: { id: string } }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: `${rightGridGap}px` }}>
           {/* Top Row (1, 2, 3, 4) */}
           <div style={{ display: 'flex', gap: `${rightGridGap}px` }}>
-            {topRowImageData.map((imgData, idx) => {
+            {[0, 1, 2, 3].map((idx) => {
               const manga = data.slots[idx];
+              const imageUrl = manga?.imageUrl;
               return (
                 <div
                   key={idx}
@@ -190,10 +172,9 @@ export default async function Image({ params }: { params: { id: string } }) {
                     boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                   }}
                 >
-                  {imgData ? (
-                    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                  {imageUrl ? (
                     <img
-                      src={imgData as any}
+                      src={imageUrl}
                       alt={manga?.title || ''}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
@@ -242,9 +223,9 @@ export default async function Image({ params }: { params: { id: string } }) {
 
           {/* Bottom Row (6, 7, 8, 9) */}
           <div style={{ display: 'flex', gap: `${rightGridGap}px` }}>
-            {bottomRowImageData.map((imgData, idx) => {
-              const actualIdx = idx + 5;
+            {[5, 6, 7, 8].map((actualIdx) => {
               const manga = data.slots[actualIdx];
+              const imageUrl = manga?.imageUrl;
               return (
                 <div
                   key={actualIdx}
@@ -259,9 +240,9 @@ export default async function Image({ params }: { params: { id: string } }) {
                     boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                   }}
                 >
-                  {imgData ? (
+                  {imageUrl ? (
                     <img
-                      src={imgData as any}
+                      src={imageUrl}
                       alt={manga?.title || ''}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ImageResponse } from 'next/og';
-import { getFontData, getImageData } from '@/lib/og-helper';
+import { getFontData } from '@/lib/og-helper';
 import type { YouTubeSlot } from '@/types/youtube';
 import { COLOR_THEMES } from '@/lib/colors';
 
@@ -42,29 +42,16 @@ export default async function Image({ params }: { params: { id: string } }) {
   const colorThemeId = data.colorThemeId || '01';
   const colorTheme = COLOR_THEMES[colorThemeId] || COLOR_THEMES['01'];
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const currentUrl = `${baseUrl}/9tube/list/${params.id}/opengraph-image`;
-  const fontData = await getFontData(currentUrl);
-
-  // 全ての画像を ArrayBuffer 化
-  const imageDataList: (ArrayBuffer | null)[] = [];
-  // 3枚ずつのチャンクで取得（並列ストール回避）
-  for (let i = 0; i < slots.length; i += 3) {
-    const chunk = slots.slice(i, i + 3);
-    const chunkResults = await Promise.all(
-      chunk.map(async (slot) => {
-        if (!slot?.imageUrl) return null;
-        try {
-          const result = await getImageData(slot.imageUrl, 3000);
-          return result.success ? (result.buffer as ArrayBuffer) : null;
-        } catch (error) {
-          console.error(`[9TUBE-OGP] Failed to fetch image: ${slot.imageUrl}`, error);
-          return null;
-        }
-      })
-    );
-    imageDataList.push(...chunkResults);
-  }
+  // フォントのサブセット化用テキストの収集
+  const allText = [
+    authorName,
+    'を構成する9つのYouTube',
+    theme,
+    '9TUBE',
+    ...slots.map(s => s?.title || ''),
+  ].join('');
+  const subsetText = Array.from(new Set(allText)).join('');
+  const fontData = await getFontData(subsetText);
 
   // --- [設定エリア: 余白とサイズ] --- (1200x630復元)
   const padding = 24;
@@ -116,8 +103,8 @@ export default async function Image({ params }: { params: { id: string } }) {
             <div key={row} style={{ display: 'flex', gap: `${gap}px`, flex: 1 }}>
               {[0, 1, 2].map(col => {
                 const idx = row * 3 + col;
-                const imageData = imageDataList[idx];
                 const slot = slots[idx];
+                const imageUrl = slot?.imageUrl;
                 return (
                   <div
                     key={col}
@@ -133,9 +120,9 @@ export default async function Image({ params }: { params: { id: string } }) {
                       position: 'relative',
                     }}
                   >
-                    {imageData ? (
+                    {imageUrl ? (
                       <img
-                        src={imageData as any}
+                        src={imageUrl}
                         style={{
                           width: '100%',
                           height: '100%',
