@@ -83,7 +83,7 @@ export async function GET(request: Request) {
                 title: item.title,
                 author: item.author,
                 publisher: item.publisherName,
-                imageUrl: item.largeImageUrl ? item.largeImageUrl.replace('?_ex=200x200', '?_ex=400x400') : '',
+                imageUrl: item.largeImageUrl || '',
                 itemUrl: item.itemUrl,
                 affiliateUrl: item.affiliateUrl || item.itemUrl,
                 releaseDate: item.salesDate,

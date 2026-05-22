@@ -10,8 +10,8 @@ export const runtime = 'edge';
 
 export const alt = '9coma | 著者別ページ';
 export const size = {
-  width: 1200,
-  height: 630,
+  width: 600,
+  height: 315,
 };
 
 export default async function Image({ params }: { params: { authorName: string } }) {
@@ -64,59 +64,56 @@ export default async function Image({ params }: { params: { authorName: string }
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '32px',
-            gap: '32px',
+            padding: '16px',
+            gap: '16px',
             position: 'relative',
             overflow: 'hidden',
           }}
         >
-          {/* 背景装飾 */}
           <div style={{
             position: 'absolute',
-            top: -200,
-            right: -200,
-            width: '600px',
-            height: '600px',
-            borderRadius: '300px',
+            top: -100,
+            right: -100,
+            width: '300px',
+            height: '300px',
+            borderRadius: '150px',
             backgroundColor: '#FFEA00',
             opacity: 0.6,
             zIndex: 1,
           }} />
 
-          {/* 固定配置：ロゴ */}
           <div style={{
             position: 'absolute',
-            top: '48px',
-            left: '48px',
+            top: '24px',
+            left: '24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '460px',
-            gap: '12px',
+            width: '230px',
+            gap: '6px',
             background: '#1A1A1A',
-            padding: '10px 24px',
+            padding: '5px 12px',
             borderRadius: '99px',
             color: '#FFFFFF',
-            fontSize: '24px',
+            fontSize: '12px',
             fontWeight: 900,
             zIndex: 100,
           }}>
             9コマ (9coma.com)
           </div>
 
-          {/* 固定配置：著者名エリア */}
           <div style={{
             position: 'absolute',
-            top: '110px',
-            left: '48px',
+            top: '55px',
+            left: '24px',
             display: 'flex',
             flexDirection: 'column',
-            width: '460px',
+            width: '230px',
             alignItems: 'flex-end',
             zIndex: 100,
           }}>
             <div style={{
-              fontSize: authorName.length > 10 ? '48px' : authorName.length > 7 ? '64px' : '84px',
+              fontSize: authorName.length > 10 ? '24px' : authorName.length > 7 ? '32px' : '42px',
               fontWeight: 900,
               color: '#1A1A1A',
               lineHeight: 1.25,
@@ -124,14 +121,14 @@ export default async function Image({ params }: { params: { authorName: string }
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',
-              maxHeight: authorName.length > 10 ? '130px' : authorName.length > 7 ? '175px' : '230px',
+              maxHeight: authorName.length > 10 ? '65px' : authorName.length > 7 ? '87px' : '115px',
               overflow: 'hidden',
               wordBreak: 'break-all',
             }}>
               {authorName}
             </div>
             <div style={{
-              fontSize: '44px',
+              fontSize: '22px',
               fontWeight: 800,
               color: '#333333',
               marginTop: '0px',
@@ -141,53 +138,51 @@ export default async function Image({ params }: { params: { authorName: string }
             </div>
           </div>
 
-          {/* 固定配置：インサイトボックス */}
           <div style={{
             position: 'absolute',
-            bottom: '80px',
-            left: '48px',
+            bottom: '40px',
+            left: '24px',
             display: 'flex',
             flexDirection: 'column',
-            width: '460px',
+            width: '230px',
             background: '#1A1A1A',
             color: '#FFFFFF',
-            padding: '24px 32px',
-            borderRadius: '24px',
-            boxShadow: '0 12px 0 rgba(0,0,0,0.15)',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            boxShadow: '0 6px 0 rgba(0,0,0,0.15)',
             zIndex: 100,
           }}>
-            <div style={{ fontSize: '25px', fontWeight: 700, opacity: 0.8, marginBottom: '8px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.8, marginBottom: '4px' }}>
               これまで投稿された皆さんの
             </div>
             <div style={{
               display: 'flex',
               alignItems: 'baseline',
-              fontSize: '52px',
+              fontSize: '26px',
               fontWeight: 900,
             }}>
-              <span style={{ color: '#FFD600', fontSize: '64px', marginRight: '12px' }}>{totalSelectionCount}</span> コマ
+              <span style={{ color: '#FFD600', fontSize: '32px', marginRight: '6px' }}>{totalSelectionCount}</span> コマ
             </div>
-            <div style={{ fontSize: '25px', fontWeight: 700, opacity: 0.8, marginTop: '8px', textAlign: 'right' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.8, marginTop: '4px', textAlign: 'right' }}>
               を構成しています。
             </div>
           </div>
 
-          {/* 右側：複数コンテナのスタック表示 */}
           <div style={{
             position: 'absolute',
-            top: '24px',
-            right: '32px',
+            top: '12px',
+            right: '16px',
             display: 'flex',
-            width: '640px',
-            height: '600px',
+            width: '320px',
+            height: '300px',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 50,
           }}>
             {displayLists.map((list, index: number) => {
               const reverseIndex = displayLists.length - 1 - index;
-              const offsetX = reverseIndex * 100 - 40;
-              const offsetY = reverseIndex * -24;
+              const offsetX = reverseIndex * 50 - 20;
+              const offsetY = reverseIndex * -12;
               const rotate = (reverseIndex === 0) ? 0 : (reverseIndex * 4);
               const slots = list.slots || Array(9).fill(null);
 
@@ -198,12 +193,12 @@ export default async function Image({ params }: { params: { authorName: string }
                     position: 'absolute',
                     display: 'flex',
                     flexDirection: 'column',
-                    width: '380px',
-                    height: '560px',
+                    width: '190px',
+                    height: '280px',
                     background: '#1A1A1A',
-                    padding: '8px',
-                    borderRadius: '16px',
-                    boxShadow: '12px 12px 24px rgba(0,0,0,0.3)',
+                    padding: '4px',
+                    borderRadius: '8px',
+                    boxShadow: '6px 6px 12px rgba(0,0,0,0.3)',
                     transform: `translateX(${offsetX}px) translateY(${offsetY}px) rotate(${rotate}deg)`,
                     zIndex: index + 10,
                     opacity: 1,
@@ -212,9 +207,9 @@ export default async function Image({ params }: { params: { authorName: string }
                   <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    width: '364px',
-                    height: '544px',
-                    gap: '4px',
+                    width: '182px',
+                    height: '272px',
+                    gap: '2px',
                   }}>
                     {slots.slice(0, 9).map((slot, i: number) => {
                       const imageUrl = (slot as any)?.imageUrl;
@@ -222,10 +217,10 @@ export default async function Image({ params }: { params: { authorName: string }
                         <div
                           key={i}
                           style={{
-                            width: '118px',
-                            height: '178px',
+                            width: '59px',
+                            height: '89px',
                             background: '#2A2A2A',
-                            borderRadius: '4px',
+                            borderRadius: '2px',
                             overflow: 'hidden',
                             display: 'flex',
                           }}
@@ -244,7 +239,7 @@ export default async function Image({ params }: { params: { authorName: string }
                               alignItems: 'center',
                               justifyContent: 'center',
                               color: '#555555',
-                              fontSize: '24px',
+                              fontSize: '12px',
                               fontWeight: 900,
                             }}>
                               {i + 1}
@@ -261,10 +256,10 @@ export default async function Image({ params }: { params: { authorName: string }
 
           <div style={{
             position: 'absolute',
-            bottom: '32px',
-            left: '48px',
-            width: '600px',
-            fontSize: '20px',
+            bottom: '16px',
+            left: '24px',
+            width: '300px',
+            fontSize: '10px',
             fontWeight: 700,
             color: '#1A1A1A',
             zIndex: 200,

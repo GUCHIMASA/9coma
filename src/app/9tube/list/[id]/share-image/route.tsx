@@ -113,7 +113,7 @@ export async function GET(
                         display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
                       }}>
                         <div style={{ display: 'flex', color: 'white', fontSize: '6px', fontWeight: 700, lineHeight: 1.2, textAlign: 'center', textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
-                          {truncate(slot.title, 36)}
+                          {truncate(slot.title, 20)}
                         </div>
                       </div>
                     )}

@@ -137,7 +137,7 @@ export async function GET(
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                         }}>
                           <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {manga.title}
+                            {manga.title.length > 20 ? manga.title.substring(0, 20) + '...' : manga.title}
                           </div>
                         </div>
                       )}

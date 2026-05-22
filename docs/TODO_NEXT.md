@@ -1,45 +1,30 @@
-# TODO_NEXT (Vercel -> Cloudflare 移行：OGP画像生成の抜本的シンプル化)
+# TODO_NEXT (Cloudflare 50ms制限突破：最適化の最終調整)
 
 ## 🎯 目的
-複雑な画像事前フェッチやBase64変換などの「不要な自作ロジック」をすべて破棄し、Next.js (`@vercel/og`) 本来の標準仕様に沿った最もシンプルな構造にリファクタリングします。
-これにより、画像の空白バグとメモリスパイクを同時に解決し、最後にフォントの最適化を行ってCloudflareの制限内に収めます。
+Cloudflare PagesにおけるSatoriのWASMエンジンの負荷（PNG圧縮と画像デコードのCPU計算量）を下げるため、**最適な箇所だけをピンポイントで軽量化**します。
+Share画像は画質を保つためにサイズを維持し、代わりに入力（外部取得画像）の解像度を適正化することでError 1102を防ぎます。
 
-## 📁 対象ファイル
-1. `src/lib/og-helper.ts`
-2. `src/app/list/[id]/share-image/route.tsx`
-3. `src/app/9tube/list/[id]/share-image/route.tsx`
-4. `src/app/list/[id]/opengraph-image.tsx`
-5. `src/app/9tube/list/[id]/opengraph-image.tsx`
-6. `src/app/author/[authorName]/opengraph-image.tsx`
+## 📁 対象ファイルと変更内容
 
----
+### 1. OGP画像の解像度半減（1200x630 → 600x315）
+SNSシェア用のOGPは引き伸ばされるため、計算負荷を減らすために**正確に半分（1/2）**にスケールダウンします。
+以下のファイルのレイアウト（width, height, padding, gap, fontSize 等）を半減させてください。
+*   `src/app/list/[id]/opengraph-image.tsx` （マンガ版 OGP）
+*   `src/app/9tube/list/[id]/opengraph-image.tsx` （YouTube版 OGP）※現在テスト中。正式に適用すること。
+*   `src/app/author/[authorName]/opengraph-image.tsx` （著者ページ OGP）
 
-## 🛠 具体的な実装プロンプト（作業者への指示）
+### 2. Share画像は「サイズ維持（600x750）」＋「テキスト制限」
+スマホへのダウンロード用であるShare画像は、画質維持のためキャンバスサイズは変更しません。
+代わりに長文による改行計算負荷を防ぐため、以下のファイルでタイトルの `truncate` 文字数を短く調整（例：34文字 → 18文字など）してください。
+*   `src/app/list/[id]/share-image/route.tsx`
+*   `src/app/9tube/list/[id]/share-image/route.tsx`
 
-### Task 1: 外部画像の事前取得ロジックの「完全削除」と「URL直渡し」
-Satoriは標準で外部URLのFetchを内包しており、WASM内でバイナリを直接安全に処理します。私たちが自前でFetchしてArrayBufferやBase64にする必要は全くありませんでした。
-
-*   **対象ファイル (`route.tsx`, `opengraph-image.tsx`)**:
-    *   `getImageData` を用いた `Promise.all` やチャンク処理など、画像を事前に取得して配列に詰める処理を**すべて削除**してください。
-    *   JSXツリー内の `<img src={...} />` には、Firestoreから取得した生の絶対URL（例: `manga.imageUrl` や `slot.imageUrl`）をそのまま渡してください。
-*   **対象ファイル (`src/lib/og-helper.ts`)**:
-    *   `getImageData` 関数（旧 `getBase64Image`）は不要になったため、関数ごと**完全に削除**してください。
-
-### Task 2: Google Fonts API を用いたフォントの「動的サブセット化」
-残る唯一の巨大負荷である「2.2MBのフォントファイル」のパース負荷を削るため、標準的な動的サブセット化を実装します。
-
-*   **対象ファイル (`src/lib/og-helper.ts` の `getFontData`)**:
-    1. 引数に `text?: string` を追加します（`requestUrl` は不要）。
-    2. 以下の User-Agent を使用して Google Fonts API から TTF 形式の CSS を取得します。
-       `const UA = 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1';`
-       `fetch(https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&text=${encodeURIComponent(text)}, { headers: { 'User-Agent': UA } })`
-    3. レスポンスのCSSから `src: url(https://...)` を抽出し、そのURLを再度 fetch して `arrayBuffer()` を返却してください。
-
-*   **対象ファイル (`route.tsx`, `opengraph-image.tsx` 側)**:
-    *   `getFontData` を呼び出す際、画像内に描画されるすべての文字列（タイトル、著者名など）を結合し、重複文字を削除した軽量な文字列を `text` 引数として渡してください。
+### 3. 楽天画像（入力側）の解像度適正化
+マンガ版がクラッシュする最大の原因は「600x750のキャンバスに対して、400x400の巨大な画像を9枚もデコードしていること」です。（実際の枠サイズは188x188程度です）
+*   `src/app/api/search/route.ts` 内の、`?_ex=200x200` を `?_ex=400x400` に強制置換している処理を削除し、デフォルトの **200x200** をそのまま使うように変更してください。（これによりデコード負荷が1/4になります）
 
 ---
 
-## ✅ 完了条件（検証項目）
-1. 画像の事前Fetchロジック（`getImageData`）が全ファイルから完全に消滅していること。
-2. 9TUBE版OGP・マンガ版OGPともに、画像が空白にならず、かつ `Worker exceeded resource limits` にならずに完全な高画質画像が生成されること。
+## ✅ 完了条件
+*   OGPは 600x315 に縮小され、Share画像は 600x750 を維持していること。
+*   本番デプロイ後、最も重い「マンガ版の9枚フルリスト」で `/share-image` と `/opengraph-image` にアクセスし、50ms制限（Error 1102）で落ちずに画像が生成されること。

@@ -9,8 +9,8 @@ export const runtime = 'edge';
 
 export const alt = '9coma | 私を構成する9つのマンガ';
 export const size = {
-  width: 1200,
-  height: 630,
+  width: 600,
+  height: 315,
 };
 export const contentType = 'image/png';
 
@@ -37,11 +37,11 @@ export default async function Image({ params }: { params: { id: string } }) {
 
   const centerSlot = data.slots[4];
 
-  // レイアウト定数 (1200x630復元)
-  const padding = 32;
-  const leftColWidth = 330;
-  const horizontalGap = 32;
-  const rightGridGap = 20;
+  // レイアウト定数 (600x315)
+  const padding = 16;
+  const leftColWidth = 165;
+  const horizontalGap = 16;
+  const rightGridGap = 10;
 
   // フォントガード
   const fonts = fontData ? [
@@ -72,18 +72,18 @@ export default async function Image({ params }: { params: { id: string } }) {
         }}
       >
         {/* Left Column (Badge + Slot 5) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: `${leftColWidth}px` }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: `${leftColWidth}px` }}>
           {/* Badge (Header Area) */}
           <div
             style={{
               width: '100%',
-              height: '50px',
+              height: '25px',
               backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
               borderRadius: '99px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px',
+              fontSize: '10px',
               fontWeight: 900,
               color: textColor,
             }}
@@ -95,13 +95,13 @@ export default async function Image({ params }: { params: { id: string } }) {
           <div
             style={{
               width: '100%',
-              height: '470px',
+              height: '235px',
               backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               display: 'flex',
-              borderRadius: '8px',
+              borderRadius: '4px',
               overflow: 'hidden',
               position: 'relative',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             }}
           >
             {centerSlot?.imageUrl ? (
@@ -120,7 +120,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                   justifyContent: 'center',
                   color: textColor,
                   opacity: 0.2,
-                  fontSize: '120px',
+                  fontSize: '60px',
                   fontWeight: 900,
                 }}
               >
@@ -133,10 +133,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                 bottom: 0,
                 left: 0,
                 width: '100%',
-                padding: '40px 16px 12px',
+                padding: '20px 8px 6px',
                 background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
                 color: 'white',
-                fontSize: '16px',
+                fontSize: '8px',
                 fontWeight: 800,
                 textAlign: 'center',
                 display: 'flex',
@@ -162,14 +162,14 @@ export default async function Image({ params }: { params: { id: string } }) {
                 <div
                   key={idx}
                   style={{
-                    width: '175px',
-                    height: '260px',
+                    width: '87px',
+                    height: '130px',
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    borderRadius: '4px',
+                    borderRadius: '2px',
                     overflow: 'hidden',
                     position: 'relative',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                    boxShadow: '0 2px 7px rgba(0,0,0,0.15)',
                   }}
                 >
                   {imageUrl ? (
@@ -188,7 +188,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         justifyContent: 'center',
                         color: textColor,
                         opacity: 0.2,
-                        fontSize: '48px',
+                        fontSize: '24px',
                         fontWeight: 900,
                       }}
                     >
@@ -201,10 +201,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                       bottom: 0,
                       left: 0,
                       width: '100%',
-                      padding: '30px 8px 8px',
+                      padding: '15px 4px 4px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
                       color: 'white',
-                      fontSize: '11px',
+                      fontSize: '5px',
                       fontWeight: 700,
                       textAlign: 'center',
                       display: 'flex',
@@ -230,14 +230,14 @@ export default async function Image({ params }: { params: { id: string } }) {
                 <div
                   key={actualIdx}
                   style={{
-                    width: '175px',
-                    height: '260px',
+                    width: '87px',
+                    height: '130px',
                     backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                     display: 'flex',
-                    borderRadius: '4px',
+                    borderRadius: '2px',
                     overflow: 'hidden',
                     position: 'relative',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                    boxShadow: '0 2px 7px rgba(0,0,0,0.15)',
                   }}
                 >
                   {imageUrl ? (
@@ -256,7 +256,7 @@ export default async function Image({ params }: { params: { id: string } }) {
                         justifyContent: 'center',
                         color: textColor,
                         opacity: 0.2,
-                        fontSize: '48px',
+                        fontSize: '24px',
                         fontWeight: 900,
                       }}
                     >
@@ -269,10 +269,10 @@ export default async function Image({ params }: { params: { id: string } }) {
                       bottom: 0,
                       left: 0,
                       width: '100%',
-                      padding: '30px 8px 8px',
+                      padding: '15px 4px 4px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
                       color: 'white',
-                      fontSize: '11px',
+                      fontSize: '5px',
                       fontWeight: 700,
                       textAlign: 'center',
                       display: 'flex',
